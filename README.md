@@ -209,3 +209,22 @@ npm run dev -- --host 0.0.0.0
 - **ComfyUI**: https://github.com/comfyanonymous/ComfyUI
 - **Vue.js**: https://vuejs.org
 - **Vite**: https://vitejs.dev
+
+## Mode de previsualització UI (sense backend ni ComfyUI)
+
+Si només vols fer canvis visuals o de disseny al frontend, pots activar un mode mock que evita arrancar backend i ComfyUI.
+
+1. Crea (o edita) `frontend/.env` i afegeix:
+   ```bash
+   VITE_DEV_PREVIEW_MODE=true
+   ```
+2. Arrenca només el frontend:
+   ```powershell
+   cd frontend
+   npm run dev
+   ```
+3. Obre `http://localhost:5173`.
+
+Quan `VITE_DEV_PREVIEW_MODE=true`, els serveis de frontend retornen dades simulades (usuari, sessions i imatges) perquè puguis navegar per la interfície i iterar en el disseny sense dependències de backend.
+
+Per tornar al comportament normal, canvia el valor a `false` o elimina la variable.
