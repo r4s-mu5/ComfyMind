@@ -17,14 +17,14 @@
     <AlertDialog :open="sessionExpiredDialog" @update:open="(val) => sessionExpiredDialog = val">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Sesión expirada</AlertDialogTitle>
+          <AlertDialogTitle>{{ t('global.sessionExpired') }}</AlertDialogTitle>
           <AlertDialogDescription>
-            Tu sesión ha expirado. Por favor, inicia sesión nuevamente para continuar.
+            {{ t('global.sessionExpiredDescription') }}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div class="flex justify-end">
           <AlertDialogAction @click="handleSessionExpired">
-            Iniciar sesión
+            {{ t('global.loginAgain') }}
           </AlertDialogAction>
         </div>
       </AlertDialogContent>
@@ -47,11 +47,13 @@ import {
 } from '@/components/ui/alert-dialog'
 import { sessionExpiredDialog } from '@/plugins/axios'
 import { userService } from '@/api/userService'
+import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 
 import Header from './components/Header.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = usePrototypeLocale()
 const authPaths = ['/', '/signup']
 const showHeader = computed(() => !authPaths.includes(route.path))
 

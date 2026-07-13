@@ -6,6 +6,8 @@ import { userService } from '../api/userService.js'
 import { sessionsService } from '../api/sessionsService.js'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
+import DemoCreationWorkspace from '@/components/prototype/DemoCreationWorkspace.vue'
+import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -52,6 +54,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 const WS_URL = API_URL.replace(/^http/, 'ws')
 const route = useRoute()
 const router = useRouter()
+const { isDemo } = usePrototypeDemo()
 const sessionId = Number(route.params.sessionId) // tomado de la ruta si está; será NaN si falta
 const hasSession = Number.isFinite(sessionId)
 
@@ -259,6 +262,9 @@ const setupSessionEndWatcher = () => {
 }
 
 onMounted(async () => {
+  // The meeting preview is intentionally isolated from API, ComfyUI, and websocket behavior.
+  if (isDemo.value) return
+
   if (hasSession) restoreState()
 
   // usuario actual
@@ -1033,7 +1039,8 @@ const convertDrawnSketchFromCanvas = async () => {
 </script>
 
 <template>
-  <div class="flex flex-col">
+  <DemoCreationWorkspace v-if="isDemo" />
+  <div v-else class="flex flex-col">
     <Dialog :open="showDetails"  @update:open="(val) => !val && (showDetails = false)" >
       <DialogContent>
         <DialogHeader>
