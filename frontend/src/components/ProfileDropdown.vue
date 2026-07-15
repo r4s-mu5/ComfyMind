@@ -17,7 +17,7 @@ import {
 
 const user = ref<any>(null)
 const router = useRouter()
-const { isDemo } = usePrototypeDemo()
+const { isDemo, locationWithDemo } = usePrototypeDemo()
 const { t } = usePrototypeLocale()
 
 const displayUser = computed(() => isDemo.value
@@ -42,7 +42,7 @@ onMounted(async () => {
 
 const logout = () => {
   userService.logout()
-  router.push('/')
+  router.push(locationWithDemo('/login'))
 }
 </script>
 

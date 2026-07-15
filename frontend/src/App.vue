@@ -48,19 +48,20 @@ import {
 import { sessionExpiredDialog } from '@/plugins/axios'
 import { userService } from '@/api/userService'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 
 import Header from './components/Header.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = usePrototypeLocale()
-const authPaths = ['/', '/signup']
-const showHeader = computed(() => !authPaths.includes(route.path))
+const { locationWithDemo } = usePrototypeDemo()
+const showHeader = computed(() => !route.meta.hideHeader)
 
 const handleSessionExpired = () => {
   sessionExpiredDialog.value = false
   userService.logout()
-  router.push('/')
+  router.push(locationWithDemo('/login'))
 }
 
 document.title = 'ComfyMind'

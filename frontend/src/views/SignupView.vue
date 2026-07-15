@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
+import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+import LanguageSelector from '@/components/LanguageSelector.vue'
 import { Eye, EyeOff } from 'lucide-vue-next'
 import { userService } from '../api/userService'
 import { Input } from '@/components/ui/input'
@@ -27,9 +30,12 @@ import {
 
 
 const router = useRouter()
+const { locationWithDemo } = usePrototypeDemo()
+const { t } = usePrototypeLocale()
 const newUser = ref({ email: '', full_name: '', password: '', type: '' })
 const confirmPassword = ref('')
 const message = ref('')
+const messageIsTranslationKey = ref(false)
 const messageType = ref<'error' | 'success' | ''>('')
 const isLoading = ref(false)
 const errors = ref<Record<string, string>>({})
@@ -47,6 +53,8 @@ const bgStyle = computed(() => ({
   backgroundSize: 'cover',
   backgroundPosition: 'top center',
 }))
+
+const displayedMessage = computed(() => messageIsTranslationKey.value ? t(message.value) : message.value)
 
 const validateEmail = (emailStr: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -66,37 +74,37 @@ const validateForm = (): boolean => {
   errors.value = {}
 
   if (!newUser.value.email.trim()) {
-    errors.value.email = 'El correo electrónico es requerido'
+    errors.value.email = 'signup.emailRequired'
   } else if (!validateEmail(newUser.value.email)) {
-    errors.value.email = 'Por favor, introduce un correo electrónico válido'
+    errors.value.email = 'signup.emailInvalid'
   }
 
   if (!newUser.value.full_name.trim()) {
-    errors.value.full_name = 'El nombre completo es requerido'
+    errors.value.full_name = 'signup.fullNameRequired'
   } else if (newUser.value.full_name.trim().length < 3) {
-    errors.value.full_name = 'El nombre debe tener al menos 3 caracteres'
+    errors.value.full_name = 'signup.fullNameLength'
   }
 
   if (!newUser.value.password) {
-    errors.value.password = 'La contraseña es requerida'
+    errors.value.password = 'signup.passwordRequired'
   } else if (newUser.value.password.length < 8) {
-    errors.value.password = 'La contraseña debe tener al menos 8 caracteres'
+    errors.value.password = 'signup.passwordLength'
   } else if (!/[A-Z]/.test(newUser.value.password)) {
-    errors.value.password = 'La contraseña debe contener al menos una mayúscula'
+    errors.value.password = 'signup.passwordUppercase'
   } else if (!/\d/.test(newUser.value.password)) {
-    errors.value.password = 'La contraseña debe contener al menos un número'
+    errors.value.password = 'signup.passwordNumber'
   } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(newUser.value.password)) {
-    errors.value.password = 'La contraseña debe contener al menos un carácter especial'
+    errors.value.password = 'signup.passwordSpecial'
   }
 
   if (!confirmPassword.value) {
-    errors.value.confirmPassword = 'Por favor, confirma la contraseña'
+    errors.value.confirmPassword = 'signup.confirmPasswordRequired'
   } else if (newUser.value.password !== confirmPassword.value) {
-    errors.value.confirmPassword = 'Las contraseñas no coinciden'
+    errors.value.confirmPassword = 'signup.passwordMismatch'
   }
 
   if (!newUser.value.type) {
-    errors.value.type = 'Selecciona un tipo de usuario'
+    errors.value.type = 'signup.userTypeRequired'
   }
 
   return Object.keys(errors.value).length === 0
@@ -104,10 +112,12 @@ const validateForm = (): boolean => {
 
 const addUser = async () => {
   message.value = ''
+  messageIsTranslationKey.value = false
   messageType.value = ''
 
   if (!validateForm()) {
-    message.value = 'Por favor, verifica los campos indicados'
+    message.value = 'signup.errorCheck'
+    messageIsTranslationKey.value = true
     messageType.value = 'error'
     return
   }
@@ -121,13 +131,16 @@ const addUser = async () => {
       password: newUser.value.password,
       type: newUser.value.type,
     })
-    router.push('/')
+    router.push(locationWithDemo('/login'))
   } catch (err: any) {
     messageType.value = 'error'
     const detail = err?.response?.data?.detail
-    message.value = typeof detail === 'string' && detail
-      ? detail
-      : 'Error al crear la cuenta. Intenta de nuevo.'
+    if (typeof detail === 'string' && detail) {
+      message.value = detail
+    } else {
+      message.value = 'signup.errorGeneric'
+      messageIsTranslationKey.value = true
+    }
   } finally {
     isLoading.value = false
   }
@@ -142,6 +155,10 @@ const addUser = async () => {
     <!-- overlay suave -->
     <div class="absolute inset-0 bg-white/60"></div>
 
+    <div class="relative z-10 mb-4 flex w-full max-w-md justify-end">
+      <LanguageSelector />
+    </div>
+
     <div class="relative z-10 flex flex-col w-full max-w-md items-center">      <!-- Logo -->
       <div class="mb-6 text-center">
         <img :src="logoImg" alt="ComfyMind" class="mx-auto h-32 w-32 mb-2" />
@@ -151,9 +168,9 @@ const addUser = async () => {
       <!-- Card de signup -->
       <Card class="w-full text-gray-900 shadow-lg bg-white/95 border border-white/70">
         <CardHeader>
-          <CardTitle>Crear nueva cuenta</CardTitle>
+          <CardTitle>{{ t('signup.title') }}</CardTitle>
           <CardDescription>
-            Introduce los datos para registrarte
+            {{ t('signup.description') }}
           </CardDescription>
         </CardHeader>
 
@@ -161,39 +178,39 @@ const addUser = async () => {
           <form @submit.prevent="addUser" class="space-y-4" @keydown.enter="addUser" autocomplete="off">
             <!-- Email field -->
             <div class="flex flex-col space-y-1.5">
-              <Label for="email">Correo electrónico</Label>
+              <Label for="email">{{ t('signup.email') }}</Label>
               <Input
                 id="email"
                 type="email"
-                placeholder="ejemplo@correo.com"
+                :placeholder="t('signup.emailPlaceholder')"
                 v-model="newUser.email"
                 :class="{ 'border-red-500': errors.email }"
                 @input="() => { if (errors.email) delete errors.email }"
               />
               <span v-if="errors.email" class="text-xs text-red-600 mt-0.5">
-                {{ errors.email }}
+                {{ t(errors.email) }}
               </span>
             </div>
 
             <!-- Full Name field -->
             <div class="flex flex-col space-y-1.5">
-              <Label for="full_name">Nombre completo</Label>
+              <Label for="full_name">{{ t('signup.fullName') }}</Label>
               <Input
                 id="full_name"
                 type="text"
-                placeholder="Nombre completo"
+                :placeholder="t('signup.fullNamePlaceholder')"
                 v-model="newUser.full_name"
                 :class="{ 'border-red-500': errors.full_name }"
                 @input="() => { if (errors.full_name) delete errors.full_name }"
               />
               <span v-if="errors.full_name" class="text-xs text-red-600 mt-0.5">
-                {{ errors.full_name }}
+                {{ t(errors.full_name) }}
               </span>
             </div>
 
             <!-- Password field -->
             <div class="flex flex-col space-y-1.5">
-              <Label for="password">Contraseña</Label>
+              <Label for="password">{{ t('signup.password') }}</Label>
               <div class="relative">
                 <Input
                   id="password"
@@ -208,34 +225,35 @@ const addUser = async () => {
                   type="button"
                   @click="showPassword = !showPassword"
                   class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  :aria-label="showPassword ? t('signup.hidePassword') : t('signup.showPassword')"
                 >
                   <Eye v-if="!showPassword" class="h-4 w-4" />
                   <EyeOff v-else class="h-4 w-4" />
                 </button>
               </div>
               <span v-if="errors.password" class="text-xs text-red-600 mt-0.5">
-                {{ errors.password }}
+                {{ t(errors.password) }}
               </span>
               <!-- Password requirements checker -->
               <div class="mt-2 space-y-1 text-xs">
                 <div :class="passwordRequirements.length ? 'text-green-600' : 'text-gray-500'">
-                  ✓ Al menos 8 caracteres
+                  ✓ {{ t('signup.requirementLength') }}
                 </div>
                 <div :class="passwordRequirements.uppercase ? 'text-green-600' : 'text-gray-500'">
-                  ✓ Al menos una mayúscula
+                  ✓ {{ t('signup.requirementUppercase') }}
                 </div>
                 <div :class="passwordRequirements.number ? 'text-green-600' : 'text-gray-500'">
-                  ✓ Al menos un número
+                  ✓ {{ t('signup.requirementNumber') }}
                 </div>
                 <div :class="passwordRequirements.special ? 'text-green-600' : 'text-gray-500'">
-                  ✓ Al menos un carácter especial (!@#$%...)
+                  ✓ {{ t('signup.requirementSpecial') }}
                 </div>
               </div>
             </div>
 
             <!-- Confirm Password field -->
             <div class="flex flex-col space-y-1.5">
-              <Label for="confirmPassword">Confirmar contraseña</Label>
+              <Label for="confirmPassword">{{ t('signup.confirmPassword') }}</Label>
               <div class="relative">
                 <Input
                   id="confirmPassword"
@@ -250,41 +268,42 @@ const addUser = async () => {
                   type="button"
                   @click="showConfirmPassword = !showConfirmPassword"
                   class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  :aria-label="showConfirmPassword ? t('signup.hideConfirmPassword') : t('signup.showConfirmPassword')"
                 >
                   <Eye v-if="!showConfirmPassword" class="h-4 w-4" />
                   <EyeOff v-else class="h-4 w-4" />
                 </button>
               </div>
               <span v-if="errors.confirmPassword" class="text-xs text-red-600 mt-0.5">
-                {{ errors.confirmPassword }}
+                {{ t(errors.confirmPassword) }}
               </span>
             </div>
 
             <!-- User Type field -->
             <div class="flex flex-col space-y-1.5">
-              <Label for="type">Tipo de usuario</Label>
+              <Label for="type">{{ t('signup.userType') }}</Label>
 
                 <Select id="type"
                   v-model="newUser.type"
                   :class="['border rounded p-2 text-sm', errors.type ? 'border-red-500' : 'border-gray-300']"
                   @change="() => { if (errors.type) delete errors.type }">
                   <SelectTrigger class="w-full">
-                    <SelectValue placeholder="Selecciona un tipo de usuario" />
+                    <SelectValue :placeholder="t('signup.userTypePlaceholder')" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectGroup>
-                      <SelectLabel>Tipos de usuario</SelectLabel>
+                      <SelectLabel>{{ t('signup.userTypes') }}</SelectLabel>
                       <SelectItem value="patient">
-                        Paciente
+                        {{ t('signup.patient') }}
                       </SelectItem>
                       <SelectItem value="therapist">
-                        Terapeuta
+                        {{ t('signup.therapist') }}
                       </SelectItem>
                     </SelectGroup>
                   </SelectContent>
                 </Select>
               <span v-if="errors.type" class="text-xs text-red-600 mt-0.5">
-                {{ errors.type }}
+                {{ t(errors.type) }}
               </span>
             </div>
 
@@ -294,9 +313,9 @@ const addUser = async () => {
             >
               <Alert class="bg-red-100 text-red-800 border border-red-300">
                 <AlertCircleIcon />
-                <AlertTitle>Error al crear la cuenta</AlertTitle>
+                <AlertTitle>{{ t('signup.errorTitle') }}</AlertTitle>
                 <AlertDescription class="text-red-800">
-                  {{ message }}
+                  {{ displayedMessage }}
                 </AlertDescription>
               </Alert>
             </div>
@@ -310,14 +329,14 @@ const addUser = async () => {
             type="submit"
             :disabled="isLoading"
           >
-            {{ isLoading ? 'Creando cuenta...' : 'Crear cuenta' }}
+            {{ isLoading ? t('signup.submitting') : t('signup.submit') }}
           </Button>
 
           <p
             class="mt-2 text-center text-sm text-blue-600 hover:underline cursor-pointer"
-            @click="router.push('/')"
+            @click="router.push(locationWithDemo('/login'))"
           >
-            ¿Ya tienes una cuenta? Inicia sesión
+            {{ t('signup.returnToLogin') }}
           </p>
         </CardFooter>
 
