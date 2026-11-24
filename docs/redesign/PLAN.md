@@ -23,6 +23,7 @@ the stakeholder meeting.
 | D6 | Keep the stack: Vue 3, Vite, Tailwind 4, Reka UI / shadcn-vue, Lucide, Pinia, Axios. No new component framework. | `AGENTS.md` |
 | D7 | Audience: research director + academic reviewers. Several TFG students will build on the design, so **the design system and handbook are first-class deliverables**. | User (interview) |
 | D8 | Direction: **Liminal Sanctuary** (A + artwork mounts and labels + soft-vaporwave liminal atrium with reactive classical 3D on dusk screens). Dusk outside, dawn inside. Tenor Sans + Readex Pro. Comfort panel toggles. Full spec: `DESIGN.md`. | User (interview) |
+| D10 | **Vibecheck rule:** criticise the first idea against LLM red flags and move away from them; regular fresh-eyes reviews. `VIBECHECK.md`, also in AGENTS.md and CLAUDE.md. | User |
 | D9 | Demo: Spanish default; reviewers view it over a video call and on their own computers, so desktop QA comes first; curated template images. | User (interview) |
 
 ## Known facts / constraints
@@ -63,6 +64,7 @@ the stakeholder meeting.
 | B2 | Patient home + session/creation workspace (+ draw/canvas entry) | Sonnet |
 | B3 | Gallery / result + one therapist screen | Sonnet |
 | R1 | Review: visual QA screenshots, a11y check (contrast, targets, focus), code review | Opus/Sonnet |
+| VC | **Vibecheck** (`VIBECHECK.md`): a fresh-eyes reviewer per finished screen and before the meeting asks "does it look vibecoded? obvious LLM red flags?" Anything rated yes or somewhat gets fixed. | Opus (fresh agent) |
 
 ### Phase 4 — Deliver
 - Static demo build → hosted link.
@@ -83,9 +85,9 @@ the stakeholder meeting.
 | L1 | done | liminal 3D prototype |
 | B0 | done | Tokens in style.css, 15 components in components/sanctuary/ (+README), useComfort, AppShell wired in App.vue, locale ES/CA/EN, `/design` style guide (+ `/design/dusk` DuskLayout demo). Builds pass; contrast script all ok. Header.vue removed. |
 | B0a | done | demo engine: `VITE_DEMO`, fake backend + sockets, hash routing; see `DEMO_MODE.md` |
-| B1 | pending | |
+| B1 | in_progress | |
 | L2 | in_progress | abstract objects + post-FX |
-| B2 | pending | |
+| B2 | in_progress | |
 | B3 | pending | |
 | R1 | pending | |
 

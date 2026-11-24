@@ -44,6 +44,7 @@ whose final-degree projects (TFG) add parts of the app. If you are adding a feat
 6. **Big, forgiving targets.** These help with tremor and fatigue: 56 px primary targets, 12 px gaps, no drag-only interactions, and undo where possible.
 7. **Legible first, beautiful second, and both always.** Atmosphere never sits behind running text without a scrim.
 8. **Thresholds are dusk, work is dawn.** If a screen is about *arriving, waiting or leaving*, it is dusk. If it is about *doing*, it is dawn.
+9. **It must not look vibecoded.** Criticise the first idea against the LLM red flags in `VIBECHECK.md` and move away from them. Every screen gets a fresh-eyes vibecheck before it ships.
 
 ---
 
@@ -254,6 +255,7 @@ Screens outside the meeting scope (calendar, signup, canvas page, free generatio
 - [ ] State is never shown by colour alone (icon + text).
 - [ ] Images have alt text. Patient artworks get "Obra de Alex: <title or description>".
 - [ ] `lang` is set per language; ES, CA and EN strings exist; Catalan glyphs render.
+- [ ] **Vibecheck passed** (`VIBECHECK.md` §4): a reviewer who didn't build it answered "does it look vibecoded?" with *no*.
 - [ ] It works at 1280 and 1440 px (meeting), 1024 px (tablet) and 390 px (phone, basic).
 
 ---

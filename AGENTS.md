@@ -13,6 +13,9 @@ It is not a production-ready redesign.
 
 Before changing the frontend, read:
 
+- `docs/redesign/DESIGN.md` (the current design direction; it supersedes the drafts below where they differ)
+- `docs/redesign/VIBECHECK.md` (the anti-"vibecoded" rule; mandatory)
+
 - `docs/ACCESSIBILITY_REQUIREMENTS_DRAFT.md`
 - `docs/DESIGN_SYSTEM_BRIEF_DRAFT.md`
 - `docs/UI_TERMINOLOGY_ES_CA_EN_DRAFT.md`
@@ -163,3 +166,11 @@ At the end, report:
 - the result of `npm run build`
 - manual review steps
 - existing functionality intentionally left incomplete
+
+## Vibecheck rule (mandatory)
+
+ComfyMind must not look like any other app built with an LLM. Before implementing a UI idea,
+write the first idea down, check it against the red flags in `docs/redesign/VIBECHECK.md`,
+and choose the alternative furthest from them that still meets accessibility. Report
+"first idea → flags → what we did instead" in your completion report. Never use human or
+figurative shapes, sparkles-for-AI, emoji icons, gradient text, glassmorphism or SaaS copy.
