@@ -92,6 +92,7 @@ the stakeholder meeting.
 | B2 | in_progress | |
 | B3 | done | GalleryView.vue (Mis obras wall by sala, filter, detail dialog; also /session/:id), TherapistSessionView.vue (+TherapistChat.vue), CalendarView on tokens. Old views at /legacy/... |
 | R1 | pending | |
+| VC1 | done | foundation vibecheck: somewhat vibecoded (generic dusk blobs/orb/centred card, card-everything, caps eyebrows, Sparkles on Crear); 9 must-fix in reviews/VC1_FOUNDATION.md |
 
 ## Log
 
