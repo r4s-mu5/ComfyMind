@@ -71,8 +71,10 @@ const toggle = (fileName: string) => {
     selected.value = i >= 0 ? [] : [fileName]
     return
   }
+  fullHint.value = false
   if (i >= 0) selected.value = selected.value.filter((f) => f !== fileName)
   else if (selected.value.length < MAX) selected.value = [...selected.value, fileName]
+  else fullHint.value = true
 }
 
 const setMulti = (on: boolean) => {
@@ -80,7 +82,7 @@ const setMulti = (on: boolean) => {
   if (!on && selected.value.length > 1) selected.value = selected.value.slice(-1)
 }
 
-const isFull = computed(() => multi.value && selected.value.length >= MAX)
+const fullHint = ref(false)
 
 const handleFile = async (file?: File | null) => {
   if (!file || !props.userId) return
@@ -167,7 +169,8 @@ const sourceBtn = (active: boolean) => [
       </div>
 
       <p class="type-small text-muted-foreground" aria-live="polite">
-        <template v-if="multi">{{ t('create.multiCount', { n: selected.length, max: MAX }) }}</template>
+        <template v-if="multi && fullHint">{{ t('create.multiFull', { max: MAX }) }}</template>
+        <template v-else-if="multi">{{ t('create.multiCount', { n: selected.length, max: MAX }) }}</template>
         <template v-else-if="selected.length">{{ t('create.singleChosen') }}</template>
         <template v-else>{{ t('create.singleHint') }}</template>
       </p>
@@ -186,9 +189,8 @@ const sourceBtn = (active: boolean) => [
             type="button"
             :aria-pressed="selected.includes(tile.fileName)"
             :aria-label="t('create.tileLabel', { n: i + 1 })"
-            :disabled="isFull && !selected.includes(tile.fileName)"
             :class="[
-              'group relative block w-full rounded-control bg-dawn-surface p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+              'relative block w-full rounded-control bg-dawn-surface p-2 transition-colors',
               selected.includes(tile.fileName) ? 'outline outline-[3px] outline-offset-2 outline-ring' : 'border-2 border-input hover:border-ring',
             ]"
             @click="toggle(tile.fileName)"
