@@ -5,7 +5,9 @@
 //   scene.setOptions({ fx: false }); scene.resize(); scene.snapshot(); scene.dispose()
 //
 // Everything is procedural geometry: no models, no textures, no figurative shapes.
-import * as THREE from 'three';
+import {
+  ACESFilmicToneMapping, BackSide, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, Color, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, FogExp2, Group, HalfFloatType, HemisphereLight, InstancedMesh, LatheGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, NoColorSpace, OrthographicCamera, PerspectiveCamera, PlaneGeometry, SRGBColorSpace, Scene, ShaderMaterial, Shape, SphereGeometry, TorusGeometry, TubeGeometry, UnsignedByteType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
+} from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
 import { MarchingCubes } from 'three/addons/objects/MarchingCubes.js';
@@ -60,7 +62,7 @@ function merge(parts) {
 }
 
 function flute(geo, flutes, depth, taper) {
-  const p = geo.attributes.position, v = new THREE.Vector3();
+  const p = geo.attributes.position, v = new Vector3();
   geo.computeBoundingBox();
   const y0 = geo.boundingBox.min.y, y1 = geo.boundingBox.max.y;
   for (let i = 0; i < p.count; i++) {
@@ -76,23 +78,23 @@ function flute(geo, flutes, depth, taper) {
   geo.computeVertexNormals();
   return geo;
 }
-const lathe = (pts, seg, s = R) => new THREE.LatheGeometry(pts.map(([x, y]) => new THREE.Vector2(x * s, y * s)), seg);
+const lathe = (pts, seg, s = R) => new LatheGeometry(pts.map(([x, y]) => new Vector2(x * s, y * s)), seg);
 
 function column(radial) {
   const base = lathe([[0, 0], [1.34, 0], [1.34, 0.12], [1.26, 0.16], [1.3, 0.3], [1.2, 0.42], [1.1, 0.46], [1.14, 0.56], [1.04, 0.64], [1.0, 0.7]], radial / 2);
-  const plinth = new THREE.BoxGeometry(2.8 * R, 0.3 * R, 2.8 * R).translate(0, -0.15 * R, 0);
-  const shaft = flute(new THREE.CylinderGeometry(R, R, SHAFT, radial, 3, true), 16, 0.07, 0.14).translate(0, 0.7 * R + SHAFT / 2, 0);
+  const plinth = new BoxGeometry(2.8 * R, 0.3 * R, 2.8 * R).translate(0, -0.15 * R, 0);
+  const shaft = flute(new CylinderGeometry(R, R, SHAFT, radial, 3, true), 16, 0.07, 0.14).translate(0, 0.7 * R + SHAFT / 2, 0);
   const capY = 0.7 * R + SHAFT;
   const cap = lathe([[0.86, 0], [0.92, 0.05], [0.86, 0.1], [0.9, 0.16], [0.88, 0.22], [1.0, 0.34], [1.22, 0.5], [1.34, 0.62], [0, 0.62]], radial / 2).translate(0, capY, 0);
-  const abacus = new THREE.BoxGeometry(2.9 * R, 0.32 * R, 2.9 * R).translate(0, capY + 0.62 * R + 0.16 * R, 0);
+  const abacus = new BoxGeometry(2.9 * R, 0.32 * R, 2.9 * R).translate(0, capY + 0.62 * R + 0.16 * R, 0);
   const merged = merge([plinth, base, shaft, cap, abacus]);
   merged.userData.height = capY + 0.94 * R;
   return merged;
 }
 
 function brokenDrum(h, seed, seg = 48) {
-  const g = flute(new THREE.CylinderGeometry(R, R, h, seg, 1, false), 16, 0.07, 0.0).translate(0, h / 2, 0);
-  const p = g.attributes.position, v = new THREE.Vector3();
+  const g = flute(new CylinderGeometry(R, R, h, seg, 1, false), 16, 0.07, 0.0).translate(0, h / 2, 0);
+  const p = g.attributes.position, v = new Vector3();
   let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
   const jag = Array.from({ length: seg }, () => rnd());
   for (let i = 0; i < p.count; i++) {
@@ -110,83 +112,84 @@ function brokenDrum(h, seed, seg = 48) {
 
 function plinthGeo(w, h) {
   return merge([
-    new THREE.BoxGeometry(w, h - 0.12, w).translate(0, (h - 0.12) / 2 + 0.06, 0),
-    new THREE.BoxGeometry(w + 0.14, 0.06, w + 0.14).translate(0, h - 0.03, 0),
-    new THREE.BoxGeometry(w + 0.14, 0.06, w + 0.14).translate(0, 0.03, 0),
+    new BoxGeometry(w, h - 0.12, w).translate(0, (h - 0.12) / 2 + 0.06, 0),
+    new BoxGeometry(w + 0.14, 0.06, w + 0.14).translate(0, h - 0.03, 0),
+    new BoxGeometry(w + 0.14, 0.06, w + 0.14).translate(0, 0.03, 0),
   ]);
 }
 
 // Ionic capital: echinus with egg moulding, a volute bolster with spiral scrolls on both faces, abacus.
 function ionicCapital() {
   const parts = [];
-  parts.push(new THREE.CylinderGeometry(0.19, 0.19, 0.03, 48).translate(0, 0.015, 0));
-  parts.push(new THREE.TorusGeometry(0.19, 0.022, 10, 48).rotateX(Math.PI / 2).translate(0, 0.05, 0));
+  parts.push(new CylinderGeometry(0.19, 0.19, 0.03, 48).translate(0, 0.015, 0));
+  parts.push(new TorusGeometry(0.19, 0.022, 10, 48).rotateX(Math.PI / 2).translate(0, 0.05, 0));
   parts.push(lathe([[0.17, 0.06], [0.2, 0.07], [0.245, 0.1], [0.265, 0.135], [0.262, 0.16], [0.24, 0.175], [0, 0.175]], 48, 1));
-  for (let i = 0; i < 14; i++) { // egg moulding
-    const a = (i / 14) * Math.PI * 2;
-    parts.push(new THREE.SphereGeometry(0.03, 10, 8).scale(0.62, 1.4, 0.62).translate(Math.sin(a) * 0.25, 0.122, Math.cos(a) * 0.25));
-  }
   // bolster: canalis band joining two volute discs, extruded front to back
   const VX = 0.3, VY = 0.135, VR = 0.11, CB = 0.165, D = 0.4;
   const dx = Math.sqrt(VR * VR - (VY - CB) ** 2), aIn = Math.atan2(CB - VY, dx);
-  const sh = new THREE.Shape();
+  const sh = new Shape();
   sh.moveTo(-VX, VY + VR); sh.lineTo(VX, VY + VR);
   sh.absarc(VX, VY, VR, Math.PI / 2, Math.PI - aIn, true);
   sh.lineTo(-VX + dx, CB);
   sh.absarc(-VX, VY, VR, aIn, Math.PI / 2, true);
   const bevel = 0.008;
-  parts.push(new THREE.ExtrudeGeometry(sh, { depth: D, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 40 }).translate(0, 0, -D / 2));
+  parts.push(new ExtrudeGeometry(sh, { depth: D, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 2, curveSegments: 40 }).translate(0, 0, -D / 2));
   // spiral scrolls (raised fillet) and eyes on front and back faces
   for (const sx of [-1, 1]) for (const sz of [-1, 1]) {
     const pts = [], turns = 2.6, n = 140;
     for (let i = 0; i <= n; i++) {
       const t = i / n, th = Math.PI / 2 - sx * t * turns * Math.PI * 2;
       const r = 0.098 * Math.pow(1 - t, 0.85) + 0.022;
-      pts.push(new THREE.Vector3(sx * VX + Math.cos(th) * r, VY + Math.sin(th) * r, sz * (D / 2 + bevel + 0.002)));
+      pts.push(new Vector3(sx * VX + Math.cos(th) * r, VY + Math.sin(th) * r, sz * (D / 2 + bevel + 0.002)));
     }
-    parts.push(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 150, 0.0085, 6, false));
-    parts.push(new THREE.SphereGeometry(0.022, 12, 8).scale(1, 1, 0.6).translate(sx * VX, VY, sz * (D / 2 + bevel)));
-    parts.push(new THREE.TorusGeometry(VR + 0.002, 0.011, 8, 40).translate(sx * VX, VY, sz * 0.07)); // balteus bands
+    parts.push(new TubeGeometry(new CatmullRomCurve3(pts), 150, 0.0085, 6, false));
+    parts.push(new SphereGeometry(0.022, 12, 8).scale(1, 1, 0.6).translate(sx * VX, VY, sz * (D / 2 + bevel)));
+    parts.push(new TorusGeometry(VR + 0.002, 0.011, 8, 40).translate(sx * VX, VY, sz * 0.07)); // balteus bands
   }
   // abacus with a thin lip
-  const ab = new THREE.Shape(); const AW = 0.31, AD = 0.225, rr = 0.012;
+  const ab = new Shape(); const AW = 0.31, AD = 0.225, rr = 0.012;
   ab.moveTo(-AW + rr, -AD); ab.lineTo(AW - rr, -AD); ab.quadraticCurveTo(AW, -AD, AW, -AD + rr); ab.lineTo(AW, AD - rr);
   ab.quadraticCurveTo(AW, AD, AW - rr, AD); ab.lineTo(-AW + rr, AD); ab.quadraticCurveTo(-AW, AD, -AW, AD - rr); ab.lineTo(-AW, -AD + rr); ab.quadraticCurveTo(-AW, -AD, -AW + rr, -AD);
-  parts.push(new THREE.ExtrudeGeometry(ab, { depth: 0.036, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 1, curveSegments: 4 }).rotateX(-Math.PI / 2).translate(0, VY + VR + 0.018, 0));
-  parts.push(new THREE.BoxGeometry(0.58, 0.012, 0.42).translate(0, VY + VR + 0.006, 0));
+  parts.push(new ExtrudeGeometry(ab, { depth: 0.036, bevelEnabled: true, bevelThickness: 0.006, bevelSize: 0.006, bevelSegments: 1, curveSegments: 4 }).rotateX(-Math.PI / 2).translate(0, VY + VR + 0.018, 0));
+  parts.push(new BoxGeometry(0.58, 0.012, 0.42).translate(0, VY + VR + 0.006, 0));
   const g = merge(parts);
   g.computeBoundingBox();
   return g;
 }
 
-// Abstract carved form ("non finito"): a curved, pierced marble sheet rising out of a rough-hewn block.
+// Abstract carved form ("non finito"): a twisted crescent of polished marble rising out of a plain hewn block,
+// drilled through once. Built as a signed distance field and meshed with marching cubes.
 function sdfSculpture(x, y, z) {
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
   const smax = (a, b, k) => -smin(-a, -b, k);
-  // rough block: a box with chamfer planes (hewn facets) and faint chisel ripples
-  const bx = Math.abs(x) - 0.66, by = Math.abs(y + 0.6) - 0.28, bz = Math.abs(z) - 0.46;
-  let block = Math.max(bx, by, bz);
-  const planes = [
-    [0.55, 0.62, 0.56, 0.68], [-0.62, 0.55, 0.55, 0.62], [0.6, 0.5, -0.62, 0.7], [-0.55, 0.6, -0.58, 0.66],
-    [0.85, -0.2, 0.48, 0.66], [-0.8, -0.1, -0.6, 0.7], [0.1, 0.7, 0.71, 0.5], [0.0, 0.6, -0.8, 0.52],
-  ];
-  for (const [a, b, c, o] of planes) { const l = Math.hypot(a, b, c); block = Math.max(block, (a * x + b * (y + 0.6) + c * z) / l - o * 0.62); }
-  block += 0.012 * Math.sin(x * 31 + z * 7) * Math.sin(y * 27 - z * 11);
-  // carved part: a sheet curved in plan (an S), standing on the block, with soft edges
-  const wave = 0.2 * Math.sin(2.1 * x + 0.5) - 0.05 * y;
-  let sheet = Math.abs(z - wave) * 0.82 - (0.12 + 0.05 * (0.3 - y));
-  const ex = x / 0.78, ey = (y - 0.06) / 0.72;
-  const bound = (Math.hypot(ex, ey) - 1) * 0.72;
-  sheet = smax(sheet, bound, 0.1);
-  sheet = smax(sheet, -(y + 0.42), 0.02); // the sheet starts inside the block
-  // one drilled opening, off centre, with eased edges
-  const hole = Math.hypot(x - 0.2, y - 0.2) - 0.18;
-  sheet = smax(sheet, -hole, 0.07);
-  return smin(block, sheet, 0.09);
+  // hewn block: a low box with two broad chamfers and faint chisel ripples
+  const yb = y + 0.66;
+  let block = Math.max(Math.abs(x) - 0.62, Math.abs(yb) - 0.2, Math.abs(z) - 0.44);
+  block = Math.max(block, (0.5 * x + yb + 0.35 * z) / 1.17 - 0.33, (-0.45 * x + yb - 0.3 * z) / 1.13 - 0.34);
+  block += 0.01 * Math.sin(x * 29 + z * 9) * Math.sin(z * 23 - x * 5);
+  // carved part: twist about the vertical axis as it rises
+  const tw = 0.75 * (y + 0.4), c = Math.cos(tw), s = Math.sin(tw);
+  const px = c * x - s * z, pz = s * x + c * z;
+  // crescent outline in the front plane: a leaning ellipse minus an offset ellipse
+  const rot = -0.38, cr = Math.cos(rot), sr = Math.sin(rot);
+  const ex = (cr * px - sr * (y + 0.02)) / 0.6, ey = (sr * px + cr * (y + 0.02)) / 0.82;
+  const outer = (Math.hypot(ex, ey) - 1) * 0.6;
+  const ix = (px - 0.36) / 0.46, iy = (y - 0.42) / 0.5;
+  const inner = (Math.hypot(ix, iy) - 1) * 0.46;
+  let form = smax(outer, -inner, 0.12);
+  // thickness: full at the base, thinning toward the tips, slightly curved in plan
+  const th = 0.2 - 0.07 * Math.max(0, y) + 0.04 * Math.cos(px * 2.2);
+  const bow = 0.12 * Math.cos(px * 2.4) - 0.06;
+  form = smax(form, Math.abs(pz - bow) - th, 0.12);
+  form = smax(form, -(y + 0.5), 0.02);
+  // one drilled opening through the mass, low and off centre, with eased edges
+  const hole = Math.hypot(px + 0.14, y + 0.12) - 0.13;
+  form = smax(form, -hole, 0.08);
+  return smin(block, form, 0.1);
 }
 
-function sculptureGeometry(res = 84) {
-  const mc = new MarchingCubes(res, new THREE.MeshBasicMaterial(), false, false, 60000);
+function sculptureGeometry(res = 68) {
+  const mc = new MarchingCubes(res, new MeshBasicMaterial(), false, false, 60000);
   mc.isolation = 0;
   const f = mc.field, h = res / 2;
   for (let k = 0; k < res; k++) for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) {
@@ -194,9 +197,9 @@ function sculptureGeometry(res = 84) {
   }
   mc.update();
   const n = mc.count;
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(mc.positionArray.slice(0, n * 3), 3));
-  g.setAttribute('normal', new THREE.BufferAttribute(mc.normalArray.slice(0, n * 3), 3));
+  const g = new BufferGeometry();
+  g.setAttribute('position', new BufferAttribute(mc.positionArray.slice(0, n * 3), 3));
+  g.setAttribute('normal', new BufferAttribute(mc.normalArray.slice(0, n * 3), 3));
   mc.geometry.dispose(); mc.material.dispose();
   g.computeBoundingBox();
   return g;
@@ -205,7 +208,7 @@ function sculptureGeometry(res = 84) {
 // Dürer's solid (Melencolia I, 1514): a rhombohedron with 72-degree faces, truncated at both apexes.
 function durerSolid(size) {
   const cosA = Math.sqrt((Math.cos(72 * DEG) + 0.5) / 1.5), sinA = Math.sqrt(1 - cosA * cosA);
-  const e = [0, 1, 2].map(i => new THREE.Vector3(sinA * Math.cos(i * 2 * Math.PI / 3), cosA, sinA * Math.sin(i * 2 * Math.PI / 3)));
+  const e = [0, 1, 2].map(i => new Vector3(sinA * Math.cos(i * 2 * Math.PI / 3), cosA, sinA * Math.sin(i * 2 * Math.PI / 3)));
   const top = e[0].clone().add(e[1]).add(e[2]);
   const cut = 0.6; // fraction of an edge removed at each apex
   const pts = [];
@@ -291,12 +294,10 @@ export async function createSanctuaryScene(canvas, {
   const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette };
   const host = canvas.parentElement || canvas;
 
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
-  renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
+  renderer.outputColorSpace = SRGBColorSpace;
+  renderer.toneMapping = ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.0;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   renderer.setClearColor(0x000000, 0);
   let dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
   renderer.setPixelRatio(1); // sizes below are handled in device pixels
@@ -304,41 +305,29 @@ export async function createSanctuaryScene(canvas, {
   const halfFloat = renderer.capabilities.isWebGL2 &&
     (renderer.extensions.has('EXT_color_buffer_float') || renderer.extensions.has('EXT_color_buffer_half_float'));
 
-  const C = h => new THREE.Color(h);
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 600);
+  const C = h => new Color(h);
+  const scene = new Scene();
+  const camera = new PerspectiveCamera(38, 1, 0.1, 600);
   camera.rotation.order = 'YXZ';
 
   /* sky */
   const skyU = {
     top: { value: C(MOOD.sky.top) }, mid: { value: C(MOOD.sky.mid) }, low: { value: C(MOOD.sky.low) }, horizon: { value: C(MOOD.sky.horizon) },
     sunColor: { value: C(MOOD.sun.color) }, sunColor2: { value: C(MOOD.sun.color2) },
-    sunDir: { value: new THREE.Vector3(MOOD.sun.dir[0], MOOD.sun.dir[1], -1).normalize() },
+    sunDir: { value: new Vector3(MOOD.sun.dir[0], MOOD.sun.dir[1], -1).normalize() },
     sunSize: { value: MOOD.sun.size * DEG }, glow: { value: MOOD.sun.glow }, sunAlpha: { value: MOOD.sun.alpha },
   };
-  const skyMat = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: skyU, vertexShader: SKY_VS, fragmentShader: SKY_FS });
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), skyMat);
+  const skyMat = new ShaderMaterial({ side: BackSide, depthWrite: false, fog: false, uniforms: skyU, vertexShader: SKY_VS, fragmentShader: SKY_FS });
+  const sky = new Mesh(new SphereGeometry(300, 32, 16), skyMat);
   sky.renderOrder = -1;
   scene.add(sky);
-  scene.fog = new THREE.FogExp2(C(MOOD.fog.color), MOOD.fog.density);
+  scene.fog = new FogExp2(C(MOOD.fog.color), MOOD.fog.density);
 
-  // the sky as a soft environment, so marble picks up the dusk tints
-  const pmrem = new THREE.PMREMGenerator(renderer);
-  const envScene = new THREE.Scene();
-  const envSky = new THREE.Mesh(new THREE.SphereGeometry(50, 32, 16), skyMat);
-  envScene.add(envSky);
-  const envRT = pmrem.fromScene(envScene, 0.04, 0.1, 100);
-  envSky.geometry.dispose();
-  scene.environment = envRT.texture;
 
   /* lights */
-  const hemi = new THREE.HemisphereLight(C(MOOD.hemi[0]), C(MOOD.hemi[1]), MOOD.hemi[2]);
-  const key = new THREE.DirectionalLight(C(MOOD.key[0]), MOOD.key[1]);
-  const back = new THREE.DirectionalLight(C(MOOD.back[0]), MOOD.back[1]);
-  key.castShadow = true;
-  key.shadow.mapSize.set(1024, 1024);
-  key.shadow.bias = -0.0006; key.shadow.normalBias = 0.03; key.shadow.radius = 3;
-  Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3, near: 0.5, far: 20 });
+  const hemi = new HemisphereLight(C(MOOD.hemi[0]), C(MOOD.hemi[1]), MOOD.hemi[2]);
+  const key = new DirectionalLight(C(MOOD.key[0]), MOOD.key[1]);
+  const back = new DirectionalLight(C(MOOD.back[0]), MOOD.back[1]);
   scene.add(hemi, key, back, key.target, back.target);
 
   /* materials */
@@ -354,91 +343,105 @@ export async function createSanctuaryScene(canvas, {
     materials.push(mat);
     return mat;
   }
-  const std = p => { const m = new THREE.MeshStandardMaterial(p); materials.push(m); return m; };
-  const stone = std({ color: C(MOOD.stone), roughness: 0.85, envMapIntensity: 0.25 });
-  const floorMat = std({ color: C(MOOD.floor), roughness: 0.95, envMapIntensity: 0.2 });
-  const plinthMat = withRim(new THREE.MeshStandardMaterial({ color: 0xE4DCDB, roughness: 0.8, envMapIntensity: 0.35 }), 0.3);
-  const marble = withRim(new THREE.MeshStandardMaterial({ color: 0xF1EBE6, roughness: 0.62, envMapIntensity: 0.5 }));
-  const ruinStone = withRim(new THREE.MeshStandardMaterial({ color: 0xE9E1DE, roughness: 0.78, envMapIntensity: 0.4 }), 0.32);
-  const facetMat = withRim(new THREE.MeshStandardMaterial({ color: 0xF0E2D8, roughness: 0.66, flatShading: true, envMapIntensity: 0.45 }), 0.3);
-  const honed = withRim(new THREE.MeshStandardMaterial({ color: 0xECE6EC, roughness: 0.38, envMapIntensity: 0.6 }), 0.36);
-  const ringMat = withRim(new THREE.MeshStandardMaterial({ color: 0xE3DDEE, roughness: 0.55, envMapIntensity: 0.5 }), 0.36);
+  const std = p => { const m = new MeshStandardMaterial(p); materials.push(m); return m; };
+  const stone = std({ color: C(MOOD.stone), roughness: 0.85 });
+  const floorMat = std({ color: C(MOOD.floor), roughness: 0.95 });
+  const plinthMat = withRim(new MeshStandardMaterial({ color: 0xE4DCDB, roughness: 0.8 }), 0.3);
+  const marble = withRim(new MeshStandardMaterial({ color: 0xF1EBE6, roughness: 0.62 }));
+  const ruinStone = withRim(new MeshStandardMaterial({ color: 0xE9E1DE, roughness: 0.78 }), 0.32);
+  const facetMat = withRim(new MeshStandardMaterial({ color: 0xF0E2D8, roughness: 0.66, flatShading: true }), 0.3);
+  const honed = withRim(new MeshStandardMaterial({ color: 0xECE6EC, roughness: 0.38 }), 0.36);
+  const ringMat = withRim(new MeshStandardMaterial({ color: 0xE3DDEE, roughness: 0.55 }), 0.36);
 
   /* architecture */
   const geometries = [];
   const keepGeo = g => { geometries.push(g); return g; };
-  const colNear = keepGeo(column(64)), colFar = keepGeo(column(32));
+  const colNear = keepGeo(column(40)), colFar = keepGeo(column(24));
   const COL_H = colNear.userData.height;
-  const M = (x, y, z) => new THREE.Matrix4().makeTranslation(x, y, z);
+  const M = (x, y, z) => new Matrix4().makeTranslation(x, y, z);
   {
     const cfg = MOOD.colonnade, near = [], far = [];
     for (const side of [-1, 1]) for (let i = 0; i < cfg.count; i++) (i < 4 ? near : far).push(M(side * cfg.x, 0, cfg.start - i * cfg.spacing));
     for (const [geo, list] of [[colNear, near], [colFar, far]]) {
-      const m = new THREE.InstancedMesh(geo, stone, list.length);
+      const m = new InstancedMesh(geo, stone, list.length);
       list.forEach((mx, i) => m.setMatrixAt(i, mx));
       scene.add(m);
     }
     const len = cfg.count * cfg.spacing + 1.2;
-    const beamGeo = keepGeo(new THREE.BoxGeometry(0.95, 0.62, len));
+    const beamGeo = keepGeo(new BoxGeometry(0.95, 0.62, len));
     for (const side of [-1, 1]) {
-      const beam = new THREE.Mesh(beamGeo, stone);
+      const beam = new Mesh(beamGeo, stone);
       beam.position.set(side * cfg.x, COL_H + 0.31, cfg.start - len / 2 + 0.6);
       scene.add(beam);
     }
   }
-  const floor = new THREE.Mesh(keepGeo(new THREE.PlaneGeometry(240, 240).rotateX(-Math.PI / 2)), floorMat);
-  floor.receiveShadow = true;
-  scene.add(floor);
+  const floor = new Mesh(keepGeo(new PlaneGeometry(240, 240).rotateX(-Math.PI / 2)), floorMat);
+    scene.add(floor);
 
   /* the object on its plinth(s) */
-  const rig = new THREE.Group();
+  const rig = new Group();
   scene.add(rig);
   let kit = null;
 
-  function mesh(geo, mat, cast = true) {
-    const m = new THREE.Mesh(geo, mat); m.castShadow = cast; m.receiveShadow = true; return m;
+  function mesh(geo, mat) { return new Mesh(geo, mat); }
+  // fake contact shadow: a soft radial-gradient decal on the floor (no shadow maps)
+  const shadowTex = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = 64;
+    const x = c.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.45, 'rgba(255,255,255,0.55)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = gr; x.fillRect(0, 0, 64, 64);
+    const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; return t;
+  })();
+  const shadowMat = new MeshBasicMaterial({ color: 0x241d38, alphaMap: shadowTex, transparent: true, opacity: 0.55, depthWrite: false });
+  materials.push(shadowMat);
+  const shadowGeo = keepGeo(new PlaneGeometry(1, 1).rotateX(-Math.PI / 2));
+  function contact(x, z, sx, sz, rot = 0, o = 1) {
+    const m = new Mesh(shadowGeo, o === 1 ? shadowMat : Object.assign(shadowMat.clone(), { opacity: shadowMat.opacity * o }));
+    if (o !== 1) materials.push(m.material);
+    m.position.set(x, 0.004, z); m.scale.set(sx, 1, sz); m.rotation.y = rot; m.renderOrder = 1;
+    return m;
   }
   function mover(obj, base = obj.rotation.y) { return { obj, baseY: base, baseX: obj.rotation.x }; }
 
   function buildKit(name) {
-    const g = new THREE.Group(), own = [];
+    const g = new Group(), own = [];
     const G = geo => { own.push(geo); return geo; };
     let movers = [], focusY = 1.45, extent = 0.6, tap = 'turn';
     if (name === 'ruina') {
       const PH = 1.0;
-      g.add(mesh(G(plinthGeo(0.8, PH)), plinthMat));
+      g.add(mesh(G(plinthGeo(0.8, PH)), plinthMat), contact(0.08, 0.06, 1.7, 1.7));
       const cap = mesh(G(ionicCapital()), ruinStone);
-      cap.scale.setScalar(1.25); cap.position.y = PH; cap.rotation.y = -22 * DEG;
+      cap.scale.setScalar(1.05); cap.position.y = PH; cap.rotation.y = -30 * DEG;
       g.add(cap); movers = [mover(cap)];
       const d1 = mesh(G(brokenDrum(0.62, 7)), ruinStone);
       d1.rotation.set(0, 0.55, Math.PI / 2); d1.position.set(-0.72, R * 0.94, 0.5);
       const d2 = mesh(G(brokenDrum(0.44, 19)), ruinStone);
       d2.rotation.set(0, -0.35, -Math.PI / 2); d2.position.set(0.95, R * 0.94, -0.9);
-      g.add(d1, d2);
+      g.add(d1, d2, contact(-0.72, 0.5, 1.0, 0.85, 0.55, 0.9), contact(0.95, -0.9, 0.78, 0.8, -0.35, 0.9));
       focusY = 1.42; extent = 0.75;
     } else if (name === 'escultura') {
       const PH = 1.04;
-      g.add(mesh(G(plinthGeo(0.72, PH)), plinthMat));
+      g.add(mesh(G(plinthGeo(0.72, PH)), plinthMat), contact(0.06, 0.06, 1.6, 1.6));
       const s = 0.37;
       const sc = mesh(G(sculptureGeometry()), marble);
       sc.scale.setScalar(s);
-      sc.position.y = PH + 0.88 * s; // block bottom at y = -0.88
-      sc.rotation.y = -18 * DEG;
+      sc.position.y = PH + 0.86 * s; // block bottom at y = -0.86
+      sc.rotation.y = -28 * DEG;
       g.add(sc); movers = [mover(sc)];
       focusY = 1.5; extent = 0.55;
     } else {
       // the sculptor's study: three solids on plinths of different heights
       const spots = [
-        { x: -0.62, z: 0.18, h: 0.78, w: 0.42 },
-        { x: 0.0, z: -0.12, h: 1.08, w: 0.48 },
-        { x: 0.6, z: 0.26, h: 0.92, w: 0.4 },
+        { x: -0.52, z: 0.22, h: 0.78, w: 0.4 },
+        { x: 0.0, z: -0.14, h: 1.08, w: 0.46 },
+        { x: 0.5, z: 0.3, h: 0.9, w: 0.38 },
       ];
-      for (const s of spots) { const p = mesh(G(plinthGeo(s.w, s.h)), plinthMat); p.position.set(s.x, 0, s.z); g.add(p); }
-      const ring = mesh(G(new THREE.TorusGeometry(0.15, 0.052, 20, 64)), ringMat);
+      for (const s of spots) { const p = mesh(G(plinthGeo(s.w, s.h)), plinthMat); p.position.set(s.x, 0, s.z); g.add(p, contact(s.x + 0.05, s.z + 0.05, s.w * 2.1, s.w * 2.1)); }
+      const ring = mesh(G(new TorusGeometry(0.15, 0.052, 14, 48)), ringMat);
       ring.position.set(spots[0].x, spots[0].h + 0.202, spots[0].z); ring.rotation.y = 28 * DEG;
       const solid = mesh(G(durerSolid(0.46)), facetMat);
       solid.position.set(spots[1].x, spots[1].h, spots[1].z); solid.rotation.y = 12 * DEG;
-      const ball = mesh(G(new THREE.SphereGeometry(0.155, 56, 40)), honed);
+      const ball = mesh(G(new SphereGeometry(0.155, 40, 28)), honed);
       ball.position.set(spots[2].x, spots[2].h + 0.155, spots[2].z);
       g.add(ring, solid, ball);
       movers = [mover(solid), mover(ring)];
@@ -458,7 +461,7 @@ export async function createSanctuaryScene(canvas, {
   }
 
   /* framing */
-  const view = { cam: new THREE.Vector3(), offX: 0, offY: 0, fov: 38 };
+  const view = { cam: new Vector3(), offX: 0, offY: 0, fov: 38 };
   function frame3() {
     const portrait = size.w / size.h < 0.95;
     const f = opts.framing, k = kit;
@@ -475,20 +478,20 @@ export async function createSanctuaryScene(canvas, {
       view.offX = 0; view.offY = portrait ? 0.3 : 0.12;
     } else if (portrait) {
       view.fov = 50;
-      rig.position.set(k.name === 'estudio' ? 0.05 : 0, 0, 0.3);
-      view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 3.6 : 3.1);
+      rig.position.set(0, 0, 0.3);
+      view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 4.4 : 3.7);
       view.offX = 0; view.offY = 0.3;
     } else {
       // landscape landing: text panel on the left, object at about two thirds
       const wide = size.w / size.h > 2;
       view.fov = wide ? 32 : 38;
-      rig.position.set(k.name === 'estudio' ? 0.62 : 0.5, 0, 0.45);
-      view.cam.set(0, k.focusY + 0.17, 3.3);
+      rig.position.set(0.62, 0, 0.3);
+      view.cam.set(0, k.focusY + 0.2, 4.3);
       view.offX = -0.08; view.offY = 0.03;
     }
     const kp = MOOD.key[2], bp = MOOD.back[2];
     key.target.position.copy(rig.position); back.target.position.copy(rig.position);
-    key.userData.base = new THREE.Vector3(kp[0], kp[1], kp[2]);
+    key.userData.base = new Vector3(kp[0], kp[1], kp[2]);
     back.position.set(rig.position.x + bp[0], bp[1], rig.position.z + bp[2]);
     placeKey();
   }
@@ -502,17 +505,17 @@ export async function createSanctuaryScene(canvas, {
   const size = { w: 1, h: 1, dw: 1, dh: 1, block: 1, rw: 1, rh: 1 };
   let rt = null;
   const postU = {
-    tScene: { value: null }, rtSize: { value: new THREE.Vector2(1, 1) }, outSize: { value: new THREE.Vector2(1, 1) },
+    tScene: { value: null }, rtSize: { value: new Vector2(1, 1) }, outSize: { value: new Vector2(1, 1) },
     block: { value: 1 }, levels: { value: 0 }, ditherAmt: { value: 1 }, grainAmt: { value: 0 }, vignetteAmt: { value: 0 }, seed: { value: 17.0 },
   };
-  const postMat = new THREE.ShaderMaterial({ uniforms: postU, vertexShader: POST_VS, fragmentShader: POST_FS, depthTest: false, depthWrite: false });
-  const postGeo = new THREE.BufferGeometry();
-  postGeo.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
-  postGeo.setAttribute('uv', new THREE.Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
-  const postQuad = new THREE.Mesh(postGeo, postMat);
+  const postMat = new ShaderMaterial({ uniforms: postU, vertexShader: POST_VS, fragmentShader: POST_FS, depthTest: false, depthWrite: false });
+  const postGeo = new BufferGeometry();
+  postGeo.setAttribute('position', new Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
+  postGeo.setAttribute('uv', new Float32BufferAttribute([0, 0, 2, 0, 0, 2], 2));
+  const postQuad = new Mesh(postGeo, postMat);
   postQuad.frustumCulled = false;
-  const postScene = new THREE.Scene(); postScene.add(postQuad);
-  const postCam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const postScene = new Scene(); postScene.add(postQuad);
+  const postCam = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
   function fxParams() {
     const on = !!opts.fx;
@@ -534,10 +537,10 @@ export async function createSanctuaryScene(canvas, {
     const samples = size.block === 1 && renderer.capabilities.isWebGL2 ? 4 : 0;
     if (!rt || rt.width !== size.rw || rt.height !== size.rh || rt.samples !== samples) {
       if (rt) rt.dispose();
-      rt = new THREE.WebGLRenderTarget(size.rw, size.rh, {
-        type: halfFloat ? THREE.HalfFloatType : THREE.UnsignedByteType,
-        colorSpace: halfFloat ? THREE.NoColorSpace : THREE.SRGBColorSpace,
-        minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: true, samples,
+      rt = new WebGLRenderTarget(size.rw, size.rh, {
+        type: halfFloat ? HalfFloatType : UnsignedByteType,
+        colorSpace: halfFloat ? NoColorSpace : SRGBColorSpace,
+        minFilter: NearestFilter, magFilter: NearestFilter, depthBuffer: true, samples,
       });
     }
     postU.tScene.value = rt.texture;
@@ -681,10 +684,10 @@ export async function createSanctuaryScene(canvas, {
       update(performance.now()); render();
       return canvas.toDataURL(type, q);
     },
-    triangles() {
+    triangles(part = 'scene') {
       let n = 0;
       const visible = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
-      scene.traverse(o => {
+      (part === 'object' ? rig : scene).traverse(o => {
         if (o.isMesh && o !== sky && visible(o)) {
           const g = o.geometry;
           n += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1);
@@ -706,11 +709,9 @@ export async function createSanctuaryScene(canvas, {
       geometries.forEach(g => g.dispose());
       sky.geometry.dispose(); skyMat.dispose();
       materials.forEach(m => m.dispose());
-      postGeo.dispose(); postMat.dispose();
+      postGeo.dispose(); postMat.dispose(); shadowTex.dispose();
       if (rt) rt.dispose();
-      envRT.dispose(); pmrem.dispose();
       scene.traverse(o => { if (o.isInstancedMesh) o.dispose(); });
-      key.shadow.map && key.shadow.map.dispose();
       renderer.dispose();
       renderer.forceContextLoss();
     },

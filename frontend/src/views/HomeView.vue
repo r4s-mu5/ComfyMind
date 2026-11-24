@@ -2,21 +2,20 @@
 import { createSocket } from '@/lib/config'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ArrowRight, CalendarDays, Clock3, Image, Loader2, Palette, RefreshCw, Sparkles, UserRound } from 'lucide-vue-next'
 import { userService } from '../api/userService'
 import { sessionsService } from '../api/sessionsService'
+import { comfyService } from '../api/comfyService'
+import { urlFor } from '@/components/create/images'
+import { ArtworkMount, SButton, SessionCard, SNotice } from '@/components/sanctuary'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import CreateSessionModal from '@/components/CreateSessionModal.vue'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 
 
 const router = useRouter()
-const { formatLocalDate } = useDateHelpers()
-const { isDemo, locationWithDemo } = usePrototypeDemo()
+const { ensureUTCString } = useDateHelpers()
+const { locationWithDemo } = usePrototypeDemo()
 const { locale, t } = usePrototypeLocale()
 
 const user = ref<any>(null)
@@ -31,17 +30,48 @@ const sessionsList = ref<any[]>([])
 const showCreateModal = ref(false)
 let homeWs: WebSocket | null = null
 
-const localeCode = computed(() => ({ ca: 'ca-ES', es: 'es-ES', en: 'en-GB' })[locale.value])
-const displayName = computed(() => user.value?.full_name?.split(/\s+/)[0] || 'Alex')
+const displayName = computed(() => user.value?.full_name?.split(/\s+/)[0] || '')
 const hasActiveSession = computed(() => Boolean(activeSession.value && !activeSession.value.ended_at))
+const latest = ref<{ fileName: string; src: string } | null>(null)
 
-const formatDate = (value?: string) => {
-  if (!value) return ''
-  if (!isDemo.value) return formatLocalDate(value).slice(0, 8)
-  return new Intl.DateTimeFormat(localeCode.value, { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(value))
+const toDate = (value?: string) => (value ? new Date(ensureUTCString(value)) : null)
+const formatTime = (value?: string) => {
+  const d = toDate(value)
+  return d ? new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit' }).format(d) : ''
 }
 
-const formatTime = (value?: string) => value ? formatLocalDate(value).slice(10, 16) : ''
+// Time-of-day greeting: morning 5-12, afternoon 12-20, evening otherwise.
+const greeting = computed(() => {
+  const h = new Date().getHours()
+  const key = h >= 5 && h < 12 ? 'home.greetMorning' : h >= 12 && h < 20 ? 'home.greetAfternoon' : 'home.greetEvening'
+  return displayName.value ? t(key, { name: displayName.value }) : t(`${key}NoName`)
+})
+
+const shownSession = computed(() => (hasActiveSession.value ? activeSession.value : nextSession.value))
+const shownOther = computed(() => (hasActiveSession.value ? anotherUserSession.value : nextAnotherUserSession.value))
+const otherFirstName = computed(() => shownOther.value?.full_name?.split(/\s+/)[0] || '')
+const isToday = (value?: string) => toDate(value)?.toDateString() === new Date().toDateString()
+const sessionStatus = computed(() => (hasActiveSession.value ? 'now' : isToday(shownSession.value?.start_date) ? 'today' : 'next'))
+const sessionRange = computed(() => `${formatTime(shownSession.value?.start_date)} – ${formatTime(shownSession.value?.end_date)}`)
+const lede = computed(() => {
+  if (hasActiveSession.value) return t('home.ledeLive', { name: otherFirstName.value })
+  if (nextSession.value && isToday(nextSession.value.start_date)) return t('home.ledeLater', { time: formatTime(nextSession.value.start_date) })
+  if (nextSession.value) return t('home.ledeNext')
+  return t('home.ledeNone')
+})
+
+const loadLatest = async () => {
+  latest.value = null
+  if (!user.value?.id || user.value.type !== 'patient') return
+  try {
+    const resp: any = await comfyService.getImagesForUser(user.value.id)
+    const list: { id: number; fileName: string }[] = resp?.data ?? resp?.images ?? []
+    const pick = [...list].filter((i) => i.fileName.startsWith('generated')).sort((a, b) => b.id - a.id)[0]
+    if (pick) latest.value = { fileName: pick.fileName, src: urlFor(pick.fileName) }
+  } catch {
+    latest.value = null
+  }
+}
 
 const disconnectHomeWs = () => {
   homeWs?.close()
@@ -105,6 +135,7 @@ const refreshHomeData = async () => {
     await loadActiveSession()
     if (!activeSession.value) await loadNextSession()
     await loadSessions()
+    await loadLatest()
   } catch {
     errorMsg.value = t('home.errorTitle')
   } finally {
@@ -142,126 +173,91 @@ onBeforeUnmount(disconnectHomeWs)
 </script>
 
 <template>
-  <div class="prototype-page">
-    <section v-if="loading" class="flex min-h-[28rem] items-center justify-center" aria-live="polite">
-      <div class="flex items-center gap-3 rounded-2xl bg-white px-6 py-5 shadow-sm">
-        <Loader2 aria-hidden="true" class="size-6 animate-spin text-primary" />
-        <span class="font-semibold">{{ t('home.loading') }}</span>
-      </div>
+  <div class="flex flex-col gap-12 pb-8">
+    <p v-if="loading" class="type-body py-16 text-muted-foreground" aria-live="polite">{{ t('home.loading') }}</p>
+
+    <section v-else-if="errorMsg" class="flex max-w-[40rem] flex-col gap-5 py-10">
+      <SNotice tone="danger" :title="t('home.errorTitle')">{{ t('home.errorBody') }}</SNotice>
+      <SButton variant="secondary" class="self-start" @click="refreshHomeData">{{ t('home.retry') }}</SButton>
     </section>
 
-    <section v-else-if="errorMsg" class="mx-auto max-w-2xl py-16">
-      <Alert variant="destructive" class="bg-white p-6">
-        <AlertTitle class="text-lg">{{ t('home.errorTitle') }}</AlertTitle>
-        <AlertDescription class="mt-2">{{ errorMsg }}</AlertDescription>
-      </Alert>
-      <Button class="mt-5 h-12 rounded-xl px-6" @click="refreshHomeData">
-        <RefreshCw aria-hidden="true" /> {{ t('home.tryAgain') }}
-      </Button>
-    </section>
-
+    <!-- Patient home (DESIGN.md §7): one obvious next step, the latest obra hung beside it. -->
     <template v-else-if="user?.type === 'patient'">
-      <header class="mb-8 sm:mb-10">
-        <p class="prototype-eyebrow">{{ t('home.eyebrow') }}</p>
-        <h1 class="prototype-title mt-3">{{ t('home.greeting', { name: displayName }) }}</h1>
-        <p class="prototype-lead mt-3">{{ t('home.description') }}</p>
+      <header class="flex flex-col gap-3">
+        <h1 class="type-h1">{{ greeting }}</h1>
+        <p class="type-body measure text-muted-foreground">{{ lede }}</p>
       </header>
 
-      <div class="grid gap-6 lg:grid-cols-[1.45fr_0.8fr]">
-        <Card class="overflow-hidden border-0 bg-[#176b63] text-white shadow-[0_22px_55px_-35px_rgba(23,107,99,0.8)]">
-          <CardHeader class="relative space-y-3 p-6 pb-2 sm:p-8 sm:pb-3">
-            <div aria-hidden="true" class="absolute -right-16 -top-20 size-56 rounded-full bg-white/10" />
-            <span class="relative flex size-12 items-center justify-center rounded-2xl bg-white/15">
-              <Sparkles class="size-6" />
-            </span>
-            <div class="relative">
-              <p class="text-sm font-bold uppercase tracking-[0.15em] text-white/75">{{ t('nav.session') }}</p>
-              <h2 class="mt-2 text-2xl font-bold sm:text-3xl">
-                {{ hasActiveSession ? t('home.currentTitle') : t('home.upcomingTitle') }}
-              </h2>
-              <p class="mt-2 max-w-xl leading-7 text-white/85">
-                {{ hasActiveSession ? t('home.currentDescription') : (nextSession ? '' : t('home.noUpcoming')) }}
-              </p>
-            </div>
-          </CardHeader>
+      <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,22rem)] lg:items-start xl:gap-16">
+        <div class="flex flex-col gap-10">
+          <section class="flex flex-col gap-4" aria-labelledby="home-session">
+            <h2 id="home-session" class="type-h2">{{ hasActiveSession ? t('home.sessionNow') : t('home.sessionNext') }}</h2>
+            <template v-if="shownSession">
+              <SessionCard
+                :date="toDate(shownSession.start_date)!"
+                :time="sessionRange"
+                :therapist="shownOther?.full_name"
+                :status="sessionStatus"
+              >
+                <template v-if="hasActiveSession" #action>
+                  <SButton @click="enterSession">{{ t('session.enter') }}</SButton>
+                </template>
+              </SessionCard>
+              <p v-if="!hasActiveSession" class="type-small text-muted-foreground">{{ t('home.sessionWait') }}</p>
+            </template>
+            <p v-else class="type-body text-muted-foreground">{{ t('home.noSession') }}</p>
+          </section>
 
-          <CardContent v-if="hasActiveSession || nextSession" class="px-6 sm:px-8">
-            <dl class="grid gap-3 rounded-2xl bg-black/10 p-4 sm:grid-cols-3 sm:p-5">
-              <div>
-                <dt class="flex items-center gap-2 text-sm text-white/70"><UserRound class="size-4" /> {{ t('home.therapist') }}</dt>
-                <dd class="mt-1 font-bold">{{ (hasActiveSession ? anotherUserSession : nextAnotherUserSession)?.full_name }}</dd>
-              </div>
-              <div>
-                <dt class="flex items-center gap-2 text-sm text-white/70"><CalendarDays class="size-4" /> {{ t('home.date') }}</dt>
-                <dd class="mt-1 font-bold">{{ formatDate((hasActiveSession ? activeSession : nextSession)?.start_date) }}</dd>
-              </div>
-              <div>
-                <dt class="flex items-center gap-2 text-sm text-white/70"><Clock3 class="size-4" /> {{ t('home.schedule') }}</dt>
-                <dd class="mt-1 font-bold">
-                  {{ formatTime((hasActiveSession ? activeSession : nextSession)?.start_date) }}–{{ formatTime((hasActiveSession ? activeSession : nextSession)?.end_date) }}
-                </dd>
-              </div>
-            </dl>
-          </CardContent>
+          <hr class="flute-rule" />
 
-          <CardFooter class="px-6 pb-7 sm:px-8 sm:pb-8">
-            <Button
-              v-if="hasActiveSession"
-              class="h-12 w-full rounded-xl bg-white text-base font-bold text-[#155c55] hover:bg-white/90 sm:w-auto sm:px-7"
-              @click="enterSession"
+          <section class="flex flex-col gap-3" aria-labelledby="home-own">
+            <h2 id="home-own" class="type-h2">{{ t('home.ownTitle') }}</h2>
+            <p class="type-body measure text-muted-foreground">{{ t('home.ownBody') }}</p>
+            <SButton
+              :variant="hasActiveSession ? 'secondary' : 'primary'"
+              :to="locationWithDemo('/generation')"
+              class="mt-2 self-start"
             >
-              {{ t('home.continueSession') }} <ArrowRight aria-hidden="true" />
-            </Button>
-            <Button
-              v-else
-              class="h-12 w-full rounded-xl bg-white text-base font-bold text-[#155c55] hover:bg-white/90 sm:w-auto sm:px-7"
-              @click="router.push(locationWithDemo('/generation'))"
-            >
-              {{ t('home.startCreating') }} <ArrowRight aria-hidden="true" />
-            </Button>
-          </CardFooter>
-        </Card>
-
-        <div class="grid gap-6">
-          <Card class="border-border/80 bg-[#fffaf4] shadow-sm">
-            <CardHeader class="space-y-3 px-6 pb-2">
-              <span class="flex size-11 items-center justify-center rounded-2xl bg-[#f3e8dc] text-[#825b3e]">
-                <Palette aria-hidden="true" class="size-5" />
-              </span>
-              <h2 class="text-xl font-bold">{{ t('home.freeCreation') }}</h2>
-              <p class="leading-6 text-muted-foreground">{{ t('home.freeCreationDescription') }}</p>
-            </CardHeader>
-            <CardFooter class="px-6 pb-6">
-              <Button variant="outline" class="h-11 w-full rounded-xl bg-white" @click="router.push(locationWithDemo('/generation'))">
-                {{ t('home.startCreating') }}
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Button
-            variant="outline"
-            class="h-auto min-h-20 justify-between rounded-2xl bg-white px-5 py-4 text-base shadow-sm"
-            @click="router.push(locationWithDemo('/freeimages'))"
-          >
-            <span class="flex items-center gap-3"><Image aria-hidden="true" class="size-5 text-primary" /> {{ t('home.viewArtwork') }}</span>
-            <ArrowRight aria-hidden="true" />
-          </Button>
+              {{ hasActiveSession ? t('home.ownAction') : t('home.create') }}
+            </SButton>
+          </section>
         </div>
+
+        <section class="flex flex-col gap-5" aria-labelledby="home-latest">
+          <h2 id="home-latest" class="type-h3 text-muted-foreground">{{ t('home.latest') }}</h2>
+          <ArtworkMount v-if="latest" :src="latest.src" :made-by="displayName" niche mat="md" ratio="4 / 5" />
+          <div
+            v-else
+            class="niche flex aspect-[4/5] items-end justify-center border-[1.5px] border-dashed border-input bg-card p-8 text-center"
+          >
+            <p class="type-body text-muted-foreground">{{ t('home.latestEmpty') }}</p>
+          </div>
+          <SButton variant="quiet" :to="locationWithDemo('/freeimages')" class="self-start px-0">{{ t('home.allWorks') }}</SButton>
+        </section>
       </div>
     </template>
 
-    <!-- Existing therapist responsibilities remain available; no therapist preview is introduced. -->
-    <section v-else class="mx-auto max-w-xl py-10">
-      <Card>
-        <CardHeader>
-          <h1 class="text-2xl font-bold">Inicio</h1>
-          <p class="text-muted-foreground">{{ hasActiveSession ? 'Hay una sesión activa.' : 'No hay ninguna sesión activa.' }}</p>
-        </CardHeader>
-        <CardFooter>
-          <Button v-if="hasActiveSession" class="w-full" @click="enterSession">Acceder a la sesión</Button>
-          <Button v-else class="w-full" @click="showCreateModal = true">Añadir una nueva sesión</Button>
-        </CardFooter>
-      </Card>
+    <!-- Therapist home: unchanged behaviour, restyled with the sanctuary components. -->
+    <section v-else class="flex max-w-[44rem] flex-col gap-8">
+      <header class="flex flex-col gap-3">
+        <h1 class="type-h1">{{ greeting }}</h1>
+        <p class="type-body text-muted-foreground">{{ hasActiveSession ? t('home.therapistLive') : t('home.therapistNone') }}</p>
+      </header>
+      <SessionCard
+        v-if="shownSession"
+        :date="toDate(shownSession.start_date)!"
+        :time="sessionRange"
+        :therapist="shownOther?.full_name"
+        :status="sessionStatus"
+      >
+        <template v-if="hasActiveSession" #action>
+          <SButton size="compact" @click="enterSession">{{ t('session.enter') }}</SButton>
+        </template>
+      </SessionCard>
+      <div class="flex flex-wrap gap-3">
+        <SButton :variant="hasActiveSession ? 'secondary' : 'primary'" size="compact" @click="showCreateModal = true">{{ t('home.therapistCreate') }}</SButton>
+        <SButton variant="quiet" size="compact" :to="locationWithDemo('/calendar')">{{ t('home.therapistCalendar') }}</SButton>
+      </div>
     </section>
 
     <CreateSessionModal
