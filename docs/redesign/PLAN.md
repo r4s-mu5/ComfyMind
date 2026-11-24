@@ -70,7 +70,7 @@ the stakeholder meeting.
 
 | ID | Status | Notes |
 |----|--------|-------|
-| W1 | pending | |
+| W1 | in_progress | |
 | W2 | in_progress | |
 | W3 | pending | |
 | W4 | pending | |
