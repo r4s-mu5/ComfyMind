@@ -6,6 +6,7 @@
  */
 
 import axios from '@/plugins/axios'
+import { isDevPreviewMode, withMockDelay } from '@/lib/devPreviewMode'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -22,6 +23,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Imagen generada con metadata.
    */
   async createImage(prompt, userId, sessionId = null) {
+    if (isDevPreviewMode) return withMockDelay({ id: Date.now(), prompt, userId, sessionId, fileName: 'preview-image.png' })
     try {
       const token = localStorage.getItem('token')
       const url = sessionId 
@@ -49,6 +51,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Imagen convertida con metadata.
    */
   async convertirBoceto(prompt, userId, sessionId = null) {
+    if (isDevPreviewMode) return withMockDelay({ id: Date.now(), prompt, userId, sessionId, fileName: 'preview-sketch.png' })
     try {
       const token = localStorage.getItem('token')
       const url = sessionId 
@@ -74,6 +77,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Imagen combinada con metadata.
    */
   async generateImageByMultiple(images, count, userId, sessionId = null) {
+    if (isDevPreviewMode) return withMockDelay({ id: Date.now(), count, userId, sessionId, fileName: 'preview-multi.png' })
     try {
       const token = localStorage.getItem('token')
       const payload = { data: (images?.data ?? images).map(i => ({ fileName: i.fileName || i })), count }
@@ -99,6 +103,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Información de la imagen subida.
    */
   async uploadImage(file, userId, isDrawnImage = false) {
+    if (isDevPreviewMode) return withMockDelay({ ok: true, fileName: file?.name || 'preview-upload.png', userId, isDrawnImage })
     const token = localStorage.getItem('token')
     const form = new FormData()
     form.append('file', file)
@@ -117,6 +122,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Información del dibujo guardado.
    */
   async uploadDrawnImage(file, userId) {
+    if (isDevPreviewMode) return withMockDelay({ ok: true, fileName: file?.name || 'preview-drawing.png', userId })
     const token = localStorage.getItem('token')
     const form = new FormData()
     form.append('file', file)
@@ -133,6 +139,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Lista de imágenes del usuario.
    */
   async getImagesForUser(userId) {
+    if (isDevPreviewMode) return withMockDelay({ data: [] })
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/comfy/users/${userId}/images`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -146,6 +153,7 @@ export const comfyService = {
    * @returns {Promise<Array<string>>} Nombres de archivos de imágenes plantilla.
    */
   async getTemplateImages() {
+    if (isDevPreviewMode) return withMockDelay(['template-a.png', 'template-b.png'])
     const response = await axios.get(`${API_URL}/comfy/template-images`)
     return response.data
   },
@@ -159,6 +167,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Información de la imagen vinculada.
    */
   async linkImageToSession(imageFileName, userId, sessionId) {
+    if (isDevPreviewMode) return withMockDelay({ ok: true, imageFileName, userId, sessionId })
     try {
       const token = localStorage.getItem('token')
       const url = `${API_URL}/comfy/users/${userId}/session-images/link?image_file_name=${encodeURIComponent(imageFileName)}&session_id=${sessionId}`
