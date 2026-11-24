@@ -1,4 +1,6 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory, createWebHistory } from 'vue-router'
+import { isDemo } from '@/lib/demo/isDemo'
+import { demoUsers } from '@/lib/demo/store'
 import SignupView from '../views/SignupView.vue'
 import TherapistGenerationView from '../views/TherapistGenerationView.vue'
 import LoginView from '../views/LoginView.vue'
@@ -25,7 +27,17 @@ const routes = [
   { path: '/calendar', component: CalendarView }
 ]
 
+// Demo mode is meant for static hosting, where history-mode URLs would 404 on reload.
 export const router = createRouter({
-  history: createWebHistory(),
+  history: isDemo ? createWebHashHistory() : createWebHistory(),
   routes,
 })
+
+// Demo mode has no token expiry: send visitors without a demo user to the login screen.
+if (isDemo) {
+  const publicPaths = ['/', '/login', '/signup', '/signup/']
+  router.beforeEach((to) => {
+    if (publicPaths.includes(to.path) || demoUsers.isLoggedIn()) return true
+    return { path: '/login' }
+  })
+}

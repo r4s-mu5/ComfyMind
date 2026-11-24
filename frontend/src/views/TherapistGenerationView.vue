@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { createSocket, imageUrl as fileUrl, API_URL } from '@/lib/config'
 import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { userService } from '../api/userService.js'
@@ -28,8 +29,6 @@ const {
 } = useDateHelpers()
 
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const WS_URL = API_URL.replace(/^http/, 'ws')
 const route = useRoute()
 const router = useRouter()
 const sessionId = Number(route.params.sessionId)
@@ -58,7 +57,7 @@ const connectSocket = () => {
 
   if (!Number.isFinite(sessionId)) return
 
-  socket = new WebSocket(`${WS_URL}/ws/${sessionId}/${role}?token=${token}`)
+  socket = createSocket(`/ws/${sessionId}/${role}?token=${token}`)
 
   socket.onopen = () => console.log('Conectado al WS como terapeuta')
 
@@ -75,7 +74,7 @@ const connectSocket = () => {
         } else {
           mount = 'template_images'
         }
-        latestImage.value = `${API_URL}/images/${mount}/${obj.fileName}`
+        latestImage.value = fileUrl(mount, obj.fileName)
         // No confirmar la obra aún; solo actualizar la imagen
         persistState()
       } else if (obj.event === 'confirm_artwork') {

@@ -3,7 +3,7 @@ import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { Home, Image, Menu, Palette, UserRound } from 'lucide-vue-next'
 import { userService } from '../api/userService'
-import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
+import { publicUrl } from '@/lib/config'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import LanguageSelector from './LanguageSelector.vue'
 import ProfileDropdown from './ProfileDropdown.vue'
@@ -19,16 +19,12 @@ import {
 } from '@/components/ui/sheet'
 
 const route = useRoute()
+const logoUrl = publicUrl('logo_comfymind.svg')
 const user = ref<any>(null)
 const mobileOpen = ref(false)
-const { isDemo } = usePrototypeDemo()
 const { t } = usePrototypeLocale()
 
 onMounted(async () => {
-  if (isDemo.value) {
-    user.value = { full_name: 'Alex', type: 'patient' }
-    return
-  }
   try {
     user.value = await userService.getCurrentUser()
   } catch {
@@ -36,8 +32,8 @@ onMounted(async () => {
   }
 })
 
-const isPatient = computed(() => isDemo.value || user.value?.type !== 'therapist')
-const query = computed(() => isDemo.value ? { demo: '1' } : {})
+const isPatient = computed(() => user.value?.type !== 'therapist')
+const query = computed(() => ({}))
 const navItems = computed(() => isPatient.value
   ? [
       { label: t('nav.home'), path: '/home', icon: Home },
@@ -69,7 +65,7 @@ const isActive = (path: string) => {
           <SheetContent side="left" class="w-80 p-5">
             <SheetHeader class="text-left">
               <SheetTitle class="flex items-center gap-3">
-                <img src="/logo_comfymind.svg" alt="" class="size-10" /> ComfyMind
+                <img :src="logoUrl" alt="" class="size-10" /> ComfyMind
               </SheetTitle>
               <SheetDescription>{{ t('nav.main') }}</SheetDescription>
             </SheetHeader>
@@ -90,7 +86,7 @@ const isActive = (path: string) => {
         </Sheet>
 
         <RouterLink :to="{ path: '/home', query }" class="flex items-center gap-3 rounded-lg" aria-label="ComfyMind">
-          <img src="/logo_comfymind.svg" alt="" class="size-11" />
+          <img :src="logoUrl" alt="" class="size-11" />
           <span class="hidden text-2xl font-extrabold tracking-tight text-[#17302d] sm:block">ComfyMind</span>
         </RouterLink>
 

@@ -17,12 +17,10 @@ import {
 
 const user = ref<any>(null)
 const router = useRouter()
-const { isDemo, locationWithDemo } = usePrototypeDemo()
+const { locationWithDemo } = usePrototypeDemo()
 const { t } = usePrototypeLocale()
 
-const displayUser = computed(() => isDemo.value
-  ? { full_name: 'Alex', email: 'alex@example.test', type: 'patient' }
-  : user.value)
+const displayUser = computed(() => user.value)
 
 const initials = computed(() => displayUser.value?.full_name
   ?.split(/\s+/)
@@ -32,7 +30,6 @@ const initials = computed(() => displayUser.value?.full_name
   .toUpperCase() || 'CM')
 
 onMounted(async () => {
-  if (isDemo.value) return
   try {
     user.value = await userService.getCurrentUser()
   } catch {

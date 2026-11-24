@@ -3,6 +3,8 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { AlertCircle, Eye, EyeOff, HeartHandshake } from 'lucide-vue-next'
 import { userService } from '../api/userService'
+import { publicUrl } from '@/lib/config'
+import { isDemo } from '@/lib/demo/isDemo'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import LanguageSelector from '@/components/LanguageSelector.vue'
@@ -22,6 +24,16 @@ const errors = ref<Record<string, string>>({})
 const router = useRouter()
 const { locationWithDemo } = usePrototypeDemo()
 const { t } = usePrototypeLocale()
+
+const demoLogin = async (role: 'patient' | 'therapist') => {
+  isLoading.value = true
+  try {
+    await userService.login({ email: role === 'therapist' ? 'marta@demo.comfymind' : 'alex@demo.comfymind', password: 'demo-demo' })
+    router.push(locationWithDemo('/home'))
+  } finally {
+    isLoading.value = false
+  }
+}
 
 const validateEmail = (emailValue: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)
 
@@ -70,7 +82,7 @@ const login = async () => {
 
       <div class="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1fr_28rem] lg:gap-20">
         <section class="mx-auto max-w-xl text-center lg:mx-0 lg:text-left">
-          <img src="/logo_comfymind.svg" alt="ComfyMind" class="mx-auto mb-7 size-24 lg:mx-0" />
+          <img :src="publicUrl('logo_comfymind.svg')" alt="ComfyMind" class="mx-auto mb-7 size-24 lg:mx-0" />
           <p class="prototype-eyebrow">{{ t('login.eyebrow') }}</p>
           <h1 class="mt-4 text-4xl font-bold tracking-tight text-[#17302d] sm:text-5xl">
             {{ t('login.title') }}
@@ -152,6 +164,18 @@ const login = async () => {
               </Button>
             </form>
           </CardContent>
+
+          <div v-if="isDemo" class="mx-6 mb-4 rounded-xl border border-dashed border-border p-3 sm:mx-8" data-testid="demo-login">
+            <p class="mb-2 text-sm font-semibold text-muted-foreground">Demo</p>
+            <div class="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" class="h-11 flex-1 rounded-xl" :disabled="isLoading" data-testid="demo-patient" @click="demoLogin('patient')">
+                Entrar como paciente (Alex)
+              </Button>
+              <Button type="button" variant="secondary" class="h-11 flex-1 rounded-xl" :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
+                Entrar como terapeuta (Marta)
+              </Button>
+            </div>
+          </div>
 
           <CardFooter class="px-6 pb-7 sm:px-8">
             <Button

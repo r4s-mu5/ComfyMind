@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { imageUrl as fileUrl, createSocket } from '@/lib/config'
 import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import ChatPanel from '@/components/ChatPanel.vue'
 import { comfyService } from '../api/comfyService'
@@ -6,8 +7,6 @@ import { userService } from '../api/userService.js'
 import { sessionsService } from '../api/sessionsService.js'
 import { useRoute, useRouter } from 'vue-router'
 import { toast } from 'vue-sonner'
-import DemoCreationWorkspace from '@/components/prototype/DemoCreationWorkspace.vue'
-import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -50,11 +49,8 @@ const {
   formatLocalDate
 } = useDateHelpers()
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const WS_URL = API_URL.replace(/^http/, 'ws')
 const route = useRoute()
 const router = useRouter()
-const { isDemo } = usePrototypeDemo()
 const sessionId = Number(route.params.sessionId) // tomado de la ruta si está; será NaN si falta
 const hasSession = Number.isFinite(sessionId)
 
@@ -162,7 +158,7 @@ const connectWs = () => {
   }
 
   // incluir token en query param para que el servidor lo valide
-  ws = new WebSocket(`${WS_URL}/ws/${sessionId}/${role}?token=${token}`)
+  ws = createSocket(`/ws/${sessionId}/${role}?token=${token}`)
 
   ws.onopen = () => console.log('WS conectado como paciente')
   ws.onmessage = (ev) => {
@@ -262,9 +258,6 @@ const setupSessionEndWatcher = () => {
 }
 
 onMounted(async () => {
-  // The meeting preview is intentionally isolated from API, ComfyUI, and websocket behavior.
-  if (isDemo.value) return
-
   if (hasSession) restoreState()
 
   // usuario actual
@@ -470,7 +463,7 @@ const generateImage = async (last_seed = null, inputImage = null) => {
     
 
     if (response.file) {
-      tempImageUrl.value = `${API_URL}/images/generated_images/${response.file}`
+      tempImageUrl.value = fileUrl('generated_images', response.file)
       seedLastImg.value = response.seed
       // Refresh gallery to include the newly generated image
       try {
@@ -503,7 +496,7 @@ const createFromSketch = async(inputImage) => {
       : await comfyService.convertirBoceto(sketchPrompt.value, active_user.value.id)
 
     if (response.file) {
-      tempImageUrl.value = `${API_URL}/images/generated_images/${response.file}`
+      tempImageUrl.value = fileUrl('generated_images', response.file)
       seedLastImg.value = response.seed
       // Refresh gallery to include the newly generated image
       try {
@@ -542,7 +535,7 @@ const modalRegenerate = async () => {
     active_user.value = await userService.getCurrentUser()
     const resp = await comfyService.createImage({ promptText: prompt.value.promptText, seed: seedToUse }, active_user.value.id, Number.isFinite(sessionId) ? sessionId : null)
     if (resp.file) {
-      tempImageUrl.value = `${API_URL}/images/generated_images/${resp.file}`
+      tempImageUrl.value = fileUrl('generated_images', resp.file)
       prompt.value.seed = resp.seed
       // Refresh gallery to include regenerated image
       try {
@@ -643,7 +636,7 @@ const uploadUserImage = async () => {
     active_user.value = await userService.getCurrentUser()
     const resp = await comfyService.uploadImage(uploadFile.value, active_user.value.id)
     if (resp.file) {
-      // tempImageUrl.value = `${API_URL}/images/uploaded_images/${resp.file}`
+      // tempImageUrl.value = fileUrl('uploaded_images', resp.file)
       seedLastImg.value = resp.seed
       toast.success('Imagen subida correctamente')
       uploadFile.value = null
@@ -675,7 +668,7 @@ const uploadUserImageandAddText = async () => {
       active_user.value = await userService.getCurrentUser()
       const resp = await comfyService.uploadImage(uploadFile.value, active_user.value.id)
       if (resp.file) {
-        uploadedImageUrl.value = `${API_URL}/images/uploaded_images/${resp.file}`
+        uploadedImageUrl.value = fileUrl('uploaded_images', resp.file)
         seedLastImg.value = resp.seed
         toast.success('Imagen subida correctamente')
 
@@ -710,7 +703,7 @@ const uploadAndTransformSketch = async () => {
       active_user.value = await userService.getCurrentUser()
       const resp = await comfyService.uploadImage(uploadFile.value, active_user.value.id, true)
       if (resp.file) {
-        uploadedSketchUrl.value = `${API_URL}/images/uploaded_images/${resp.file}`
+        uploadedSketchUrl.value = fileUrl('uploaded_images', resp.file)
         seedLastImg.value = resp.seed
         toast.success('Imagen subida correctamente')
         
@@ -843,13 +836,13 @@ const loadGallery = async () => {
 const getImageUrl = (fileName) => {
   if (!fileName) return ''
   if (fileName.startsWith('uploaded')) {
-    return `${API_URL}/images/uploaded_images/${fileName}`
+    return fileUrl('uploaded_images', fileName)
   } else if (fileName.startsWith('generated')) {
-    return `${API_URL}/images/generated_images/${fileName}`
+    return fileUrl('generated_images', fileName)
   } else if (fileName.startsWith('drawn')) {
-    return `${API_URL}/images/drawn_images/${fileName}`
+    return fileUrl('drawn_images', fileName)
   } else {
-    return `${API_URL}/images/template_images/${fileName}`
+    return fileUrl('template_images', fileName)
   }
 }
 
@@ -938,7 +931,7 @@ const generateMultiImage = async () => {
     const response = await comfyService.generateImageByMultiple(imagesPayload, selectedImages.value.length, active_user.value.id, Number.isFinite(sessionId) ? sessionId : null)
 
     if (response.file) {
-      tempImageUrl.value = `${API_URL}/images/generated_images/${response.file}`
+      tempImageUrl.value = fileUrl('generated_images', response.file)
       seedLastImg.value = response.seed
       try {
         await loadGallery()
@@ -989,7 +982,7 @@ const confirmMultiSelect = async () => {
     const response = await comfyService.generateImageByMultiple(imagesPayload, selectedImages.value.length, active_user.value.id, Number.isFinite(sessionId) ? sessionId : null)
 
     if (response.file) {
-      imageUrl.value = `${API_URL}/images/generated_images/${response.file}`
+      imageUrl.value = fileUrl('generated_images', response.file)
       seedLastImg.value = response.seed
       // Refresh gallery to include the new image generated from multiple images
       try {
@@ -1022,9 +1015,9 @@ const convertDrawnSketch = async () => {
   const imageUrl = ref('')
   if (!selectedGallerySketchName.value) return
   if (selectedGallerySketchName.value.startsWith('uploaded')) {
-    imageUrl.value = `${API_URL}/images/uploaded_images/${selectedGallerySketchName.value}`
+    imageUrl.value = fileUrl('uploaded_images', selectedGallerySketchName.value)
   } else {
-    imageUrl.value = `${API_URL}/images/drawn_images/${selectedGallerySketchName.value}`
+    imageUrl.value = fileUrl('drawn_images', selectedGallerySketchName.value)
   }
   await createFromSketch(imageUrl.value)
 }
@@ -1032,15 +1025,14 @@ const convertDrawnSketch = async () => {
 // Handler para conversión de boceto dibujado
 const convertDrawnSketchFromCanvas = async () => {
   if (!drawnSketchName.value) return
-  const imageUrl = `${API_URL}/images/drawn_images/${drawnSketchName.value}`
+  const imageUrl = fileUrl('drawn_images', drawnSketchName.value)
   await createFromSketch(imageUrl)
 }
 
 </script>
 
 <template>
-  <DemoCreationWorkspace v-if="isDemo" />
-  <div v-else class="flex flex-col">
+  <div class="flex flex-col">
     <Dialog :open="showDetails"  @update:open="(val) => !val && (showDetails = false)" >
       <DialogContent>
         <DialogHeader>

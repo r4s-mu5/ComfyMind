@@ -6,9 +6,10 @@
  */
 
 import axios from '@/plugins/axios'
-import { isDevPreviewMode, withMockDelay } from '@/lib/devPreviewMode'
+import { isDemo } from '@/lib/demo/isDemo'
+import { demoComfy } from '@/lib/demo/store'
+import { API_URL } from '@/lib/config'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const comfyService = {
 
@@ -23,7 +24,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Imagen generada con metadata.
    */
   async createImage(prompt, userId, sessionId = null) {
-    if (isDevPreviewMode) return withMockDelay({ id: Date.now(), prompt, userId, sessionId, fileName: 'preview-image.png' })
+    if (isDemo) return demoComfy.createImage(prompt, userId, sessionId)
     try {
       const token = localStorage.getItem('token')
       const url = sessionId 
@@ -51,7 +52,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Imagen convertida con metadata.
    */
   async convertirBoceto(prompt, userId, sessionId = null) {
-    if (isDevPreviewMode) return withMockDelay({ id: Date.now(), prompt, userId, sessionId, fileName: 'preview-sketch.png' })
+    if (isDemo) return demoComfy.convertirBoceto(prompt, userId, sessionId)
     try {
       const token = localStorage.getItem('token')
       const url = sessionId 
@@ -77,7 +78,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Imagen combinada con metadata.
    */
   async generateImageByMultiple(images, count, userId, sessionId = null) {
-    if (isDevPreviewMode) return withMockDelay({ id: Date.now(), count, userId, sessionId, fileName: 'preview-multi.png' })
+    if (isDemo) return demoComfy.generateImageByMultiple(images, count, userId, sessionId)
     try {
       const token = localStorage.getItem('token')
       const payload = { data: (images?.data ?? images).map(i => ({ fileName: i.fileName || i })), count }
@@ -103,7 +104,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Información de la imagen subida.
    */
   async uploadImage(file, userId, isDrawnImage = false) {
-    if (isDevPreviewMode) return withMockDelay({ ok: true, fileName: file?.name || 'preview-upload.png', userId, isDrawnImage })
+    if (isDemo) return demoComfy.uploadImage(file, userId, isDrawnImage)
     const token = localStorage.getItem('token')
     const form = new FormData()
     form.append('file', file)
@@ -122,7 +123,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Información del dibujo guardado.
    */
   async uploadDrawnImage(file, userId) {
-    if (isDevPreviewMode) return withMockDelay({ ok: true, fileName: file?.name || 'preview-drawing.png', userId })
+    if (isDemo) return demoComfy.uploadDrawnImage(file, userId)
     const token = localStorage.getItem('token')
     const form = new FormData()
     form.append('file', file)
@@ -139,7 +140,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Lista de imágenes del usuario.
    */
   async getImagesForUser(userId) {
-    if (isDevPreviewMode) return withMockDelay({ data: [] })
+    if (isDemo) return demoComfy.getImagesForUser(userId)
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/comfy/users/${userId}/images`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -153,7 +154,7 @@ export const comfyService = {
    * @returns {Promise<Array<string>>} Nombres de archivos de imágenes plantilla.
    */
   async getTemplateImages() {
-    if (isDevPreviewMode) return withMockDelay(['template-a.png', 'template-b.png'])
+    if (isDemo) return demoComfy.getTemplateImages()
     const response = await axios.get(`${API_URL}/comfy/template-images`)
     return response.data
   },
@@ -167,7 +168,7 @@ export const comfyService = {
    * @returns {Promise<Object>} Información de la imagen vinculada.
    */
   async linkImageToSession(imageFileName, userId, sessionId) {
-    if (isDevPreviewMode) return withMockDelay({ ok: true, imageFileName, userId, sessionId })
+    if (isDemo) return demoComfy.linkImageToSession(imageFileName, userId, sessionId)
     try {
       const token = localStorage.getItem('token')
       const url = `${API_URL}/comfy/users/${userId}/session-images/link?image_file_name=${encodeURIComponent(imageFileName)}&session_id=${sessionId}`

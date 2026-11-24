@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { createSocket } from '@/lib/config'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { comfyService } from '../api/comfyService'
@@ -25,8 +26,6 @@ import {
 } from '@/components/ui/alert-dialog'
 
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const WS_URL = API_URL.replace(/^http/, 'ws')
 const route = useRoute()
 const router = useRouter()
 
@@ -84,7 +83,7 @@ const setupSessionEndWatcher = (sessionInfo) => {
 const connectWs = (sessionId, role, sessionInfo) => {
   const token = localStorage.getItem('token')
   if (!token || !sessionId || sessionInfo?.ended_at) return
-  ws = new WebSocket(`${WS_URL}/ws/${sessionId}/${role}?token=${token}`)
+  ws = createSocket(`/ws/${sessionId}/${role}?token=${token}`)
   ws.onmessage = (ev) => {
     try {
       const obj = JSON.parse(ev.data)
@@ -173,15 +172,25 @@ onBeforeUnmount(() => {
   ws?.close()
 })
 
-const startDrawing = (e: MouseEvent) => {
+// Pointer position in canvas pixels (the canvas may be scaled by CSS)
+const pointerPos = (e: PointerEvent) => {
+  const el = canvas.value
+  if (!el) return { x: e.offsetX, y: e.offsetY }
+  const r = el.getBoundingClientRect()
+  return { x: (e.clientX - r.left) * (el.width / r.width), y: (e.clientY - r.top) * (el.height / r.height) }
+}
+
+const startDrawing = (e: PointerEvent) => {
   drawing.value = true
+  try { canvas.value?.setPointerCapture(e.pointerId) } catch { /* not supported */ }
   if (ctx.value) {
+    const { x, y } = pointerPos(e)
     ctx.value.beginPath()
-    ctx.value.moveTo(e.offsetX, e.offsetY)
+    ctx.value.moveTo(x, y)
   }
 }
 
-const draw = (e: MouseEvent) => {
+const draw = (e: PointerEvent) => {
   if (!drawing.value || !ctx.value) return
 
   hasDrawn.value = true
@@ -191,7 +200,8 @@ const draw = (e: MouseEvent) => {
   if (mode.value === 'draw') ctx.value.strokeStyle = color.value
   else if (mode.value === 'erase') ctx.value.strokeStyle = '#FFFFFF'
 
-  ctx.value.lineTo(e.offsetX, e.offsetY)
+  const { x, y } = pointerPos(e)
+  ctx.value.lineTo(x, y)
   ctx.value.stroke()
 }
 
@@ -410,11 +420,12 @@ const uploadSavedImage = async () => {
               ref="canvas"
               width="600"
               height="600"
-              class="border-2 border-slate-300 rounded-lg bg-white cursor-crosshair shadow-md"
-              @mousedown="startDrawing"
-              @mousemove="draw"
-              @mouseup="stopDrawing"
-              @mouseleave="stopDrawing"
+              class="border-2 border-slate-300 rounded-lg bg-white cursor-crosshair shadow-md touch-none"
+              @pointerdown.prevent="startDrawing"
+              @pointermove.prevent="draw"
+              @pointerup="stopDrawing"
+              @pointercancel="stopDrawing"
+              @pointerleave="stopDrawing"
             ></canvas>
           </CardContent>
         </Card>

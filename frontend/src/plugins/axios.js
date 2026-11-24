@@ -6,6 +6,9 @@ export const sessionExpiredDialog = ref(false)
 // Helper para saber la ruta actual
 function getCurrentPath() {
   try {
+    // Hash routing (static/demo hosting): the route lives after '#', e.g. '#/login?x=1'
+    const hash = window.location.hash
+    if (hash.startsWith('#/')) return hash.slice(1).split('?')[0]
     return window.location.pathname
   } catch {
     return ''

@@ -5,10 +5,10 @@
  */
 
 import axios from '@/plugins/axios'
-import { isDevPreviewMode, withMockDelay } from '@/lib/devPreviewMode'
-import { mockSession } from '@/lib/devPreviewMocks'
+import { isDemo } from '@/lib/demo/isDemo'
+import { demoSessions } from '@/lib/demo/store'
+import { API_URL } from '@/lib/config'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const sessionsService = {
   /**
@@ -17,7 +17,7 @@ export const sessionsService = {
    * @returns {Promise<Object|null>} Sesión activa o null si no hay ninguna.
    */
   async getActiveSession() {
-    if (isDevPreviewMode) return withMockDelay(null)
+    if (isDemo) return demoSessions.getActiveSession()
     const token = localStorage.getItem('token')
     try {
       const response = await axios.get(`${API_URL}/sessions/active`, {
@@ -38,7 +38,7 @@ export const sessionsService = {
    * @returns {Promise<Object|null>} Próxima sesión o null si no hay ninguna.
    */
   async getNextSession() {
-    if (isDevPreviewMode) return withMockDelay(mockSession)
+    if (isDemo) return demoSessions.getNextSession()
     const token = localStorage.getItem('token')
     try {
       const response = await axios.get(`${API_URL}/sessions/next`, { 
@@ -60,7 +60,7 @@ export const sessionsService = {
    * @returns {Promise<Object>} Sesión finalizada.
    */
   async endSession(sessionId) {
-    if (isDevPreviewMode) return withMockDelay({ ...mockSession, id: sessionId, ended_at: new Date().toISOString() })
+    if (isDemo) return demoSessions.endSession(sessionId)
     const token = localStorage.getItem('token')
     const response = await axios.post(`${API_URL}/sessions/end/${sessionId}`, null, {
       headers: { Authorization: `Bearer ${token}` }
@@ -75,7 +75,7 @@ export const sessionsService = {
    * @returns {Promise<Object>} Datos de la sesión.
    */
   async getSession(sessionId) {
-    if (isDevPreviewMode) return withMockDelay({ ...mockSession, id: Number(sessionId) })
+    if (isDemo) return demoSessions.getSession(sessionId)
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/sessions/session/${sessionId}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -89,7 +89,7 @@ export const sessionsService = {
    * @returns {Promise<Array<Object>>} Lista de sesiones.
    */
   async getMySessions() {
-    if (isDevPreviewMode) return withMockDelay([mockSession])
+    if (isDemo) return demoSessions.getMySessions()
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/sessions/my-sessions`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -110,7 +110,7 @@ export const sessionsService = {
    * @returns {Promise<Object>} Sesión creada.
    */
   async createSession(patientId, sessionData) {
-    if (isDevPreviewMode) return withMockDelay({ ...mockSession, ...sessionData, patient_id: patientId, id: Math.floor(Math.random() * 100000) })
+    if (isDemo) return demoSessions.createSession(patientId, sessionData)
     const token = localStorage.getItem('token')
     const response = await axios.post(
       `${API_URL}/sessions/session/${patientId}`,
@@ -127,7 +127,7 @@ export const sessionsService = {
    * @returns {Promise<Object>} Confirmación de eliminación.
    */
   async deleteSession(sessionId) {
-    if (isDevPreviewMode) return withMockDelay({ ok: true, sessionId })
+    if (isDemo) return demoSessions.deleteSession(sessionId)
     const token = localStorage.getItem('token')
     const response = await axios.delete(`${API_URL}/sessions/session/${sessionId}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -143,7 +143,7 @@ export const sessionsService = {
    * @returns {Promise<Object>} Sesión actualizada.
    */
   async updateSession(sessionId, sessionData) {
-    if (isDevPreviewMode) return withMockDelay({ ...mockSession, ...sessionData, id: sessionId })
+    if (isDemo) return demoSessions.updateSession(sessionId, sessionData)
     const token = localStorage.getItem('token')
     const response = await axios.put(
       `${API_URL}/sessions/session/${sessionId}`,
@@ -160,7 +160,7 @@ export const sessionsService = {
    * @returns {Promise<Object>} Lista de imágenes de la sesión.
    */
   async getImagesForSession(sessionId) {
-    if (isDevPreviewMode) return withMockDelay({ data: [], sessionId })
+    if (isDemo) return demoSessions.getImagesForSession(sessionId)
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/sessions/sessions/${sessionId}/images`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -169,7 +169,7 @@ export const sessionsService = {
   },
 
   async getImagesNoSession(userId) {
-    if (isDevPreviewMode) return withMockDelay({ data: [], userId })
+    if (isDemo) return demoSessions.getImagesNoSession(userId)
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/users/users/${userId}/free-images`, {
       headers: { Authorization: `Bearer ${token}` }

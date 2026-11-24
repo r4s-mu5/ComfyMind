@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { imageUrl as fileUrl } from '@/lib/config'
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ArrowLeft, CalendarDays, ImageIcon, Images, Info, Loader2, Plus, UserRound } from 'lucide-vue-next'
@@ -7,9 +8,6 @@ import { userService } from '../api/userService'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import demoArtworkOne from '@/assets/images/template_images/ComfyUI_00105_.png'
-import demoArtworkTwo from '@/assets/images/template_images/ComfyUI_00094_.png'
-import demoArtworkThree from '@/assets/images/template_images/ComfyUI_00177_.png'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -27,7 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const sessionId = Number(route.params.sessionId)
 const { formatLocalDate } = useDateHelpers()
-const { isDemo, locationWithDemo } = usePrototypeDemo()
+const { locationWithDemo } = usePrototypeDemo()
 const { t } = usePrototypeLocale()
 
 const sessionInfo = ref<any>(null)
@@ -38,32 +36,14 @@ const activeUser = ref<any>(null)
 const otherUser = ref<any>(null)
 const showUnauthorizedDialog = ref(false)
 const selectedArtwork = ref<any>(null)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-
-const setDemoData = () => {
-  activeUser.value = { id: 'demo-patient', full_name: 'Alex', type: 'patient' }
-  otherUser.value = { id: 'demo-therapist', full_name: 'Marta Soler', type: 'therapist' }
-  sessionInfo.value = {
-    id: 'demo-session',
-    start_date: '2026-07-16T14:30:00Z',
-    end_date: '2026-07-16T15:30:00Z',
-  }
-  images.value = [
-    { id: 'demo-artwork-1', demoUrl: demoArtworkOne },
-    { id: 'demo-artwork-2', demoUrl: demoArtworkTwo },
-    { id: 'demo-artwork-3', demoUrl: demoArtworkThree },
-  ]
-  isLoadingImages.value = false
-}
 
 const getImageUrl = (image: any) => {
-  if (image?.demoUrl) return image.demoUrl
   const fileName = image?.fileName
   if (!fileName) return ''
-  if (fileName.startsWith('uploaded')) return `${API_URL}/images/uploaded_images/${fileName}`
-  if (fileName.startsWith('generated')) return `${API_URL}/images/generated_images/${fileName}`
-  if (fileName.startsWith('drawn')) return `${API_URL}/images/drawn_images/${fileName}`
-  return `${API_URL}/images/template_images/${fileName}`
+  if (fileName.startsWith('uploaded')) return fileUrl('uploaded_images', fileName)
+  if (fileName.startsWith('generated')) return fileUrl('generated_images', fileName)
+  if (fileName.startsWith('drawn')) return fileUrl('drawn_images', fileName)
+  return fileUrl('template_images', fileName)
 }
 
 const loadSessionArtwork = async () => {
@@ -87,11 +67,6 @@ const loadFreeArtwork = async () => {
 }
 
 onMounted(async () => {
-  if (isDemo.value) {
-    setDemoData()
-    return
-  }
-
   try {
     activeUser.value = await userService.getCurrentUser()
     if (Number.isFinite(sessionId)) await loadSessionArtwork()

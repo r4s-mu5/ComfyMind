@@ -1,12 +1,11 @@
 import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { isDemo as demoFlag } from '@/lib/demo/isDemo'
 
+// Demo mode is global (build flag, legacy dev-preview flag or ?demo=1 remembered for the tab),
+// so it no longer needs to be carried in the query string.
 export const usePrototypeDemo = () => {
-  const route = useRoute()
-  const isDemo = computed(() => route.query.demo === '1')
-  const locationWithDemo = (path: string) => isDemo.value
-    ? { path, query: { demo: '1' } }
-    : { path }
+  const isDemo = computed(() => demoFlag)
+  const locationWithDemo = (path: string) => ({ path })
 
   return { isDemo, locationWithDemo }
 }

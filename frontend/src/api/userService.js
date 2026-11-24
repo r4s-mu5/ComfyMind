@@ -5,10 +5,10 @@
  */
 
 import axios from '@/plugins/axios'
-import { isDevPreviewMode, withMockDelay } from '@/lib/devPreviewMode'
-import { mockCurrentUser, mockUsers } from '@/lib/devPreviewMocks'
+import { isDemo } from '@/lib/demo/isDemo'
+import { demoUsers } from '@/lib/demo/store'
+import { API_URL } from '@/lib/config'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
 export const userService = {
   /**
@@ -17,7 +17,7 @@ export const userService = {
    * @returns {Promise<Array<Object>>} Lista de usuarios.
    */
   async getUsers() {
-    if (isDevPreviewMode) return withMockDelay(mockUsers)
+    if (isDemo) return demoUsers.getUsers()
     const response = await axios.get(`${API_URL}/users/users/`)
     return response.data
   },
@@ -29,7 +29,7 @@ export const userService = {
    * @returns {Promise<Object>} Datos del usuario.
    */
   async getUserById(userId) {
-    if (isDevPreviewMode) return withMockDelay(mockUsers.find(u => u.id === userId) || mockCurrentUser)
+    if (isDemo) return demoUsers.getUserById(userId)
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/users/users/${userId}`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -48,7 +48,7 @@ export const userService = {
    * @returns {Promise<Object>} Usuario creado.
    */
   async createUser(userData) {
-    if (isDevPreviewMode) return withMockDelay({ id: 3000, ...userData })
+    if (isDemo) return demoUsers.createUser(userData)
     const response = await axios.post(`${API_URL}/users/users/`, userData)
     return response.data
   },
@@ -64,10 +64,7 @@ export const userService = {
    * @returns {string} return.token_type - Tipo de token (bearer).
    */
   async login(credentials) {
-    if (isDevPreviewMode) {
-      localStorage.setItem('token', 'dev-preview-token')
-      return withMockDelay({ access_token: 'dev-preview-token', token_type: 'bearer' })
-    }
+    if (isDemo) return demoUsers.login(credentials)
     const params = new URLSearchParams()
     params.append('username', credentials.email)
     params.append('password', credentials.password)
@@ -87,7 +84,7 @@ export const userService = {
    * @returns {Promise<Object>} Usuario actual.
    */
   async getCurrentUser() {
-    if (isDevPreviewMode) return withMockDelay(mockCurrentUser)
+    if (isDemo) return demoUsers.getCurrentUser()
     const token = localStorage.getItem('token')
     const response = await axios.get(`${API_URL}/users/users/me`, {
       headers: { Authorization: `Bearer ${token}` }
@@ -100,6 +97,7 @@ export const userService = {
    * @async
    */
   async logout() {
+    if (isDemo) return demoUsers.logout()
     localStorage.removeItem('token')
   },
 

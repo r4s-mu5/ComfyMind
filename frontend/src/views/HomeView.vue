@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { createSocket } from '@/lib/config'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ArrowRight, CalendarDays, Clock3, Image, Loader2, Palette, RefreshCw, Sparkles, UserRound } from 'lucide-vue-next'
@@ -12,8 +13,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const WS_URL = API_URL.replace(/^http/, 'ws')
 
 const router = useRouter()
 const { formatLocalDate } = useDateHelpers()
@@ -44,20 +43,6 @@ const formatDate = (value?: string) => {
 
 const formatTime = (value?: string) => value ? formatLocalDate(value).slice(10, 16) : ''
 
-const setDemoData = () => {
-  user.value = { id: 'demo-patient', full_name: 'Alex', type: 'patient' }
-  activeSession.value = {
-    id: 'demo-session',
-    therapist_id: 'demo-therapist',
-    start_date: '2026-07-16T14:30:00Z',
-    end_date: '2026-07-16T15:30:00Z',
-    ended_at: null,
-  }
-  anotherUserSession.value = { id: 'demo-therapist', full_name: 'Marta Soler' }
-  nextSession.value = null
-  loading.value = false
-}
-
 const disconnectHomeWs = () => {
   homeWs?.close()
   homeWs = null
@@ -65,8 +50,8 @@ const disconnectHomeWs = () => {
 
 const connectHomeWs = () => {
   const token = localStorage.getItem('token')
-  if (!token || isDemo.value) return
-  homeWs = new WebSocket(`${WS_URL}/ws/home?token=${token}`)
+  if (!token) return
+  homeWs = createSocket(`/ws/home?token=${token}`)
   homeWs.onmessage = (event) => {
     try {
       if (JSON.parse(event.data).event === 'new_session') refreshHomeData()
@@ -114,10 +99,6 @@ const loadSessions = async () => {
 }
 
 const refreshHomeData = async () => {
-  if (isDemo.value) {
-    setDemoData()
-    return
-  }
   loading.value = true
   errorMsg.value = ''
   try {
@@ -132,10 +113,6 @@ const refreshHomeData = async () => {
 }
 
 const enterSession = () => {
-  if (isDemo.value) {
-    router.push(locationWithDemo('/generation'))
-    return
-  }
   if (!activeSession.value) return
   const role = user.value?.type === 'therapist' ? 'therapist' : 'patient'
   router.push(`/session/${activeSession.value.id}/${role}`)
@@ -147,11 +124,6 @@ const handleSessionCreated = async () => {
 }
 
 onMounted(async () => {
-  if (isDemo.value) {
-    setDemoData()
-    return
-  }
-
   try {
     user.value = await userService.getCurrentUser()
     if (user.value?.type === 'therapist') {

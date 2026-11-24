@@ -1,6 +1,4 @@
-export const isDevPreviewMode = import.meta.env.VITE_DEV_PREVIEW_MODE === 'true'
+// Legacy alias: the old dev-preview flag is now just "demo mode".
+import { isDemo } from '@/lib/demo/isDemo'
 
-export const withMockDelay = async (value, delayMs = 80) => {
-  await new Promise((resolve) => setTimeout(resolve, delayMs))
-  return value
-}
+export const isDevPreviewMode = isDemo

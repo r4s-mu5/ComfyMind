@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { isDemo } from '@/lib/demo/isDemo'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import LanguageSelector from '@/components/LanguageSelector.vue'
@@ -131,7 +132,7 @@ const addUser = async () => {
       password: newUser.value.password,
       type: newUser.value.type,
     })
-    router.push(locationWithDemo('/login'))
+    router.push(locationWithDemo(isDemo ? '/home' : '/login'))
   } catch (err: any) {
     messageType.value = 'error'
     const detail = err?.response?.data?.detail

@@ -184,6 +184,7 @@
 </template>
 
 <script setup lang="ts">
+import { createSocket } from '@/lib/config'
 import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
@@ -191,8 +192,6 @@ import { userService } from '../api/userService';
 import { sessionsService } from '../api/sessionsService';
 import { useRouter } from "vue-router";
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
-const WS_URL = API_URL.replace(/^http/, 'ws')
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -344,7 +343,7 @@ const connectCalendarWs = () => {
     return
   }
 
-  calendarWs = new WebSocket(`${WS_URL}/ws/home?token=${token}`)
+  calendarWs = createSocket(`/ws/home?token=${token}`)
 
   calendarWs.onopen = () => {
     console.log('✅ WS Calendar conectado')
