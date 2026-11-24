@@ -71,7 +71,7 @@ the stakeholder meeting.
 | ID | Status | Notes |
 |----|--------|-------|
 | W1 | in_progress | |
-| W2 | in_progress | |
+| W2 | done | Wrote `02_PROJECT_HISTORY.md`: origin, epic timeline e0–e8, fork redesign branches, docs list, hygiene findings (tracked node_modules/.pyc, .env/.db in e0007e2 history, duplicate welcome sha), glossary. |
 | W3 | pending | |
 | W4 | pending | |
 | I1 | pending | |
@@ -85,3 +85,4 @@ the stakeholder meeting.
 ## Log
 
 - 2026-11-24 — Orchestrator: clean base branch created (main + welcome-screen content + PR #1 mocks, junk excluded); `vite build` passes. Plan written. Push blocked (403).
+- 2026-11-24 — W2: project history written to `docs/redesign/02_PROJECT_HISTORY.md`. Status done.
