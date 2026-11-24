@@ -24,9 +24,9 @@
   --gutter-l:max(16px, env(safe-area-inset-left, 0px));
   --gutter-r:max(16px, env(safe-area-inset-right, 0px));
   --dock-h:76px;
-  --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
-  --font-display:'Castoro', Georgia, serif;          /* temporary display face (T1 is choosing) */
-  --font-mark:'Castoro Titling', 'Castoro', Georgia, serif;
+  --font-body:'Readex Pro', 'Lexend', Verdana, system-ui, sans-serif;
+  --font-display:'Tenor Sans', Optima, Candara, 'Segoe UI', sans-serif; /* DESIGN.md D8: display, tracked caps */
+  --font-mark:var(--font-display);
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--night);color:var(--ink)}
@@ -41,6 +41,7 @@ button{font:inherit;color:inherit}
 .stage picture,.stage img{position:absolute;inset:0;width:100%;height:100%}
 .stage img{object-fit:cover;object-position:62% 50%}
 .stage.three-on.rendered picture{visibility:hidden}
+.stage:not(.three-on) canvas{display:none}
 @media (prefers-reduced-motion:reduce){.stage canvas{transition:none}}
 
 /* ---------- overlay ---------- */
@@ -55,8 +56,8 @@ button{font:inherit;color:inherit}
 
 .hero{align-self:center;width:100%;max-width:520px;margin:24px 0 0 clamp(0px, 4vw, 72px);
   background:var(--scrim);border:1.5px solid var(--scrim-line);border-radius:28px;padding:32px 36px 30px}
-.mark{margin:0 0 18px;font:400 17px/1 var(--font-mark);letter-spacing:.24em;text-transform:uppercase;color:var(--warm)}
-h1{margin:0 0 14px;font:400 clamp(36px,4.4vw,54px)/1.1 var(--font-display);letter-spacing:-.005em;color:var(--ink);text-wrap:balance}
+.mark{margin:0 0 18px;font:400 17px/1 var(--font-mark);letter-spacing:.28em;text-transform:uppercase;color:var(--warm)}
+h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-wrap:balance}
 .lede{margin:0 0 26px;color:var(--ink-2);max-width:36ch}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
 .btn-primary{min-height:56px;min-width:180px;padding:0 32px;border-radius:999px;border:0;background:var(--warm);color:var(--on-warm);
@@ -106,18 +107,19 @@ h1{margin:0 0 14px;font:400 clamp(36px,4.4vw,54px)/1.1 var(--font-display);lette
   .toggles .tog{flex:1}
 }
 @media (max-width:760px){
-  h1{font-size:clamp(32px,8.6vw,40px)}
+  h1{font-size:clamp(26px,7.4vw,32px);letter-spacing:.08em}
   .mark{margin-bottom:14px}
   .lede{margin-bottom:20px;font-size:18px}
-  .actions{gap:8px 20px}
-  .btn-primary{flex:1 1 100%}
+  .hero{padding:22px 20px 20px}
+  .actions{gap:8px 18px}
+  .btn-primary{min-width:156px;padding:0 26px}
   .seg button .n{display:none}
 }
 </style>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Castoro&family=Castoro+Titling&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Readex+Pro:wght@400;600&family=Tenor+Sans&display=swap" rel="stylesheet">
 
 <div class="stage three-on" id="stage" aria-hidden="true">
   <picture id="poster">
@@ -530,7 +532,10 @@ function startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU){
     root.scale.setScalar(scale);
     return root;
   }
-  const loadModel = name => loaded[name] || (loaded[name] = loader.loadAsync(MODELS[name].url).then(g => g.scene));
+  // Models ship inlined in models/models.js (base64) so any static host can serve them; parse without a network fetch.
+  const glbPromise = import('./models/models.js').then(m => m.GLB);
+  const b64ToBuf = b => { const bin = atob(b); const u = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i); return u.buffer; };
+  const loadModel = name => loaded[name] || (loaded[name] = glbPromise.then(G => new Promise((res, rej) => loader.parse(b64ToBuf(G[name]), '', g => res(g.scene), rej))));
 
   /* floating fragments for "Dreaming" */
   const floaters = new THREE.Group();
@@ -620,10 +625,10 @@ function startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU){
     if (portrait){
       // phone / portrait tablet: fragment in the top band, panel low; a shifted lens keeps verticals straight
       camera.fov = 50;
-      heroRig.position.set(liminal ? 0.12 : 0, 0, 0.3);
+      heroRig.position.set(liminal ? 0.05 : 0, 0, 0.3);
       view.camBase.set(liminal ? -0.2 : 0, 1.75, 3.1);
       view.look.set(liminal ? -0.1 : 0, 1.75, -6);
-      view.offsetX = 0; view.offsetY = 0.27;
+      view.offsetX = 0; view.offsetY = 0.3;
     } else {
       // landscape: text panel on the left over calm sky, fragment at about two thirds
       camera.fov = aspect > 2 ? 32 : 38;
@@ -646,7 +651,7 @@ function startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU){
     pointer.ty = (e.clientY / innerHeight) * 2 - 1;
     wake();
   }, {passive:true});
-  document.addEventListener('pointerleave', () => { pointer.tx = 0; pointer.ty = 0; wake(); });
+  document.documentElement.addEventListener('mouseleave', () => { pointer.tx = 0; pointer.ty = 0; wake(); });
   const turn = {value:0, from:0, target:0, t0:0, dur:3600};
   function faceYaw(){
     const m = MODELS[heroName]; if (!m) return 0;
@@ -663,7 +668,7 @@ function startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU){
 
   /* ---------- render loop (on demand when still; paused when hidden) ---------- */
   let running = false, raf = 0, needsRender = false, firstFrame = false, t0 = performance.now();
-  let slowFrames = 0, lastT = 0;
+  let slowFrames = 0, lastT = 0, lastRender = 0;
   function requestRender(){ needsRender = true; if (!running) raf ||= requestAnimationFrame(frame); }
   function wake(){ if (state.motion && state.three && !document.hidden && !running){ running = true; lastT = 0; raf ||= requestAnimationFrame(frame); } }
   function sleep(){ running = false; }
@@ -703,12 +708,14 @@ function startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU){
   function frame(now){
     raf = 0;
     if (document.hidden || !state.three){ running = false; return; }
+    // everything moves slowly, so ~30 fps is plenty and saves tablet batteries
+    if (running && !needsRender && now - lastRender < 31){ raf = requestAnimationFrame(frame); return; }
     const keepGoing = update(now);
     renderer.render(scene, camera);
     if (!firstFrame && loaded[heroName]) markRendered();
-    // adaptive quality: if frames are slow on a weaker tablet, drop to 1x pixels
-    if (lastT && now - lastT > 30){ if (++slowFrames > 45 && renderer.getPixelRatio() > 1){ maxDpr = 1; renderer.setPixelRatio(1); layout(); } } else slowFrames = Math.max(0, slowFrames - 1);
-    lastT = now; needsRender = false;
+    // adaptive quality: if even 30 fps is not reached on a weaker tablet, drop to 1x pixels
+    if (running && lastRender && now - lastRender > 50){ if (++slowFrames > 30 && renderer.getPixelRatio() > 1){ maxDpr = 1; renderer.setPixelRatio(1); layout(); } } else slowFrames = Math.max(0, slowFrames - 1);
+    lastT = now; lastRender = now; needsRender = false;
     if (keepGoing && running) raf = requestAnimationFrame(frame);
     else running = false;
   }
