@@ -24,6 +24,8 @@ the stakeholder meeting.
 | D7 | Audience: research director + academic reviewers. Several TFG students will build on the design, so **the design system and handbook are first-class deliverables**. | User (interview) |
 | D8 | Direction: **Liminal Sanctuary** (A + artwork mounts and labels + soft-vaporwave liminal atrium with reactive classical 3D on dusk screens). Dusk outside, dawn inside. Tenor Sans + Readex Pro. Comfort panel toggles. Full spec: `DESIGN.md`. | User (interview) |
 | D10 | **Vibecheck rule:** criticise the first idea against LLM red flags and move away from them; regular fresh-eyes reviews. `VIBECHECK.md`, also in AGENTS.md and CLAUDE.md. | User |
+| D11 | **No "patient" in the GUI.** Use the person's name and *tú*; the role word is usuario · usuari · user ("persona usuaria" in sentences). Code identifiers are unchanged. | User |
+| D12 | 3D = **procedural three.js only** (no model files), lazy-loaded, low-res render pass, tight budget. A shader-only scene was considered and kept as an option. | User + orchestrator |
 | D9 | Demo: Spanish default; reviewers view it over a video call and on their own computers, so desktop QA comes first; curated template images. | User (interview) |
 
 ## Known facts / constraints
@@ -88,7 +90,7 @@ the stakeholder meeting.
 | B1 | done | Landing, Login, Signup (dusk, SField/SButton), SanctuaryScene.vue (thin lazy wrapper, poster/CSS-sky fallback; waits for L2's scene/sanctuaryScene.js), SessionEndOverlay.vue (props: artworks, name, homeTo, overlay; B2 to mount). Locale ES/CA/EN landing/login/signup/sessionEnd. 3D untested until L2 file lands. |
 | L2 | in_progress | abstract objects + post-FX |
 | B2 | in_progress | |
-| B3 | pending | |
+| B3 | done | GalleryView.vue (Mis obras wall by sala, filter, detail dialog; also /session/:id), TherapistSessionView.vue (+TherapistChat.vue), CalendarView on tokens. Old views at /legacy/... |
 | R1 | pending | |
 
 ## Log
@@ -105,3 +107,4 @@ the stakeholder meeting.
 - 2026-11-24 — L1: liminal 3D prototype at `docs/redesign/liminal/index.html` (3 presets Quiet/Dreaming/Liminal, Motion + 3D toggles, posters, ES/CA/EN); SMK public-domain scans (Venus de Milo, Apollo Belvedere heads, meshopt, 115 KB) + procedural columns; ≤ 42k tris; checked 1440/1024/768/390, no console errors; `ASSETS.md`, `NOTES.md`. Status done.
 - 2026-11-24 — B0: design-system foundation done: tokens + atmosphere CSS (`style.css`), self-hosted Tenor Sans/Readex Pro, `useComfort`, sanctuary components + README, AppShell/DuskLayout, `/design` style guide (+ `/design/dusk` DuskLayout demo); both builds pass, screenshots at 1440/1024 checked. Status done.
 - 2026-11-24 — B1: landing, login, signup, SanctuaryScene wrapper, SessionEndOverlay done; both builds pass; no console errors; 3D pending L2 module. Status done.
+- 2026-11-24 — B3: Mis obras gallery wall, therapist live session (AppShell aside: chat + private notes, danger end dialog), calendar tokens; demo + normal builds pass, Playwright two-page live check (BroadcastChannel), no console errors. Status done.

@@ -77,6 +77,7 @@ Anything rated "yes" or "somewhat" is fixed before it ships.
 - Stock 3D blobs, abstract gradient meshes, isometric illustrations
 - Generic AI-art heroes (neon, "dreamy" portraits, galaxy brains)
 - *ComfyMind specific:* **any human or figurative shape** (busts, faces, hands, bodies)
+- *ComfyMind specific:* the word **paciente / pacient / patient** anywhere in visible text (use the person's name, *tú*, or usuario · usuari · user)
 
 ### 3.5 Motion and feedback
 - Spinners with "Generating magic…" or "Thinking…"

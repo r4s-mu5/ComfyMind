@@ -236,6 +236,7 @@ Screens outside the meeting scope (calendar, signup, canvas page, free generatio
 
 - **Register:** informal *tú* (ES) / *tu* (CA), singular, calm, short sentences. Never infantilising.
 - **Use:** crear, obra, otra versión, guardar, apartar, compartir, sesión, terapeuta, boceto, dibujo, palabras.
+- **Never "paciente / pacient / patient" anywhere in the GUI** (both roles' screens, labels, buttons, alt text, the demo). People are addressed by name and as *tú*. When a role word is unavoidable, use **usuario · usuari · user** in short labels and **persona usuaria · persona usuària · user** in full sentences. Internal code identifiers (the `patient` role, API fields) stay as they are; this is about visible text only.
 - **Never on patient screens:** generar, resultado, volver a intentar, prompt, calidad, error del servidor, paciente (as a label). See the terminology file `docs/UI_TERMINOLOGY_ES_CA_EN_DRAFT.md`.
 - **Errors:** say what happened and what to do, without blame: "No hemos podido crear la obra esta vez. Puedes probar de nuevo cuando quieras." Never raw codes.
 - **Waiting:** "Tu obra está en camino." Don't promise times you can't keep; the progress bar carries the honesty.
