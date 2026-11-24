@@ -81,7 +81,7 @@ the stakeholder meeting.
 | V1 | done | board/index.html + board/img/art1-6.jpg |
 | T1 | done | 06_TYPOGRAPHY.md + type/index.html; recommend Castoro Titling/Castoro + Luciole; Atkinson Hyperlegible (Next too) fails Catalan Ŀŀ |
 | L1 | done | liminal 3D prototype |
-| B0 | in_progress | foundation: tokens, sanctuary components, shell, /design |
+| B0 | done | Tokens in style.css, 15 components in components/sanctuary/ (+README), useComfort, AppShell wired in App.vue, locale ES/CA/EN, `/design` style guide (+ `/design/dusk` DuskLayout demo). Builds pass; contrast script all ok. Header.vue removed. |
 | B0a | done | demo engine: `VITE_DEMO`, fake backend + sockets, hash routing; see `DEMO_MODE.md` |
 | B1 | pending | |
 | B2 | pending | |
@@ -100,3 +100,4 @@ the stakeholder meeting.
 - 2026-11-24 — B0a: demo engine in `frontend/src/lib/demo/` + `lib/config.js`; `npm run build:demo`; verified patient+therapist flows with Playwright; report in `docs/redesign/DEMO_MODE.md`. Status done.
 - 2026-11-24 — T1: typography exploration in `docs/redesign/06_TYPOGRAPHY.md` + specimen `docs/redesign/type/index.html` (4 pairings × dusk/dawn, 176 KB, checked 1440/390). Glyphs verified with fontTools; Atkinson Hyperlegible + Next and Ibarra Real Nova lack Ŀŀ (out). Recommend Castoro Titling/Castoro + Luciole. Status done.
 - 2026-11-24 — L1: liminal 3D prototype at `docs/redesign/liminal/index.html` (3 presets Quiet/Dreaming/Liminal, Motion + 3D toggles, posters, ES/CA/EN); SMK public-domain scans (Venus de Milo, Apollo Belvedere heads, meshopt, 115 KB) + procedural columns; ≤ 42k tris; checked 1440/1024/768/390, no console errors; `ASSETS.md`, `NOTES.md`. Status done.
+- 2026-11-24 — B0: design-system foundation done: tokens + atmosphere CSS (`style.css`), self-hosted Tenor Sans/Readex Pro, `useComfort`, sanctuary components + README, AppShell/DuskLayout, `/design` style guide (+ `/design/dusk` DuskLayout demo); both builds pass, screenshots at 1440/1024 checked. Status done.

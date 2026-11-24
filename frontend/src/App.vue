@@ -1,8 +1,8 @@
 <template>
-  <div id="app" class="font-sans text-gray-900">
-    <Header v-if="showHeader">
+  <div id="app" class="font-sans text-foreground">
+    <AppShell v-if="showHeader">
       <router-view />
-    </Header>
+    </AppShell>
 
     <div v-else>
       <router-view />
@@ -10,6 +10,7 @@
 
     <Toaster 
     position="top-right"
+    :duration="10000"
     rich-colors
     />
 
@@ -50,7 +51,7 @@ import { userService } from '@/api/userService'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 
-import Header from './components/Header.vue'
+import AppShell from './components/sanctuary/AppShell.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -71,43 +72,4 @@ document.title = 'ComfyMind'
 html, body {
   overscroll-behavior: none;
 }
-/*
-html, body {
-  margin: 0;
-  min-height: 100%;
-  overscroll-behavior: none;
-}
-
-
-body {
-  background: linear-gradient(
-    to bottom,
-    #d1d5db,
-    #e5e7eb,
-    #f3f4f6
-  );
-  background-attachment: fixed;
-}
-
-body::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-
-  background: linear-gradient(
-    to bottom,
-    #d1d5db,
-    #e5e7eb,
-    #f3f4f6
-  );
-}
-
-#app {
-  min-height: 100%;
-  display: flex;
-  flex-direction: column;
-}
-*/
 </style>
-

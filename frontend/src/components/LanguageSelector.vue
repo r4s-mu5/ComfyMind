@@ -17,7 +17,7 @@ const handleChange = (event: Event) => {
     <select
       :value="locale"
       :aria-label="t('language.label')"
-      class="min-w-0 cursor-pointer appearance-none bg-transparent pr-4 text-sm font-semibold outline-none"
+      class="min-w-0 cursor-pointer appearance-none bg-transparent pr-4 text-small font-semibold outline-none"
       @change="handleChange"
     >
       <option value="ca">{{ t('language.ca') }}</option>

@@ -56,13 +56,13 @@ const logout = () => {
         <div class="min-w-0">
           <p class="truncate font-bold text-foreground">{{ displayUser?.full_name || t('profile.label') }}</p>
           <p class="truncate text-sm text-muted-foreground">{{ displayUser?.email }}</p>
-          <p class="mt-0.5 flex items-center gap-1 text-xs font-semibold text-primary">
-            <UserRound aria-hidden="true" class="size-3.5" /> {{ t('profile.role') }}
+          <p class="mt-0.5 flex items-center gap-1 text-sm font-semibold text-link">
+            <UserRound aria-hidden="true" class="size-3.5" /> {{ displayUser?.type === 'therapist' ? t('profile.roleTherapist') : t('profile.role') }}
           </p>
         </div>
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
-      <DropdownMenuItem class="min-h-11 cursor-pointer rounded-lg px-3 text-base text-red-700" @click="logout">
+      <DropdownMenuItem class="min-h-11 cursor-pointer rounded-lg px-3 text-base text-danger" @click="logout">
         <LogOut aria-hidden="true" class="size-5" />
         {{ t('profile.logout') }}
       </DropdownMenuItem>

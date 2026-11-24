@@ -1,0 +1,116 @@
+# Sanctuary design system (frontend)
+
+The building blocks of the "Liminal Sanctuary" look (spec: `docs/redesign/DESIGN.md`).
+**Live style guide: open `/design`** (`/#/design` in the demo build). It shows every token, the type scale and every component in its states, and recomputes contrast from the real CSS.
+
+```
+frontend/src/style.css                 tokens, Tailwind theme, atmosphere + type CSS
+frontend/src/fonts.css                 self-hosted Readex Pro (Tenor Sans comes from main.js)
+frontend/src/composables/useComfort.ts Comfort settings (text size, motion, atmosphere, 3D)
+frontend/src/composables/usePrototypeLocale.ts   all UI strings (ES / CA / EN)
+frontend/src/components/sanctuary/     this folder
+frontend/src/views/DesignView.vue      the /design style guide
+```
+
+Import from the barrel: `import { SButton, ArtworkMount } from '@/components/sanctuary'`.
+
+## 1. Pick the mode
+
+| Screen is about... | Wrap in | Mode |
+|---|---|---|
+| arriving, waiting, leaving (landing, login, session end) | `<DuskLayout>` | dusk |
+| doing (home, workspace, gallery, therapist console) | `<AppShell>` (already applied by `App.vue` to every route without `meta.hideHeader`) | dawn |
+
+Routes with `meta.hideHeader: true` render **bare**: put `<DuskLayout>` (or your own layout) inside the view.
+Any element can switch to dusk with `class="dusk"`: the same variable names get dusk values.
+
+## 2. Use tokens, never hex
+
+Mode-aware classes follow the nearest `.dusk` ancestor. Prefer these in components, so one component works in both modes:
+
+| Need | Class |
+|---|---|
+| page / card / popover fill | `bg-background`, `bg-card`, `bg-popover` |
+| soft or selected fill | `bg-secondary` |
+| text | `text-foreground`, `text-muted-foreground` (secondary) |
+| primary action | `bg-primary text-primary-foreground` |
+| link, active nav | `text-link` |
+| accent (icons, wordmark) | `text-mark` |
+| state | `text-success`, `text-warning`, `text-danger`, `bg-danger text-danger-foreground` |
+| control border / card border | `border-2 border-input` / `border-border` (hairline) |
+| focus ring | automatic (`:focus-visible`), 3px, never remove |
+
+Fixed-mode classes (use in layouts and for things that never change mode, like the white artwork mat):
+`bg-dawn-bg`, `bg-dawn-surface`, `text-dawn-ink`, `text-dawn-violet`, `bg-dusk-sky`, `text-dusk-text`, `bg-dusk-light`, `border-dusk-border`, ... (all names in `style.css`).
+
+Type: `font-display` (Tenor Sans), `font-body` (Readex Pro), `text-body` (18px), `text-small` (15px), and the roles `type-wordmark`, `type-display`, `type-h1`, `type-h2`, `type-h3`, `type-body`, `type-small`, `type-button`, plus `measure` (max 60ch).
+Shape: `rounded-control` (12px), `rounded-card` (16px), `rounded-pill` (primary actions only), `.niche` (arch), `.elev` (lift at dawn, glow at dusk).
+Atmosphere: `.sky`, `.sun-disc`, `.mist`, `.grain`, `.scrim`, `.dawn-glow`, `.flute-rule`.
+Spacing: Tailwind steps match the scale: `gap-1 2 3 4 6 8 12 16 24` = 4 8 12 16 24 32 48 64 96 px. Targets: `min-h-14` (56px patient), `min-h-11` (44px).
+
+```vue
+<!-- DO -->
+<p class="type-body text-muted-foreground">Marta puede ver lo que compartes.</p>
+<div class="rounded-card bg-card border-[1.5px] border-border p-6 elev">...</div>
+
+<!-- DON'T -->
+<p style="color:#526762; font-size:14px">...</p>      <!-- hex, px font size, below 15px -->
+<div class="bg-[#e8f1ee] text-gray-500">...</div>     <!-- arbitrary hex / Tailwind grays -->
+<button class="outline-none">...</button>             <!-- never remove the focus ring -->
+```
+
+Need a colour that does not exist? Add a token in `style.css`, show it in `DesignView.vue`, and document it in `DESIGN.md`.
+
+## 3. Components
+
+| Component | Use it for | Key props / slots |
+|---|---|---|
+| `SButton` | every button and button-looking link | `variant` primary/secondary/quiet/danger, `size` patient(56px)/compact(44px), `to`/`href`/`as`, `busy`, `disabled`, `block`; slot `icon` |
+| `SField` | any labelled input | `v-model`, `label`, `type` (text, email, password, textarea...), `help`, `error`, `optional`; default slot for a custom control |
+| `SCard` | one card = one thing | `padding`, `selected`, `raised`, `as` |
+| `SNotice` | persistent message | `tone` info/success/warning/danger, `title`, `dismissible`, event `dismiss` |
+| `ArtworkMount` | showing an artwork | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `niche`, `mat`, `ratio`, `label` |
+| `MuseumLabel` | caption under artwork | `title` (falls back to "Sin título"), `technique`, `date`, `madeBy` |
+| `SessionCard` | a session | `date`, `time`, `therapist`, `status` now/today/next; slot `action` |
+| `WayInPicker` | Palabras / Dibujo / Imagen | `v-model` `'words' \| 'draw' \| 'image'` |
+| `CalmProgress` | waiting | `progress` 0..1 or none (indeterminate), `status`, `hint`; slot `actions` |
+| `ReflectionPrompt` | the post-save question | `question`; events `save(note)`, `skip` |
+| `VersionsStrip` | versions in this sitting | `versions: {id, src}[]`, `v-model` current id, event `select` |
+| `DemoTag` | "Demo" chip | none (AppShell shows it automatically) |
+| `ComfortPanel` | Comfort popover | `variant` |
+| `DuskLayout` | threshold screens | `scrim`, `align`, `width`, `showComfort`; slots `default`, `scene`, `top` |
+| `AppShell` | working screens | `role`, `profile`; slots `default`, `aside` (collapsible right panel); `v-model:asideOpen` |
+
+```vue
+<!-- A working screen: the shell is already around your view -->
+<template>
+  <div class="flex flex-col gap-8">
+    <h1 class="type-h1">{{ t('home.greeting', { name }) }}</h1>
+    <SessionCard :date="s.start" :therapist="s.therapist" status="now">
+      <template #action><SButton :to="`/session/${s.id}/patient`">{{ t('session.enter') }}</SButton></template>
+    </SessionCard>
+  </div>
+</template>
+
+<!-- A threshold screen -->
+<template>
+  <DuskLayout scrim>
+    <h1 class="type-display">{{ t('welcome.heading') }}</h1>
+    <SButton class="mt-6">{{ t('welcome.begin') }}</SButton>
+  </DuskLayout>
+</template>
+```
+
+Rules of thumb: one primary `SButton` per screen; icons only together with text; state is never colour alone; errors never auto-dismiss; no "generate / result / try again" words on patient screens (see DESIGN.md §8).
+
+## 4. Words
+
+Every string goes in `usePrototypeLocale.ts` in ES, CA and EN (`t('key', { name })`). Spanish is the default. Use the vocabulary in DESIGN.md §8 (obra, otra versión, guardar, apartar, compartir). Never hard-code text in a component.
+
+## 5. Comfort and motion
+
+`useComfort()` persists the person's choices and sets classes on `<html>`: `text-125`/`text-150` (root font size, so keep everything in rem), `motion-off` (no animation, tiny fades only), `atmo-everywhere`/`atmo-plain`, `no-3d`. `prefers-reduced-motion` is honoured by default. Test your screen with 150% text and motion off. A 3D scene should render its poster first and upgrade only when `useComfort().scene3dAllowed.value` is true.
+
+## 6. Checklist before a PR
+
+DESIGN.md §9, plus screenshots at 1440 and 1024 px, a pass at 150% text, and `npm run build:demo`.

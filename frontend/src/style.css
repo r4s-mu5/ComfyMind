@@ -1,9 +1,130 @@
+/*
+ * ComfyMind design tokens: "Liminal Sanctuary" (docs/redesign/DESIGN.md §4-5).
+ *
+ * How this file is organised
+ *   1. Raw tokens          :root          --dusk-*, --dawn-*, semantic colours, radii, elevation, motion
+ *   2. Tailwind theme      @theme         bg-dawn-bg, text-dusk-text, font-display, rounded-card, ...
+ *   3. Mode variables      :root / .dusk  the shadcn variables (--background, --primary, ...) mapped to
+ *                                         dawn (default) or dusk (add class "dusk" to a container)
+ *   4. Base                focus ring, body, comfort classes on <html>
+ *   5. Components layer    type roles, atmosphere utilities (.sky, .mist, .grain, .niche, ...)
+ *
+ * Rule: never write a hex value outside this file. If you need a new colour, add a token here
+ * and document it in DESIGN.md.
+ */
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* `dark:` variants (used by the shadcn components in ui/) apply inside a dusk container. */
+@custom-variant dark (&:is(.dusk, .dusk *));
 
+/* ------------------------------------------------------------------ */
+/* 1. Raw tokens                                                       */
+/* ------------------------------------------------------------------ */
+:root {
+  /* Dusk: thresholds (landing, login, waiting, session end) */
+  --dusk-sky: #14202F;
+  --dusk-sky-deep: #0F1826;
+  --dusk-sky-mid: #2A3148;
+  --dusk-sky-low: #413F59;
+  --dusk-horizon: rgba(240, 213, 191, 0.35);
+  --dusk-surface: #1F3140;
+  --dusk-text: #F4F3F7;
+  --dusk-text-soft: #C9CEDA;
+  --dusk-light: #F0D5BF;
+  --dusk-teal: #7FC4C4;
+  --dusk-lilac: #B9AFD6;
+  --dusk-border: #8FA0B8;
+  --dusk-focus: #FFE3A3;
+
+  /* Dawn: working screens */
+  --dawn-bg: #F2F0F5;
+  --dawn-bg-warm: #F6F1EE;
+  --dawn-surface: #FFFFFF;
+  --dawn-surface-2: #E7E3EE;
+  --dawn-ink: #14202F;
+  --dawn-ink-soft: #3D4A5F;
+  --dawn-teal: #1E5E61;
+  --dawn-violet: #5B4E86;
+  --dawn-border: #6B7488;
+  --dawn-hairline: rgba(20, 32, 47, 0.14);
+  --dawn-sun: #F0D5BF;
+
+  /* Semantic colours: always shown with an icon and text. Both modes are explicit tokens. */
+  --success-dawn: #1D6B47;
+  --warning-dawn: #8A5A00;
+  --danger-dawn: #A3302A;
+  --success-dusk: #7FD1A6;
+  --warning-dusk: #F2C46D;
+  --danger-dusk: #FF9C92;
+
+  /* Shape. Controls 12px, cards 16px, pills only for primary actions. */
+  --radius: 0.75rem;
+  --radius-niche: 999px 999px 0.75rem 0.75rem;
+
+  /* Spacing scale in px: 4 8 12 16 24 32 48 64 96 (Tailwind steps 1 2 3 4 6 8 12 16 24) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+  --space-9: 6rem;
+
+  /* Targets */
+  --target-patient: 3.5rem;   /* 56px primary controls */
+  --target-compact: 2.75rem;  /* 44px therapist / dense controls */
+  --content-max: 1120px;
+
+  /* Motion */
+  --dur-fade: 150ms;
+  --dur-breathe: 6s;
+  --dur-drift: 40s;
+  --default-transition-duration: 150ms;
+}
+
+/* ------------------------------------------------------------------ */
+/* 2. Tailwind theme                                                   */
+/* ------------------------------------------------------------------ */
+/* Colours are `inline` so they follow the mode variables set by .dusk below. */
 @theme inline {
+  --color-dusk-sky: var(--dusk-sky);
+  --color-dusk-sky-deep: var(--dusk-sky-deep);
+  --color-dusk-sky-mid: var(--dusk-sky-mid);
+  --color-dusk-sky-low: var(--dusk-sky-low);
+  --color-dusk-surface: var(--dusk-surface);
+  --color-dusk-text: var(--dusk-text);
+  --color-dusk-text-soft: var(--dusk-text-soft);
+  --color-dusk-light: var(--dusk-light);
+  --color-dusk-teal: var(--dusk-teal);
+  --color-dusk-lilac: var(--dusk-lilac);
+  --color-dusk-border: var(--dusk-border);
+  --color-dusk-focus: var(--dusk-focus);
+
+  --color-dawn-bg: var(--dawn-bg);
+  --color-dawn-bg-warm: var(--dawn-bg-warm);
+  --color-dawn-surface: var(--dawn-surface);
+  --color-dawn-surface-2: var(--dawn-surface-2);
+  --color-dawn-ink: var(--dawn-ink);
+  --color-dawn-ink-soft: var(--dawn-ink-soft);
+  --color-dawn-teal: var(--dawn-teal);
+  --color-dawn-violet: var(--dawn-violet);
+  --color-dawn-border: var(--dawn-border);
+  --color-dawn-hairline: var(--dawn-hairline);
+  --color-dawn-sun: var(--dawn-sun);
+
+  /* Mode-aware semantic colours: dawn values by default, dusk values inside .dusk */
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-link: var(--link);
+  --color-mark: var(--mark);
+  --color-hairline: var(--hairline);
+
+  /* shadcn-vue variables */
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -41,87 +162,154 @@
   --color-sidebar-ring: var(--sidebar-ring);
 }
 
+/* Static: always emitted, even when no class uses them yet (components read them as var()). */
+@theme static {
+  /* Fonts (self-hosted, see fonts.css and main.js) */
+  --font-sans: var(--font-body);
+  --font-display: "Tenor Sans", Optima, Candara, "Segoe UI", sans-serif;
+  --font-body: "Readex Pro Variable", "Readex Pro", "Lexend", Verdana, "Segoe UI", system-ui, sans-serif;
+
+  /* Type roles as sizes: text-body, text-small */
+  --text-body: 1.125rem;
+  --text-body--line-height: 1.6;
+  --text-small: 0.9375rem;
+  --text-small--line-height: 1.45;
+
+  --radius-control: 0.75rem;
+  --radius-card: 1rem;
+  --radius-pill: 999px;
+
+  /* Elevation: dawn gets one soft lift, dusk gets a warm glow and no shadows (see .elev). */
+  --shadow-lift: 0 1px 0 rgba(20, 32, 47, 0.06), 0 10px 26px rgba(20, 32, 47, 0.07);
+  --shadow-glow: 0 0 40px rgba(240, 213, 191, 0.16);
+
+  --ease-calm: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ------------------------------------------------------------------ */
+/* 3. Mode variables: dawn (default) and dusk (class="dusk")            */
+/* ------------------------------------------------------------------ */
 :root {
-  --radius: 0.875rem;
-  --background: #f6f8f5;
-  --foreground: #17302d;
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: #176b63;
-  --primary-foreground: #ffffff;
-  --secondary: #e8f1ee;
-  --secondary-foreground: #164f49;
-  --muted: #edf1ee;
-  --muted-foreground: #526762;
-  --accent: #f3e8dc;
-  --accent-foreground: #714b31;
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: #d7e0dc;
-  --input: #cbd8d3;
-  --ring: #21857b;
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: #fbfcfa;
-  --sidebar-foreground: #17302d;
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  color-scheme: light;
+
+  /* shadcn variables -> dawn tokens, so every ui/ component is on-brand by default */
+  --background: var(--dawn-bg);
+  --foreground: var(--dawn-ink);
+  --card: var(--dawn-surface);
+  --card-foreground: var(--dawn-ink);
+  --popover: var(--dawn-surface);
+  --popover-foreground: var(--dawn-ink);
+  --primary: var(--dawn-ink);
+  --primary-foreground: var(--dawn-surface);
+  --secondary: var(--dawn-surface-2);
+  --secondary-foreground: var(--dawn-ink);
+  --muted: var(--dawn-surface-2);
+  --muted-foreground: var(--dawn-ink-soft);
+  --accent: var(--dawn-surface-2);
+  --accent-foreground: var(--dawn-ink);
+  --destructive: var(--danger-dawn);
+  --border: var(--dawn-hairline);   /* decorative hairline: cards, dividers */
+  --input: var(--dawn-border);      /* control borders (>= 3:1) */
+  --ring: var(--dawn-violet);
+  --chart-1: var(--dawn-teal);
+  --chart-2: var(--dawn-violet);
+  --chart-3: var(--warning-dawn);
+  --chart-4: var(--success-dawn);
+  --chart-5: var(--dawn-ink-soft);
+  --sidebar: var(--dawn-surface);
+  --sidebar-foreground: var(--dawn-ink);
+  --sidebar-primary: var(--dawn-ink);
+  --sidebar-primary-foreground: var(--dawn-surface);
+  --sidebar-accent: var(--dawn-surface-2);
+  --sidebar-accent-foreground: var(--dawn-ink);
+  --sidebar-border: var(--dawn-hairline);
+  --sidebar-ring: var(--dawn-violet);
+
+  /* ComfyMind extras (mode-aware) */
+  --success: var(--success-dawn);
+  --warning: var(--warning-dawn);
+  --danger: var(--danger-dawn);
+  --danger-foreground: var(--dawn-surface);
+  --link: var(--dawn-teal);
+  --mark: var(--dawn-violet);
+  --hairline: var(--dawn-hairline);
+  --focus-ring: var(--dawn-violet);
+  --elevation: var(--shadow-lift);
 }
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+/* Dusk: wrap a threshold screen (or any panel) in class="dusk". Same variable names, dusk values. */
+.dusk {
+  color-scheme: dark;
+
+  --background: var(--dusk-sky);
+  --foreground: var(--dusk-text);
+  --card: var(--dusk-surface);
+  --card-foreground: var(--dusk-text);
+  --popover: var(--dusk-surface);
+  --popover-foreground: var(--dusk-text);
+  --primary: var(--dusk-light);
+  --primary-foreground: var(--dusk-sky);
+  --secondary: var(--dusk-surface);
+  --secondary-foreground: var(--dusk-text);
+  --muted: var(--dusk-surface);
+  --muted-foreground: var(--dusk-text-soft);
+  --accent: var(--dusk-surface);
+  --accent-foreground: var(--dusk-text);
+  --destructive: var(--danger-dusk);
+  --border: var(--dusk-border);
+  --input: var(--dusk-border);
+  --ring: var(--dusk-focus);
+  --chart-1: var(--dusk-teal);
+  --chart-2: var(--dusk-lilac);
+  --chart-3: var(--warning-dusk);
+  --chart-4: var(--success-dusk);
+  --chart-5: var(--dusk-text-soft);
+  --sidebar: var(--dusk-surface);
+  --sidebar-foreground: var(--dusk-text);
+  --sidebar-primary: var(--dusk-light);
+  --sidebar-primary-foreground: var(--dusk-sky);
+  --sidebar-accent: var(--dusk-surface);
+  --sidebar-accent-foreground: var(--dusk-text);
+  --sidebar-border: var(--dusk-border);
+  --sidebar-ring: var(--dusk-focus);
+
+  --success: var(--success-dusk);
+  --warning: var(--warning-dusk);
+  --danger: var(--danger-dusk);
+  --danger-foreground: var(--dusk-sky);
+  --link: var(--dusk-teal);
+  --mark: var(--dusk-lilac);
+  --hairline: rgba(244, 243, 247, 0.18);
+  --focus-ring: var(--dusk-focus);
+  --elevation: var(--shadow-glow);
+
+  color: var(--foreground);
 }
 
+/* ------------------------------------------------------------------ */
+/* 4. Base                                                             */
+/* ------------------------------------------------------------------ */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+
+  /* Root size stays rem-based: the Comfort panel scales it (text-125 / text-150 below). */
+  html {
+    font-size: 100%;
+    overscroll-behavior: none;
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
     min-width: 320px;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: var(--font-body);
+    font-size: 1.125rem; /* 18px patient body */
+    line-height: 1.6;
   }
 
   :focus-visible {
-    outline: 3px solid var(--ring);
+    outline: 3px solid var(--focus-ring);
     outline-offset: 3px;
   }
 
@@ -134,35 +322,195 @@
   }
 }
 
-@layer components {
-  .prototype-page {
-    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-10;
-  }
+/* Comfort classes, set on <html> by useComfort(). All of them are optional. */
+html.text-125 { font-size: 125%; }
+html.text-150 { font-size: 150%; }
 
-  .prototype-eyebrow {
-    @apply text-sm font-bold uppercase tracking-[0.16em] text-primary;
-  }
+/* Plain atmosphere: no mist, grain, sun, glow; dusk sky becomes a flat colour. */
+html.atmo-plain .mist,
+html.atmo-plain .grain,
+html.atmo-plain .sun-disc,
+html.atmo-plain .dawn-glow,
+html.atmo-plain .atmo-layer { display: none; }
+html.atmo-plain .sky { background: var(--dusk-sky); }
 
-  .prototype-title {
-    @apply text-3xl font-bold tracking-tight text-foreground sm:text-4xl;
-  }
+/* Faint mist behind working screens, only when asked. AppShell renders <div class="atmo-layer">. */
+.atmo-layer { display: none; }
+html.atmo-everywhere .atmo-layer { display: block; }
 
-  .prototype-lead {
-    @apply max-w-2xl text-base leading-7 text-muted-foreground sm:text-lg;
-  }
-
-  .language-selector {
-    @apply inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-white px-3 text-foreground shadow-sm;
+/* Motion off: no animation, only tiny fades. Also applied for prefers-reduced-motion. */
+html.motion-off *,
+html.motion-off *::before,
+html.motion-off *::after {
+  animation: none !important;
+  scroll-behavior: auto !important;
+  transition-property: opacity, color, background-color, border-color !important;
+  transition-duration: var(--dur-fade) !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:not(.motion-on) *,
+  html:not(.motion-on) *::before,
+  html:not(.motion-on) *::after {
+    animation: none !important;
+    scroll-behavior: auto !important;
+    transition-property: opacity, color, background-color, border-color !important;
+    transition-duration: var(--dur-fade) !important;
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+/* no-3d is read by the (lazy) SanctuaryScene through useComfort().scene3dAllowed; the poster stays. */
+html.no-3d .scene-3d canvas { display: none; }
+
+/* ------------------------------------------------------------------ */
+/* 5. Type roles and atmosphere                                        */
+/* ------------------------------------------------------------------ */
+@layer components {
+  /* Type roles (DESIGN.md §4.4). Sizes are rem so Comfort text scaling works. */
+  .type-wordmark {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.28em;
+    font-size: 1rem;
+    line-height: 1;
   }
+  .type-display {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    line-height: 1.1;
+  }
+  .type-h1 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+    font-size: clamp(2rem, 3vw, 2.25rem);
+    line-height: 1.15;
+    font-weight: 400;
+  }
+  .type-h2 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1.5rem;
+    line-height: 1.25;
+  }
+  .type-h3 {
+    font-family: var(--font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+    font-weight: 400;
+  }
+  .type-body { font-size: 1.125rem; line-height: 1.6; }
+  .type-small { font-size: 0.9375rem; line-height: 1.45; }
+  .type-button { font-weight: 600; font-size: 1.125rem; line-height: 1.2; }
+  .measure { max-width: 60ch; }
+
+  /* Atmosphere (DESIGN.md §5.1-5.2). Pure CSS, no images. Place inside a `relative overflow-hidden` parent. */
+  .sky {
+    background:
+      radial-gradient(120% 55% at 50% 100%, var(--dusk-horizon) 0%, transparent 70%),
+      linear-gradient(180deg, var(--dusk-sky-deep) 0%, var(--dusk-sky) 35%, var(--dusk-sky-mid) 72%, var(--dusk-sky-low) 100%);
+  }
+
+  .sun-disc {
+    position: absolute;
+    left: 50%;
+    bottom: -14vmin;
+    width: min(72vmin, 680px);
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    border-radius: 50%;
+    pointer-events: none;
+    background: radial-gradient(circle, rgba(240, 213, 191, 0.95) 0%, rgba(240, 213, 191, 0.55) 32%, rgba(240, 213, 191, 0.14) 58%, transparent 72%);
+  }
+  .sun-disc.is-breathing { animation: sun-breathe var(--dur-breathe) ease-in-out infinite; }
+
+  .mist {
+    position: absolute;
+    inset: -4%;
+    pointer-events: none;
+    filter: blur(36px);
+    background:
+      radial-gradient(40% 32% at 22% 68%, rgba(127, 196, 196, 0.30) 0%, transparent 70%),
+      radial-gradient(46% 34% at 78% 58%, rgba(185, 175, 214, 0.32) 0%, transparent 70%),
+      radial-gradient(60% 30% at 50% 92%, rgba(240, 213, 191, 0.30) 0%, transparent 70%);
+    animation: mist-drift var(--dur-drift) ease-in-out infinite alternate;
+  }
+
+  .grain {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: screen;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+    background-size: 180px 180px;
+  }
+
+  /* Text container that sits on the dusk sky: surface at 92% opacity (DESIGN.md §5.1.6). */
+  .scrim {
+    background: color-mix(in srgb, var(--dusk-surface) 92%, transparent);
+    border: 1.5px solid var(--hairline);
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-glow);
+  }
+
+  /* Warm glow at the top of working screens. */
+  .dawn-glow {
+    pointer-events: none;
+    background:
+      radial-gradient(ellipse 60% 220px at 50% 0%, rgba(240, 213, 191, 0.34) 0%, transparent 100%),
+      radial-gradient(ellipse 90% 340px at 50% 0%, var(--dawn-bg-warm) 0%, transparent 100%);
+  }
+
+  /* Arch top for featured artwork. */
+  .niche {
+    border-radius: var(--radius-niche);
+    overflow: hidden;
+  }
+
+  /* Column-flute divider: three parallel hairlines. */
+  .flute-rule {
+    display: block;
+    height: 7px;
+    border: 0;
+    background:
+      linear-gradient(var(--hairline), var(--hairline)) top / 100% 1px no-repeat,
+      linear-gradient(var(--hairline), var(--hairline)) center / 100% 1px no-repeat,
+      linear-gradient(var(--hairline), var(--hairline)) bottom / 100% 1px no-repeat;
+  }
+
+  /* Elevation that follows the mode (lift at dawn, glow at dusk). */
+  .elev { box-shadow: var(--elevation); }
+
+  /* Existing prototype helpers, now on tokens. */
+  .prototype-page {
+    @apply mx-auto w-full max-w-[1120px] px-4 py-8 sm:px-6 sm:py-10;
+  }
+  .prototype-eyebrow {
+    @apply font-display text-sm uppercase tracking-[0.14em] text-link;
+  }
+  .prototype-title {
+    @apply font-display text-3xl tracking-tight text-foreground sm:text-4xl;
+  }
+  .prototype-lead {
+    @apply max-w-[60ch] text-base leading-7 text-muted-foreground sm:text-lg;
+  }
+  .language-selector {
+    @apply inline-flex min-h-11 items-center gap-2 rounded-control border-2 border-input bg-card px-3 text-foreground;
+  }
+}
+
+@keyframes mist-drift {
+  from { transform: translate3d(-1.5%, 0, 0); }
+  to { transform: translate3d(1.5%, -1%, 0); }
+}
+@keyframes sun-breathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.92; }
+}
+@keyframes calm-sweep {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
 }

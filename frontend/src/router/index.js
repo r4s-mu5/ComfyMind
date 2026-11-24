@@ -24,7 +24,10 @@ const routes = [
   { path: '/session/:sessionId/patient/canvas', component: CanvasView, props: true },
   { path: '/session/:sessionId/therapist', component: TherapistGenerationView, props: true },
   { path: '/session/:sessionId', component: SessionView, props: true },
-  { path: '/calendar', component: CalendarView }
+  { path: '/calendar', component: CalendarView },
+  // Living style guide (tokens + components). Public, also in demo mode.
+  { path: '/design', component: () => import('../views/DesignView.vue'), meta: { hideHeader: true } },
+  { path: '/design/dusk', component: () => import('../views/DesignDuskView.vue'), meta: { hideHeader: true } },
 ]
 
 // Demo mode is meant for static hosting, where history-mode URLs would 404 on reload.
@@ -35,7 +38,7 @@ export const router = createRouter({
 
 // Demo mode has no token expiry: send visitors without a demo user to the login screen.
 if (isDemo) {
-  const publicPaths = ['/', '/login', '/signup', '/signup/']
+  const publicPaths = ['/', '/login', '/signup', '/signup/', '/design', '/design/dusk']
   router.beforeEach((to) => {
     if (publicPaths.includes(to.path) || demoUsers.isLoggedIn()) return true
     return { path: '/login' }

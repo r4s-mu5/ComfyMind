@@ -274,3 +274,22 @@ Screens outside the meeting scope (calendar, signup, canvas page, free generatio
 3. **Chatbot role:** proposed stance "asks, never interprets, therapist-controlled", using the Reflection slot and the session side panel.
 4. **Prompt translation** assumes Spanish input, so Catalan and English prompts are mistranslated today.
 5. **Security and robustness backlog** before any real patient use (`01_APP_INVENTORY.md` §9).
+
+---
+
+## 12. Implementation status
+
+Foundation built by B0 (2026-11-24). Live style guide: route **`/design`** (`/#/design` in the demo build). How-to for builders: `frontend/src/components/sanctuary/README.md`.
+
+| Part | Where |
+|---|---|
+| Tokens, Tailwind `@theme`, shadcn variable mapping, `.dusk`, comfort classes, atmosphere + type CSS | `frontend/src/style.css` |
+| Self-hosted fonts (Tenor Sans, Readex Pro; latin + latin-ext) | `frontend/src/main.js`, `frontend/src/fonts.css` |
+| Comfort settings (text size, motion, atmosphere, 3D; persisted) | `frontend/src/composables/useComfort.ts` |
+| Strings (ES default, CA, EN) for the components | `frontend/src/composables/usePrototypeLocale.ts` |
+| Components: `SButton`, `SField`, `SCard`, `SNotice`, `ArtworkMount`, `MuseumLabel`, `SessionCard`, `WayInPicker`, `CalmProgress`, `ReflectionPrompt`, `VersionsStrip`, `DemoTag`, `ComfortPanel`, `DuskLayout`, `AppShell` | `frontend/src/components/sanctuary/` |
+| Style guide view | `frontend/src/views/DesignView.vue`, route `/design` in `frontend/src/router/index.js` |
+| App wiring | `frontend/src/App.vue` (AppShell for all routes without `meta.hideHeader`; the old `Header.vue` was removed) |
+
+Not built yet: `SanctuaryScene` (3D, §5.3; `useComfort().scene3dAllowed` and the `.scene-3d` hook in `DuskLayout` are ready for it), a therapist "Pacientes" nav entry (no route exists), the Ayuda page (the nav item opens a small help popover), and a Dialog wrapper (the shadcn `AlertDialog`/`Dialog` get dawn colours from the tokens). Existing views still contain their old hard-coded colours until B1-B3 redesign them.
+
