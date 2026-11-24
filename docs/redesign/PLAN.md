@@ -74,7 +74,7 @@ the stakeholder meeting.
 | W2 | done | Wrote `02_PROJECT_HISTORY.md`: origin, epic timeline e0–e8, fork redesign branches, docs list, hygiene findings (tracked node_modules/.pyc, .env/.db in e0007e2 history, duplicate welcome sha), glossary. |
 | W3 | done | `03_CURRENT_UI_AUDIT.md` + 63 screenshots in `screens/current/`. Demo: `?demo=1` = patient (home/workspace/gallery only); dev-preview = therapist only. |
 | W4 | done | 04_DESIGN_RESEARCH.md: 3 directions (Atmospheric Sanctuary / Paper Studio / Gallery Wall); w3.org fetch blocked, some links unverified |
-| I1 | pending | |
+| I1 | in_progress | Writing 05_INTERVIEW.md |
 | V1 | pending | |
 | B0 | pending | |
 | B1 | pending | |
