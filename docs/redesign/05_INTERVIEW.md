@@ -307,7 +307,7 @@ No recommendation: this is a fact question.
 | 3 | Q2 Reflection | Optional gentle pause | One open question after keeping a piece, with a clear 'Not now'. This is the future chatbot slot. |
 | 3 | Q3 Vocabulary | Obra · obra · artwork | |
 | 3 | Q4 Therapist | Live session view | Current piece and versions, chat, private notes (concept). |
-| 4 | Q1 Waiting | | |
-| 4 | Q2 Language | | |
-| 4 | Q3 Demo art | | |
-| 4 | Q4 Device | | |
+| 4 | Q1 Waiting | Sanctuary visual + an honest progress bar | Copy: 'Your artwork is on its way' (no 'there's no hurry'). Dusk sanctuary scene or poster, plus a thin progress bar. aria-live, and still under reduced motion. |
+| 4 | Q2 Language | Español | |
+| 4 | Q3 Demo art | Our own best outputs | Curate the template images and drop neon or odd ones. |
+| 4 | Q4 Device | Video-call screen share + reviewers' own copy on their own computers | Desktop first (1440 and 1280). The hosted link must work standalone on any laptop. The clean repo should run locally with `npm run build:demo`. |

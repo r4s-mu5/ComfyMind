@@ -76,7 +76,8 @@ the stakeholder meeting.
 | W4 | done | 04_DESIGN_RESEARCH.md: 3 directions (Atmospheric Sanctuary / Paper Studio / Gallery Wall); w3.org fetch blocked, some links unverified |
 | I1 | done | 05_INTERVIEW.md: 4 rounds / 16 questions, R1 re-ranks R2; 11 contradictions; 14 open Qs triaged a/b/c; 17 defaults not asked |
 | V1 | done | board/index.html + board/img/art1-6.jpg |
-| T1 | in_progress | typography exploration |
+| T1 | done | 06_TYPOGRAPHY.md + type/index.html; recommend Castoro Titling/Castoro + Luciole; Atkinson Hyperlegible (Next too) fails Catalan Ŀŀ |
+| L1 | in_progress | liminal 3D prototype |
 | B0 | pending | |
 | B0a | done | demo engine: `VITE_DEMO`, fake backend + sockets, hash routing; see `DEMO_MODE.md` |
 | B1 | pending | |
@@ -94,3 +95,4 @@ the stakeholder meeting.
 - 2026-11-24 — I1: interview written to `docs/redesign/05_INTERVIEW.md` (facts, contradictions, triage, 4 rounds x 4 questions, defaults, empty answers table). Status done.
 - 2026-11-24 — V1: visual direction board built at `docs/redesign/board/index.html` (+ `img/art1..6.jpg`, 204 KB). Checked at 1440/390/375, no horizontal scroll. Status done.
 - 2026-11-24 — B0a: demo engine in `frontend/src/lib/demo/` + `lib/config.js`; `npm run build:demo`; verified patient+therapist flows with Playwright; report in `docs/redesign/DEMO_MODE.md`. Status done.
+- 2026-11-24 — T1: typography exploration in `docs/redesign/06_TYPOGRAPHY.md` + specimen `docs/redesign/type/index.html` (4 pairings × dusk/dawn, 176 KB, checked 1440/390). Glyphs verified with fontTools; Atkinson Hyperlegible + Next and Ibarra Real Nova lack Ŀŀ (out). Recommend Castoro Titling/Castoro + Luciole. Status done.
