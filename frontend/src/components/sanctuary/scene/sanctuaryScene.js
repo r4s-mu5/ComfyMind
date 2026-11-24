@@ -157,41 +157,103 @@ function ionicCapital() {
   return g;
 }
 
-// Abstract carved form ("non finito"): a twisted crescent of polished marble rising out of a plain hewn block,
-// drilled through once. Built as a signed distance field and meshed with marching cubes.
-function sdfSculpture(x, y, z) {
+/* ------------------------------------------------------------------ generative sculpture */
+
+// Small, fast, seeded PRNG (mulberry32). Same seed, same sculpture, on every device.
+function rng(seed) {
+  let a = (seed >>> 0) || 1;
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export const SEED_MAX = 9999;
+export const randomSeed = () => Math.floor(Math.random() * (SEED_MAX + 1));
+
+// The parameters of one sculpture. The ranges are deliberately narrow: every seed must read as an abstract
+// carved stone, never as a figure. So: one opening at most (never a pair), always in the lower body and away
+// from the horn tips; the outline is always wider than a head and never narrows into a neck above shoulders;
+// the bite that opens the form is always off the vertical axis, so nothing is left-right symmetric.
+export function sculptureParams(seed) {
+  const r = rng(seed * 2654435761 + 12345);
+  const R = (a, b) => a + (b - a) * r();
+  const sign = () => (r() < 0.5 ? -1 : 1);
+  const P = {};
+  // hewn block (bottom at y = -0.86)
+  P.bx = R(0.52, 0.66); P.by = R(0.15, 0.22); P.bz = R(0.36, 0.46);
+  P.byc = -0.86 + P.by;
+  P.blockTop = -0.86 + 2 * P.by;
+  P.chamfers = [];
+  const nCh = 1 + Math.floor(r() * 3);
+  for (let i = 0; i < nCh; i++) {
+    const a = r() * Math.PI * 2, tilt = R(0.5, 1.1);
+    const n = [Math.cos(a), tilt, Math.sin(a)], l = Math.hypot(n[0], n[1], n[2]);
+    const nn = n.map(v => v / l);
+    const support = Math.abs(nn[0]) * P.bx + Math.abs(nn[1]) * P.by + Math.abs(nn[2]) * P.bz;
+    P.chamfers.push([nn[0], nn[1], nn[2], support * R(0.6, 0.82)]);
+  }
+  // carved form: a broad leaning ellipse, opened by one off-axis bite
+  P.rx = R(0.52, 0.7);
+  P.ry = Math.min(P.rx * R(0.88, 1.12), (0.88 - P.blockTop + 0.08) / 1.96);
+  P.cx = R(-0.08, 0.08);
+  P.cy = P.blockTop - 0.08 + P.ry * 0.96;
+  P.lean = R(-0.28, 0.28);
+  const side = sign();
+  P.biteA = side * R(0.22, 1.05);                  // radians from vertical, never 0
+  const bk = R(0.72, 0.98);
+  P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk;
+  P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
+  P.brx = R(0.26, 0.4) * P.rx / 0.6; P.bry = R(0.34, 0.55);
+  P.twist = sign() * R(0.25, 0.95);
+  P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
+  P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
+  // at most one drilled opening, in the lower body, on the side away from the bite
+  P.hole = r() < 0.72;
+  P.hr = R(0.09, 0.15);
+  P.hx = P.cx - side * R(0.06, 0.24);
+  P.hy = P.cy - P.ry * R(0.12, 0.38);
+  P.yaw = (-28 + R(-18, 18)) * DEG;
+  return P;
+}
+
+export function sculptureSdf(x, y, z, P) {
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
   const smax = (a, b, k) => -smin(-a, -b, k);
-  // hewn block: a low box with two broad chamfers
-  const yb = y + 0.66;
-  let block = Math.max(Math.abs(x) - 0.62, Math.abs(yb) - 0.2, Math.abs(z) - 0.44);
-  block = Math.max(block, (0.5 * x + yb + 0.35 * z) / 1.17 - 0.33, (-0.45 * x + yb - 0.3 * z) / 1.13 - 0.34);
-  // carved part: twist about the vertical axis as it rises
-  const tw = 0.75 * (y + 0.4), c = Math.cos(tw), s = Math.sin(tw);
+  // hewn block with chamfered top edges
+  const yb = y - P.byc;
+  let block = Math.max(Math.abs(x) - P.bx, Math.abs(yb) - P.by, Math.abs(z) - P.bz);
+  for (const c of P.chamfers) block = Math.max(block, c[0] * x + c[1] * yb + c[2] * z - c[3]);
+  // carved part: twisted about the vertical as it rises
+  const tw = P.twist * (y - P.blockTop), c = Math.cos(tw), s = Math.sin(tw);
   const px = c * x - s * z, pz = s * x + c * z;
-  // open cradle outline in the front plane: a broad ellipse with an off-centre bite from above, two uneven horns
-  const ex = px / 0.7, ey = (y + 0.02) / 0.78;
-  const outer = (Math.hypot(ex, ey) - 1) * 0.7;
-  const ix = (px - 0.1) / 0.36, iy = (y - 0.62) / 0.6;
-  const inner = (Math.hypot(ix, iy) - 1) * 0.36;
-  let form = smax(outer, -inner, 0.12);
-  // thickness: full at the base, thinning toward the tips, slightly curved in plan
-  const th = 0.2 - 0.07 * Math.max(0, y) + 0.04 * Math.cos(px * 2.2);
-  const bow = 0.12 * Math.cos(px * 2.4) - 0.06;
+  const cl = Math.cos(P.lean), sl = Math.sin(P.lean);
+  const lx = cl * (px - P.cx) - sl * (y - P.cy), ly = sl * (px - P.cx) + cl * (y - P.cy);
+  const outer = (Math.hypot(lx / P.rx, ly / P.ry) - 1) * Math.min(P.rx, P.ry);
+  const bite = (Math.hypot((px - P.bix) / P.brx, (y - P.biy) / P.bry) - 1) * Math.min(P.brx, P.bry);
+  let form = smax(outer, -bite, 0.12);
+  const th = P.th0 - P.taper * Math.max(0, y - P.cy) * 2 + 0.03 * Math.cos(px * 2.2);
+  const bow = P.bowA * Math.cos(px * P.bowF + P.bowP) - P.bowA * 0.5;
   form = smax(form, Math.abs(pz - bow) - th, 0.12);
-  form = smax(form, -(y + 0.5), 0.02);
-  // one drilled opening through the mass, low and off centre, with eased edges
-  const hole = Math.hypot(px + 0.14, y + 0.16) - 0.15;
-  form = smax(form, -hole, 0.08);
+  form = smax(form, -(y - P.blockTop + 0.1), 0.02);
+  if (P.hole) form = smax(form, -(Math.hypot(px - P.hx, y - P.hy) - P.hr), 0.07);
   return smin(block, form, 0.1);
 }
 
-function sculptureGeometry(res = 68) {
-  const mc = new MarchingCubes(res, new MeshBasicMaterial(), false, false, 60000);
+// Meshes one sculpture. About 35-60 ms in V8 at res 60 (measured in Node); 12-20k triangles.
+export function buildSculptureGeometry(seed, res = 60) {
+  const P = sculptureParams(seed);
+  const mc = new MarchingCubes(res, new MeshBasicMaterial(), false, false, 40000);
   mc.isolation = 0;
-  const f = mc.field, h = res / 2;
-  for (let k = 0; k < res; k++) for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) {
-    f[i + j * res + k * res * res] = -sdfSculpture((i - h) / h, (j - h) / h, (k - h) / h) * 10;
+  const f = mc.field, h = res / 2, inv = 1 / h;
+  for (let k = 0; k < res; k++) {
+    const z = (k - h) * inv;
+    for (let j = 0; j < res; j++) {
+      const y = (j - h) * inv, row = j * res + k * res * res;
+      for (let i = 0; i < res; i++) f[i + row] = -sculptureSdf((i - h) * inv, y, z, P) * 10;
+    }
   }
   mc.update();
   const n = mc.count;
@@ -200,6 +262,7 @@ function sculptureGeometry(res = 68) {
   g.setAttribute('normal', new BufferAttribute(mc.normalArray.slice(0, n * 3), 3));
   mc.geometry.dispose(); mc.material.dispose();
   g.computeBoundingBox();
+  g.userData.params = P;
   return g;
 }
 
