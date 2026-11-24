@@ -200,25 +200,25 @@ export function sculptureParams(seed) {
   }
   // carved form: a broad leaning ellipse, opened by one off-axis bite
   P.rx = R(0.52, 0.7);
-  P.ry = Math.min(P.rx * R(0.88, 1.12), (0.88 - P.blockTop + 0.08) / 1.96);
+  P.ry = Math.min(P.rx * R(0.8, 1.0), (0.88 - P.blockTop + 0.08) / 1.96);
   P.cx = R(-0.08, 0.08);
   P.cy = P.blockTop - 0.08 + P.ry * 0.96;
-  P.lean = R(-0.28, 0.28);
+  P.lean = R(-0.22, 0.22);
   const side = sign();
-  P.biteA = side * R(0.22, 1.05);                  // radians from vertical, never 0
-  const bk = R(0.72, 0.98);
+  P.biteA = side * R(0.34, 0.78);                  // off the vertical, so the two horns are never even
+  const bk = R(0.62, 0.86);                         // the bite always cuts well into the body
   P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk;
   P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
   P.brx = R(0.26, 0.4) * P.rx / 0.6; P.bry = R(0.34, 0.55);
-  P.twist = sign() * R(0.25, 0.95);
+  P.twist = sign() * R(0.18, 0.5);                 // gentle: a strong twist turns the top edge-on (a 'flame')
   P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
   P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
   // at most one drilled opening, in the lower body, on the side away from the bite
-  P.hole = r() < 0.72;
-  P.hr = R(0.09, 0.15);
-  P.hx = P.cx - side * R(0.06, 0.24);
-  P.hy = P.cy - P.ry * R(0.12, 0.38);
-  P.yaw = (-28 + R(-18, 18)) * DEG;
+  P.hole = r() < 0.65;
+  P.hr = R(0.08, 0.14);
+  P.hx = P.cx - side * R(0.05, 0.2);
+  P.hy = P.cy - P.ry * R(0.28, 0.5);
+  P.yaw = (-22 + R(-12, 12)) * DEG;
   return P;
 }
 

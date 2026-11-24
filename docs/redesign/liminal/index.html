@@ -59,6 +59,7 @@ button{font:inherit;color:inherit}
 .mark{margin:0 0 18px;font:400 17px/1 var(--font-mark);letter-spacing:.28em;text-transform:uppercase;color:var(--warm)}
 h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-wrap:balance}
 .lede{margin:0 0 26px;color:var(--ink-2);max-width:36ch}
+.actions-2{margin:10px 0 0}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
 .btn-primary{min-height:56px;min-width:180px;padding:0 32px;border-radius:999px;border:0;background:var(--warm);color:var(--on-warm);
   font:700 19px/1 var(--font-body);letter-spacing:.01em;cursor:pointer;touch-action:manipulation;box-shadow:0 0 40px rgba(240,213,191,.18)}
@@ -94,6 +95,17 @@ h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);lett
 .fx-row > span{color:var(--ink-2);font-weight:600}
 .fx-panel .seg button{padding:0 12px}
 .fx-off .fx-dep{opacity:.5}
+/* ---------- museum label pinned beside the plinth (HTML, so it stays crisp) ---------- */
+.museum{position:fixed;z-index:1;left:0;top:0;max-width:240px;padding:10px 14px 11px;border-radius:6px;
+  background:rgba(244,240,236,.94);color:#24223A;pointer-events:none;box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.museum[hidden]{display:none}
+.museum .m-title{margin:0;font:400 13px/1.25 var(--font-display);letter-spacing:.16em;text-transform:uppercase}
+.museum .m-tech{margin:3px 0 0;font:400 14px/1.3 var(--font-body);color:#4A465E}
+.link-btn{display:inline-flex;align-items:center;min-height:48px;padding:0 4px;border:0;background:none;color:var(--teal);font:700 18px/1.2 var(--font-body);
+  text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px;border-radius:6px;cursor:pointer;touch-action:manipulation}
+.link-btn:hover{text-decoration-thickness:3px}
+.link-btn[hidden]{display:none}
+
 /* ---------- fallback message ---------- */
 .fallback{display:none;margin:12px 0 0;padding:10px 14px;border-radius:12px;background:var(--scrim-solid);border:1.5px solid var(--scrim-line);color:var(--ink);font-size:16px}
 .no-webgl .fallback{display:block}
@@ -180,9 +192,16 @@ h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);lett
       <button type="button" class="btn-primary" id="begin" data-t="begin">Comenzar</button>
       <a class="link-quiet" href="#terapeuta" id="therapist" data-t="therapist">Soy terapeuta</a>
     </div>
+    <p class="actions-2"><button type="button" class="link-btn" id="another" data-t="another" hidden>Otra escultura</button></p>
+    <p class="sr-only" id="sculptureLive" aria-live="polite"></p>
     <p class="note" id="note" role="status" aria-live="polite"></p>
     <p class="fallback" id="fallback">3D isn’t available on this device, so a still image is shown instead.</p>
   </main>
+</div>
+
+<div class="museum" id="museum" aria-hidden="true" hidden>
+  <p class="m-title" id="mTitle">Escultura nº 0000</p>
+  <p class="m-tech" id="mTech">Mármol, generada para ti</p>
 </div>
 
 <aside class="dock" aria-label="Prototype controls" lang="en">
@@ -203,14 +222,14 @@ h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);lett
         <div class="fx-row fx-dep"><span>Pixel size</span>
           <div class="seg" role="group" aria-label="Pixel size">
             <button type="button" data-px="2" aria-pressed="false">1/2</button>
-            <button type="button" data-px="3" aria-pressed="true">1/3</button>
-            <button type="button" data-px="4" aria-pressed="false">1/4</button>
+            <button type="button" data-px="3" aria-pressed="false">1/3</button>
+            <button type="button" data-px="4" aria-pressed="true">1/4</button>
           </div></div>
         <div class="fx-row fx-dep"><span>Dither</span>
           <div class="seg" role="group" aria-label="Dither">
             <button type="button" data-dither="off" aria-pressed="false">Off</button>
-            <button type="button" data-dither="light" aria-pressed="true">Light</button>
-            <button type="button" data-dither="strong" aria-pressed="false">Strong</button>
+            <button type="button" data-dither="light" aria-pressed="false">Light</button>
+            <button type="button" data-dither="strong" aria-pressed="true">Strong</button>
           </div></div>
         <div class="fx-row fx-dep"><span>Film grain (static)</span><button type="button" class="tog" id="grainBtn" aria-pressed="true">Grain: <b>on</b></button></div>
         <div class="fx-row fx-dep"><span>Soft vignette</span><button type="button" class="tog" id="vigBtn" aria-pressed="false">Vignette: <b>off</b></button></div>
@@ -231,16 +250,19 @@ h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);lett
    a byte-identical copy of frontend/src/components/sanctuary/scene/sanctuaryScene.js (the source of truth). */
 const COPY = {
   es:{h1:'Un lugar tranquilo para crear', lede:'Tómate tu tiempo. Aquí no hay una forma correcta de hacerlo.', begin:'Comenzar', therapist:'Soy terapeuta',
-      noteBegin:'Prototipo: aquí empezaría tu sesión.', noteTher:'Prototipo: aquí se abriría el acceso para terapeutas.', lang:'Idioma'},
+      noteBegin:'Prototipo: aquí empezaría tu sesión.', noteTher:'Prototipo: aquí se abriría el acceso para terapeutas.', lang:'Idioma',
+      another:'Otra escultura', label:'Escultura nº', tech:'Mármol, generada para ti'},
   ca:{h1:'Un lloc tranquil per crear', lede:'Pren-te el teu temps. Aquí no hi ha una manera correcta de fer-ho.', begin:'Començar', therapist:'Sóc terapeuta',
-      noteBegin:'Prototip: aquí començaria la teva sessió.', noteTher:'Prototip: aquí s’obriria l’accés per a terapeutes.', lang:'Idioma'},
+      noteBegin:'Prototip: aquí començaria la teva sessió.', noteTher:'Prototip: aquí s’obriria l’accés per a terapeutes.', lang:'Idioma',
+      another:'Una altra escultura', label:'Escultura núm.', tech:'Marbre, generada per a tu'},
   en:{h1:'A quiet place to make something', lede:'Take your time. There is no right way to do this.', begin:'Begin', therapist:'I’m a therapist',
-      noteBegin:'Prototype: your session would start here.', noteTher:'Prototype: the therapist sign-in would open here.', lang:'Language'},
+      noteBegin:'Prototype: your session would start here.', noteTher:'Prototype: the therapist sign-in would open here.', lang:'Language',
+      another:'Another sculpture', label:'Sculpture no.', tech:'Marble, made for you'},
 };
 const OBJECT_TEXT = {
-  ruina:'<b>Ruina.</b> Architecture only: an Ionic capital on the plinth and two fallen drums. Tap the scene: it turns slowly.',
-  escultura:'<b>Escultura abstracta.</b> A pierced, curved marble form carved out of a rough block (non finito). Tap: it turns slowly.',
-  estudio:'<b>Estudio.</b> The sculptor’s study: Dürer’s solid, a honed sphere and a ring. Tap: the light moves round.',
+  ruina:'<b>Ruina.</b> Architecture only: an Ionic capital on the plinth and two fallen drums. Still.',
+  escultura:'<b>Escultura abstracta</b> (product default). Generative: click the scene or “Otra escultura” for a new carved form.',
+  estudio:'<b>Estudio.</b> The sculptor’s study: Dürer’s solid, a honed sphere and a ring. Still.',
 };
 const DITHER = {off:0, light:0.35, strong:0.8};
 const store = {
@@ -256,15 +278,26 @@ const state = {
   motion: pick('motion', reduceMQ.matches ? '0' : '1') === '1',
   three: pick('three', '1') !== '0',
   fx: pick('fx', '1') !== '0',
-  px: Number(pick('px', '3')),
-  dither: pick('dither', 'light'),
+  px: Number(pick('px', '4')),
+  dither: pick('dither', 'strong'),
   grain: pick('grain', '1') !== '0',
   vignette: pick('vignette', '0') === '1',
 };
 if (!COPY[state.lang]) state.lang = 'es';
 if (!OBJECT_TEXT[state.object]) state.object = 'escultura';
-if (![2, 3, 4].includes(state.px)) state.px = 3;
-if (!(state.dither in DITHER)) state.dither = 'light';
+if (![2, 3, 4].includes(state.px)) state.px = 4;
+if (!(state.dither in DITHER)) state.dither = 'strong';
+
+// One sculpture per visit: a random seed, kept in sessionStorage so a reload shows the same piece.
+const POSTER_SEED = 427; // the sculpture in posters/escultura*.jpg
+const session = {
+  get(){ try{ return sessionStorage.getItem('liminal2.seed'); }catch(e){ return null; } },
+  set(v){ try{ sessionStorage.setItem('liminal2.seed', String(v)); }catch(e){} },
+};
+let seed = Number(qs.get('seed') ?? session.get() ?? Math.floor(Math.random() * 10000));
+if (!Number.isFinite(seed)) seed = POSTER_SEED;
+session.set(seed);
+let announce = false;
 
 const $ = s => document.querySelector(s);
 const stage = $('#stage'), hero = $('#hero'), note = $('#note');
@@ -277,7 +310,35 @@ function setLang(l){
   $('#langGroup').setAttribute('aria-label', c.lang);
   document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === l)));
   note.textContent = '';
+  renderLabel();
 }
+const pad = n => String(n).padStart(4, '0');
+function renderLabel(){
+  const c = COPY[state.lang];
+  $('#mTitle').textContent = `${c.label} ${pad(seed)}`;
+  $('#mTech').textContent = c.tech;
+  $('#museum').lang = state.lang;
+}
+function placeLabel(){
+  const el = $('#museum');
+  const live = scene && state.three && state.object === 'escultura';
+  el.hidden = !live; $('#another').hidden = !live;
+  if (!live) return;
+  const portrait = innerWidth / innerHeight < 0.95;
+  const a = scene.anchor(portrait ? 'beside' : 'plinth');
+  if (!a) return;
+  const w = el.offsetWidth, h = el.offsetHeight;
+  const x = Math.min(innerWidth - w - 16, Math.max(16, a.x + 14));
+  const y = Math.min(innerHeight - h - 16, Math.max(72, portrait ? a.y - h / 2 : a.y + 6));
+  el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
+}
+function onSculpture(s){
+  seed = s; session.set(s); renderLabel();
+  if (announce){ const c = COPY[state.lang]; $('#sculptureLive').textContent = `${c.label} ${pad(s)}. ${c.tech}.`; }
+  requestAnimationFrame(placeLabel);
+}
+$('#another').addEventListener('click', () => { if (scene){ announce = true; scene.regenerate(); } });
+addEventListener('resize', () => requestAnimationFrame(placeLabel));
 document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
 $('#begin').addEventListener('click', () => { note.textContent = COPY[state.lang].noteBegin; });
 $('#therapist').addEventListener('click', e => { e.preventDefault(); note.textContent = COPY[state.lang].noteTher; });
@@ -311,7 +372,7 @@ const sceneOptions = () => ({
   object: state.object, fx: state.fx, pixelScale: state.px, motion: state.motion,
   dither: DITHER[state.dither], grain: state.grain ? 0.5 : 0, vignette: state.vignette ? 1 : 0,
 });
-function apply(){ renderDock(); if (scene) scene.setOptions(sceneOptions()); }
+function apply(){ renderDock(); if (scene) scene.setOptions(sceneOptions()); placeLabel(); }
 const bind = (sel, fn) => document.querySelectorAll(sel).forEach(b => b.addEventListener('click', () => { fn(b); apply(); }));
 bind('[data-object]', b => { state.object = b.dataset.object; store.set('object', state.object); setPoster(state.object); });
 bind('[data-px]', b => { state.px = Number(b.dataset.px); store.set('px', String(state.px)); });
@@ -344,11 +405,14 @@ async function start(){
   loading = import('./scene/sanctuaryScene.js').then(async ({ createSanctuaryScene, hasWebGL }) => {
     if (!hasWebGL()) throw new Error('no WebGL');
     scene = await createSanctuaryScene(canvas, {
-      ...sceneOptions(), framing: ['landing', 'background', 'small'].includes(qs.get('framing')) ? qs.get('framing') : 'landing',
-      onReady(){ canvas.classList.add('ready'); stage.classList.add('rendered'); },
+      ...sceneOptions(), seed, onSculpture, framing: ['landing', 'background', 'small'].includes(qs.get('framing')) ? qs.get('framing') : 'landing',
+      onReady(){ canvas.classList.add('ready'); stage.classList.add('rendered'); placeLabel(); },
       onError(err){ console.warn('3D stopped:', err.message); stop(); noWebGL(); },
     });
     window.__liminal = scene;
+    // a click on the scene regenerates inside the module; announce those too
+    stage.addEventListener('click', () => { announce = true; });
+    placeLabel();
   }).catch(err => { console.warn('3D unavailable:', err); canvas.remove(); noWebGL(); })
     .finally(() => { loading = null; if (!state.three) stop(); });
 }
@@ -356,6 +420,7 @@ function stop(){
   if (scene){ scene.dispose(); scene = null; window.__liminal = null; }
   stage.querySelectorAll('canvas').forEach(c => c.remove());
   stage.classList.remove('rendered');
+  placeLabel();
 }
 if (state.three) start();
 </script>
