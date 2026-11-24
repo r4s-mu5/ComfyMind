@@ -88,7 +88,7 @@ the stakeholder meeting.
 | B0 | done | Tokens in style.css, 15 components in components/sanctuary/ (+README), useComfort, AppShell wired in App.vue, locale ES/CA/EN, `/design` style guide (+ `/design/dusk` DuskLayout demo). Builds pass; contrast script all ok. Header.vue removed. |
 | B0a | done | demo engine: `VITE_DEMO`, fake backend + sockets, hash routing; see `DEMO_MODE.md` |
 | B1 | done | Landing, Login, Signup (dusk, SField/SButton), SanctuaryScene.vue (thin lazy wrapper, poster/CSS-sky fallback; waits for L2's scene/sanctuaryScene.js), SessionEndOverlay.vue (props: artworks, name, homeTo, overlay; B2 to mount). Locale ES/CA/EN landing/login/signup/sessionEnd. 3D untested until L2 file lands. |
-| L2 | in_progress | abstract objects + post-FX |
+| L2 | done | abstract objects + post-FX |
 | B2 | in_progress | |
 | B3 | done | GalleryView.vue (Mis obras wall by sala, filter, detail dialog; also /session/:id), TherapistSessionView.vue (+TherapistChat.vue), CalendarView on tokens. Old views at /legacy/... |
 | F1 | done | VC1 must-fixes + patient sweep |
@@ -111,3 +111,4 @@ the stakeholder meeting.
 - 2026-11-24 — B1: landing, login, signup, SanctuaryScene wrapper, SessionEndOverlay done; both builds pass; no console errors; 3D pending L2 module. Status done.
 - 2026-11-24 — B3: Mis obras gallery wall, therapist live session (AppShell aside: chat + private notes, danger end dialog), calendar tokens; demo + normal builds pass, Playwright two-page live check (BroadcastChannel), no console errors. Status done.
 - 2026-11-24 — F1: VC1 must-fixes applied to the foundation (dusk horizon, sun on the horizon, strata mist, dither, left-aligned DuskLayout, square hung ArtworkMount, flat SCard, Tenor caps only for wordmark/display/museum labels, SessionCard status on the date leaf, Comfort check + dusk panel, text-only nav, profile menu without role label) and the "patient" sweep of visible text; both builds pass.
+- 2026-11-24 — L2: procedural Liminal scene (Quiet mood) with 3 abstract objects Ruina / Escultura abstracta / Estudio (no figures, no models), custom post-FX (1/3-res nearest pixels, light Bayer dither, static grain, optional vignette), module `frontend/src/components/sanctuary/scene/sanctuaryScene.js` (+ copy in `docs/redesign/liminal/scene/`), new posters in both places, old models/ and human-figure posters deleted; ≤ 30k tris per scene; lazy chunk 143 KB gzip; builds pass, no console errors. Status done.

@@ -133,7 +133,7 @@ const sourceBtn = (active: boolean) => [
     <button
       type="button"
       :class="[
-        'flex min-h-28 w-full flex-col items-center justify-center gap-2 rounded-card border-2 border-dashed px-6 py-6 text-center transition-colors',
+        'grid min-h-20 w-full grid-cols-[auto_1fr] items-center gap-x-4 rounded-card border-2 border-dashed px-6 py-4 text-left transition-colors',
         dragOver ? 'border-ring bg-secondary' : 'border-input bg-card hover:bg-secondary',
       ]"
       :aria-busy="uploading || undefined"
@@ -143,7 +143,7 @@ const sourceBtn = (active: boolean) => [
       @dragleave="dragOver = false"
       @drop.prevent="onDrop"
     >
-      <Upload aria-hidden="true" class="size-6 text-mark" />
+      <Upload aria-hidden="true" class="row-span-2 size-6 text-mark" />
       <span class="type-body font-semibold">{{ uploading ? t('create.uploading') : t('create.uploadTitle') }}</span>
       <span class="type-small text-muted-foreground">{{ t('create.uploadHint') }}</span>
     </button>
@@ -183,7 +183,7 @@ const sourceBtn = (active: boolean) => [
         </div>
       </SNotice>
       <p v-else-if="!tiles.length" class="type-body text-muted-foreground">{{ t('create.imagesEmpty') }}</p>
-      <ul v-else class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4" role="list">
+      <ul v-else class="grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-3" role="list">
         <li v-for="(tile, i) in visible" :key="tile.fileName">
           <button
             type="button"
