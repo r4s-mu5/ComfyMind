@@ -1,9 +1,13 @@
 // Liminal Sanctuary: the dusk atrium scene (framework-agnostic, three@0.160).
-// Source of truth for both the Vue app and docs/redesign/liminal/index.html.
+// Source of truth for both the Vue app (SanctuaryScene.vue) and docs/redesign/liminal/index.html (a copy).
 //
-//   const scene = await createSanctuaryScene(canvas, { object: 'escultura' })
-//   scene.setOptions({ fx: false }); scene.resize(); scene.snapshot(); scene.dispose()
+//   const scene = await createSanctuaryScene(canvas, { object: 'escultura', seed: 427, onSculpture: s => {} })
+//   scene.regenerate()          // another sculpture (returns its seed); a click on the scene does the same
+//   scene.setOptions({ fx: false }); scene.resize(); scene.snapshot(); scene.anchor('plinth'); scene.dispose()
 //
+// The scene is fully still: no camera drift, no pointer lean, no breathing. The only motion is an 800 ms
+// dissolve (in Bayer order) when a new sculpture appears, and none at all with motion: false.
+// 'escultura' is generative: a seeded signed-distance field, meshed with marching cubes, always abstract.
 // Everything is procedural geometry: no models, no textures, no figurative shapes.
 import {
   ACESFilmicToneMapping, BackSide, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, Color, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, FogExp2, Group, HalfFloatType, HemisphereLight, InstancedMesh, LatheGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, NoColorSpace, OrthographicCamera, PerspectiveCamera, PlaneGeometry, SRGBColorSpace, Scene, ShaderMaterial, Shape, SphereGeometry, TorusGeometry, TubeGeometry, UnsignedByteType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
@@ -24,9 +28,9 @@ export function hasWebGL() {
 
 const DEG = Math.PI / 180;
 const MAX_DPR = 1.5;
-const FRAME_MS = 32; // about 30 fps while something moves
+const FRAME_MS = 32; // about 30 fps during a dissolve
 
-// The approved "Quiet" mood: pastel dusk, light fog, short colonnade, near-still.
+// The approved "Quiet" mood: pastel dusk, light fog, short colonnade, fully still.
 const MOOD = {
   sky: { top: '#1D2142', mid: '#5E5A8A', low: '#B49AB4', horizon: '#D9B4AE' },
   sun: { color: '#FFE6CC', color2: '#F7CDBE', size: 5.0, dir: [0.05, 0.05], glow: 0.3, alpha: 0.8 },
@@ -38,7 +42,6 @@ const MOOD = {
   rim: ['#D2C4FF', 0.42],
   stone: '#E7E0E2',
   colonnade: { count: 6, spacing: 2.7, x: 2.8, start: -1.8 },
-  drift: 0.35,
 };
 
 /* ------------------------------------------------------------------ geometry */
@@ -157,41 +160,103 @@ function ionicCapital() {
   return g;
 }
 
-// Abstract carved form ("non finito"): a twisted crescent of polished marble rising out of a plain hewn block,
-// drilled through once. Built as a signed distance field and meshed with marching cubes.
-function sdfSculpture(x, y, z) {
+/* ------------------------------------------------------------------ generative sculpture */
+
+// Small, fast, seeded PRNG (mulberry32). Same seed, same sculpture, on every device.
+function rng(seed) {
+  let a = (seed >>> 0) || 1;
+  return () => {
+    a = (a + 0x6D2B79F5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+export const SEED_MAX = 9999;
+export const randomSeed = () => Math.floor(Math.random() * (SEED_MAX + 1));
+
+// The parameters of one sculpture. The ranges are deliberately narrow: every seed must read as an abstract
+// carved stone, never as a figure. So: one opening at most (never a pair), always in the lower body and away
+// from the horn tips; the outline is always wider than a head and never narrows into a neck above shoulders;
+// the bite that opens the form is always off the vertical axis, so nothing is left-right symmetric.
+export function sculptureParams(seed) {
+  const r = rng(seed * 2654435761 + 12345);
+  const R = (a, b) => a + (b - a) * r();
+  const sign = () => (r() < 0.5 ? -1 : 1);
+  const P = {};
+  // hewn block (bottom at y = -0.86)
+  P.bx = R(0.52, 0.66); P.by = R(0.15, 0.22); P.bz = R(0.36, 0.46);
+  P.byc = -0.86 + P.by;
+  P.blockTop = -0.86 + 2 * P.by;
+  P.chamfers = [];
+  const nCh = 1 + Math.floor(r() * 3);
+  for (let i = 0; i < nCh; i++) {
+    const a = r() * Math.PI * 2, tilt = R(0.5, 1.1);
+    const n = [Math.cos(a), tilt, Math.sin(a)], l = Math.hypot(n[0], n[1], n[2]);
+    const nn = n.map(v => v / l);
+    const support = Math.abs(nn[0]) * P.bx + Math.abs(nn[1]) * P.by + Math.abs(nn[2]) * P.bz;
+    P.chamfers.push([nn[0], nn[1], nn[2], support * R(0.6, 0.82)]);
+  }
+  // carved form: a broad leaning ellipse, opened by one off-axis bite
+  P.rx = R(0.52, 0.7);
+  P.ry = Math.min(P.rx * R(0.88, 1.12), (0.88 - P.blockTop + 0.08) / 1.96);
+  P.cx = R(-0.08, 0.08);
+  P.cy = P.blockTop - 0.08 + P.ry * 0.96;
+  P.lean = R(-0.28, 0.28);
+  const side = sign();
+  P.biteA = side * R(0.22, 1.05);                  // radians from vertical, never 0
+  const bk = R(0.72, 0.98);
+  P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk;
+  P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
+  P.brx = R(0.26, 0.4) * P.rx / 0.6; P.bry = R(0.34, 0.55);
+  P.twist = sign() * R(0.25, 0.95);
+  P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
+  P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
+  // at most one drilled opening, in the lower body, on the side away from the bite
+  P.hole = r() < 0.72;
+  P.hr = R(0.09, 0.15);
+  P.hx = P.cx - side * R(0.06, 0.24);
+  P.hy = P.cy - P.ry * R(0.12, 0.38);
+  P.yaw = (-28 + R(-18, 18)) * DEG;
+  return P;
+}
+
+export function sculptureSdf(x, y, z, P) {
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
   const smax = (a, b, k) => -smin(-a, -b, k);
-  // hewn block: a low box with two broad chamfers
-  const yb = y + 0.66;
-  let block = Math.max(Math.abs(x) - 0.62, Math.abs(yb) - 0.2, Math.abs(z) - 0.44);
-  block = Math.max(block, (0.5 * x + yb + 0.35 * z) / 1.17 - 0.33, (-0.45 * x + yb - 0.3 * z) / 1.13 - 0.34);
-  // carved part: twist about the vertical axis as it rises
-  const tw = 0.75 * (y + 0.4), c = Math.cos(tw), s = Math.sin(tw);
+  // hewn block with chamfered top edges
+  const yb = y - P.byc;
+  let block = Math.max(Math.abs(x) - P.bx, Math.abs(yb) - P.by, Math.abs(z) - P.bz);
+  for (const c of P.chamfers) block = Math.max(block, c[0] * x + c[1] * yb + c[2] * z - c[3]);
+  // carved part: twisted about the vertical as it rises
+  const tw = P.twist * (y - P.blockTop), c = Math.cos(tw), s = Math.sin(tw);
   const px = c * x - s * z, pz = s * x + c * z;
-  // open cradle outline in the front plane: a broad ellipse with an off-centre bite from above, two uneven horns
-  const ex = px / 0.7, ey = (y + 0.02) / 0.78;
-  const outer = (Math.hypot(ex, ey) - 1) * 0.7;
-  const ix = (px - 0.1) / 0.36, iy = (y - 0.62) / 0.6;
-  const inner = (Math.hypot(ix, iy) - 1) * 0.36;
-  let form = smax(outer, -inner, 0.12);
-  // thickness: full at the base, thinning toward the tips, slightly curved in plan
-  const th = 0.2 - 0.07 * Math.max(0, y) + 0.04 * Math.cos(px * 2.2);
-  const bow = 0.12 * Math.cos(px * 2.4) - 0.06;
+  const cl = Math.cos(P.lean), sl = Math.sin(P.lean);
+  const lx = cl * (px - P.cx) - sl * (y - P.cy), ly = sl * (px - P.cx) + cl * (y - P.cy);
+  const outer = (Math.hypot(lx / P.rx, ly / P.ry) - 1) * Math.min(P.rx, P.ry);
+  const bite = (Math.hypot((px - P.bix) / P.brx, (y - P.biy) / P.bry) - 1) * Math.min(P.brx, P.bry);
+  let form = smax(outer, -bite, 0.12);
+  const th = P.th0 - P.taper * Math.max(0, y - P.cy) * 2 + 0.03 * Math.cos(px * 2.2);
+  const bow = P.bowA * Math.cos(px * P.bowF + P.bowP) - P.bowA * 0.5;
   form = smax(form, Math.abs(pz - bow) - th, 0.12);
-  form = smax(form, -(y + 0.5), 0.02);
-  // one drilled opening through the mass, low and off centre, with eased edges
-  const hole = Math.hypot(px + 0.14, y + 0.16) - 0.15;
-  form = smax(form, -hole, 0.08);
+  form = smax(form, -(y - P.blockTop + 0.1), 0.02);
+  if (P.hole) form = smax(form, -(Math.hypot(px - P.hx, y - P.hy) - P.hr), 0.07);
   return smin(block, form, 0.1);
 }
 
-function sculptureGeometry(res = 68) {
-  const mc = new MarchingCubes(res, new MeshBasicMaterial(), false, false, 60000);
+// Meshes one sculpture. About 35-60 ms in V8 at res 60 (measured in Node); 12-20k triangles.
+export function buildSculptureGeometry(seed, res = 60) {
+  const P = sculptureParams(seed);
+  const mc = new MarchingCubes(res, new MeshBasicMaterial(), false, false, 40000);
   mc.isolation = 0;
-  const f = mc.field, h = res / 2;
-  for (let k = 0; k < res; k++) for (let j = 0; j < res; j++) for (let i = 0; i < res; i++) {
-    f[i + j * res + k * res * res] = -sdfSculpture((i - h) / h, (j - h) / h, (k - h) / h) * 10;
+  const f = mc.field, h = res / 2, inv = 1 / h;
+  for (let k = 0; k < res; k++) {
+    const z = (k - h) * inv;
+    for (let j = 0; j < res; j++) {
+      const y = (j - h) * inv, row = j * res + k * res * res;
+      for (let i = 0; i < res; i++) f[i + row] = -sculptureSdf((i - h) * inv, y, z, P) * 10;
+    }
   }
   mc.update();
   const n = mc.count;
@@ -200,6 +265,7 @@ function sculptureGeometry(res = 68) {
   g.setAttribute('normal', new BufferAttribute(mc.normalArray.slice(0, n * 3), 3));
   mc.geometry.dispose(); mc.material.dispose();
   g.computeBoundingBox();
+  g.userData.params = P;
   return g;
 }
 
@@ -246,15 +312,19 @@ void main(){
 }`;
 
 const POST_VS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`;
-// Nearest upscale in whole device-pixel blocks, then tone map, encode, grain, ordered dither, vignette.
-const POST_FS = `uniform sampler2D tScene; uniform vec2 rtSize, outSize; uniform float block, levels, ditherAmt, grainAmt, vignetteAmt, seed;
+// Nearest upscale in whole device-pixel blocks, an optional Bayer-order dissolve, then tone map, encode,
+// static grain, ordered dither and vignette.
+const POST_FS = `uniform sampler2D tScene, tPrev; uniform vec2 rtSize, outSize; uniform float block, levels, ditherAmt, grainAmt, vignetteAmt, seed, progress;
 varying vec2 vUv;
 float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
 float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
 float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 void main(){
   vec2 cell = floor(gl_FragCoord.xy / block);
-  vec4 t = texture2D(tScene, (cell + 0.5) / rtSize);
+  vec2 uv = (cell + 0.5) / rtSize;
+  vec4 t = texture2D(tScene, uv);
+  // dissolve between two sculptures: each low-res pixel switches when progress passes its Bayer rank
+  if (progress < 1.0 && bayer4(cell) >= progress) t = texture2D(tPrev, uv);
   vec3 mapped = t.rgb;
   #ifdef TONE_MAPPING
   mapped = toneMapping(t.rgb);
@@ -278,18 +348,22 @@ void main(){
 export async function createSanctuaryScene(canvas, {
   object = 'escultura',
   fx = true,
-  pixelScale = 3,
+  pixelScale = 4,
   motion = true,
   framing = 'landing',
   onReady = () => {},
-  // optional extras (the fixed interface above is unchanged)
-  dither = 0.35,   // 0 = no quantising, 1 = strong
-  grain = 0.5,     // 0 = none, 1 = most (still low amplitude); static, never per-frame
-  vignette = 0,    // 0..1, soft
-  onError = null,
+  // optional extras (backwards-compatible additions)
+  seed = undefined,        // escultura: which sculpture (0..9999); random when omitted
+  onSculpture = null,      // called with the seed whenever a sculpture is shown
+  interactive = true,      // a click or tap on the scene calls regenerate()
+  dither = 0.8,            // 0 = no quantising, 1 = strongest
+  grain = 0.5,             // 0 = none, 1 = most (still low amplitude); static, never refreshed
+  vignette = 0,            // 0..1, soft
+  onError = null,          // lost WebGL context; without it the handler throws
 } = {}) {
   if (!canvas) throw new Error('createSanctuaryScene: canvas is required');
-  const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette };
+  const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette, interactive,
+    seed: Number.isFinite(Number(seed)) && seed !== null ? clampSeed(seed) : randomSeed() };
   const host = canvas.parentElement || canvas;
 
   const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
@@ -306,7 +380,6 @@ export async function createSanctuaryScene(canvas, {
   const C = h => new Color(h);
   const scene = new Scene();
   const camera = new PerspectiveCamera(38, 1, 0.1, 600);
-  camera.rotation.order = 'YXZ';
 
   /* sky */
   const skyU = {
@@ -320,7 +393,6 @@ export async function createSanctuaryScene(canvas, {
   sky.renderOrder = -1;
   scene.add(sky);
   scene.fog = new FogExp2(C(MOOD.fog.color), MOOD.fog.density);
-
 
   /* lights */
   const hemi = new HemisphereLight(C(MOOD.hemi[0]), C(MOOD.hemi[1]), MOOD.hemi[2]);
@@ -373,15 +445,8 @@ export async function createSanctuaryScene(canvas, {
       scene.add(beam);
     }
   }
-  const floor = new Mesh(keepGeo(new PlaneGeometry(240, 240).rotateX(-Math.PI / 2)), floorMat);
-    scene.add(floor);
+  scene.add(new Mesh(keepGeo(new PlaneGeometry(240, 240).rotateX(-Math.PI / 2)), floorMat));
 
-  /* the object on its plinth(s) */
-  const rig = new Group();
-  scene.add(rig);
-  let kit = null;
-
-  function mesh(geo, mat) { return new Mesh(geo, mat); }
   // fake contact shadow: a soft radial-gradient decal on the floor (no shadow maps)
   const shadowTex = (() => {
     const c = document.createElement('canvas'); c.width = c.height = 64;
@@ -393,39 +458,45 @@ export async function createSanctuaryScene(canvas, {
   const shadowMat = new MeshBasicMaterial({ color: 0x241d38, alphaMap: shadowTex, transparent: true, opacity: 0.55, depthWrite: false });
   materials.push(shadowMat);
   const shadowGeo = keepGeo(new PlaneGeometry(1, 1).rotateX(-Math.PI / 2));
-  function contact(x, z, sx, sz, rot = 0, o = 1) {
-    const m = new Mesh(shadowGeo, o === 1 ? shadowMat : Object.assign(shadowMat.clone(), { opacity: shadowMat.opacity * o }));
-    if (o !== 1) materials.push(m.material);
+  function contact(x, z, sx, sz, rot = 0) {
+    const m = new Mesh(shadowGeo, shadowMat);
     m.position.set(x, 0.004, z); m.scale.set(sx, 1, sz); m.rotation.y = rot; m.renderOrder = 1;
     return m;
   }
-  function mover(obj, base = obj.rotation.y) { return { obj, baseY: base, baseX: obj.rotation.x }; }
 
-  function buildKit(name) {
+  /* the object on its plinth(s) */
+  const rig = new Group();
+  scene.add(rig);
+  let kit = null;
+  const mesh = (geo, mat) => new Mesh(geo, mat);
+
+  function buildKit(name, sculptureSeed) {
     const g = new Group(), own = [];
     const G = geo => { own.push(geo); return geo; };
-    let movers = [], focusY = 1.45, extent = 0.6, tap = 'turn';
+    let focusY = 1.45, extent = 0.6, plinth = { w: 0.72, h: 1.04 };
     if (name === 'ruina') {
       const PH = 1.0;
+      plinth = { w: 0.8, h: PH };
       g.add(mesh(G(plinthGeo(0.8, PH)), plinthMat), contact(0.08, 0.06, 1.7, 1.7));
       const cap = mesh(G(ionicCapital()), ruinStone);
       cap.scale.setScalar(1.05); cap.position.y = PH; cap.rotation.y = -30 * DEG;
-      g.add(cap); movers = [mover(cap)];
+      g.add(cap);
       const d1 = mesh(G(brokenDrum(0.62, 7)), ruinStone);
       d1.rotation.set(0, 0.5, Math.PI / 2); d1.position.set(-1.05, R * 0.94, -1.1);
       const d2 = mesh(G(brokenDrum(0.44, 19)), ruinStone);
       d2.rotation.set(0, -0.4, -Math.PI / 2); d2.position.set(0.95, R * 0.94, -1.9);
-      g.add(d1, d2, contact(-1.05, -1.1, 1.0, 0.85, 0.5, 0.9), contact(0.95, -1.9, 0.78, 0.8, -0.4, 0.9));
+      g.add(d1, d2, contact(-1.05, -1.1, 1.0, 0.85, 0.5), contact(0.95, -1.9, 0.78, 0.8, -0.4));
       focusY = 1.42; extent = 0.75;
     } else if (name === 'escultura') {
       const PH = 1.04;
       g.add(mesh(G(plinthGeo(0.72, PH)), plinthMat), contact(0.06, 0.06, 1.6, 1.6));
       const s = 0.37;
-      const sc = mesh(G(sculptureGeometry()), marble);
+      const geo = G(buildSculptureGeometry(sculptureSeed));
+      const sc = mesh(geo, marble);
       sc.scale.setScalar(s);
-      sc.position.y = PH + 0.86 * s; // block bottom at y = -0.86
-      sc.rotation.y = -28 * DEG;
-      g.add(sc); movers = [mover(sc)];
+      sc.position.y = PH - geo.boundingBox.min.y * s;
+      sc.rotation.y = geo.userData.params.yaw;
+      g.add(sc);
       focusY = 1.5; extent = 0.55;
     } else {
       // the sculptor's study: three solids on plinths of different heights
@@ -434,7 +505,7 @@ export async function createSanctuaryScene(canvas, {
         { x: 0.0, z: -0.14, h: 1.08, w: 0.46 },
         { x: 0.5, z: 0.3, h: 0.9, w: 0.38 },
       ];
-      for (const s of spots) { const p = mesh(G(plinthGeo(s.w, s.h)), plinthMat); p.position.set(s.x, 0, s.z); g.add(p, contact(s.x + 0.05, s.z + 0.05, s.w * 2.1, s.w * 2.1)); }
+      for (const sp of spots) { const p = mesh(G(plinthGeo(sp.w, sp.h)), plinthMat); p.position.set(sp.x, 0, sp.z); g.add(p, contact(sp.x + 0.05, sp.z + 0.05, sp.w * 2.1, sp.w * 2.1)); }
       const ring = mesh(G(new TorusGeometry(0.15, 0.052, 14, 48)), ringMat);
       ring.position.set(spots[0].x, spots[0].h + 0.202, spots[0].z); ring.rotation.y = 28 * DEG;
       const solid = mesh(G(durerSolid(0.46)), facetMat);
@@ -442,23 +513,21 @@ export async function createSanctuaryScene(canvas, {
       const ball = mesh(G(new SphereGeometry(0.155, 40, 28)), honed);
       ball.position.set(spots[2].x, spots[2].h + 0.155, spots[2].z);
       g.add(ring, solid, ball);
-      movers = [mover(solid), mover(ring)];
-      focusY = 1.34; extent = 1.0; tap = 'light';
+      focusY = 1.34; extent = 1.0; plinth = { w: 0.46, h: 1.08, z: -0.14 };
     }
-    return { name, group: g, movers, focusY, extent, tap, own };
+    return { name, seed: sculptureSeed, group: g, focusY, extent, plinth, own };
   }
 
-  function setObject(name) {
-    if (!OBJECTS.includes(name)) name = 'escultura';
-    if (kit && kit.name === name) return;
+  function setKit(name, sculptureSeed) {
     if (kit) { rig.remove(kit.group); kit.own.forEach(g => g.dispose()); }
-    kit = buildKit(name);
+    kit = buildKit(name, sculptureSeed);
     rig.add(kit.group);
-    turn.value = turn.from = turn.target = 0;
-    light.value = light.from = light.target = 0; light.index = 0;
+    if (name === 'escultura' && typeof onSculpture === 'function') {
+      try { onSculpture(sculptureSeed); } catch (e) { console.error(e); }
+    }
   }
 
-  /* framing */
+  /* framing: a fixed camera per framing; nothing moves */
   const view = { cam: new Vector3(), offX: 0, offY: 0, fov: 38 };
   function frame3() {
     const portrait = size.w / size.h < 0.95;
@@ -489,21 +558,18 @@ export async function createSanctuaryScene(canvas, {
     }
     const kp = MOOD.key[2], bp = MOOD.back[2];
     key.target.position.copy(rig.position); back.target.position.copy(rig.position);
-    key.userData.base = new Vector3(kp[0], kp[1], kp[2]);
+    key.position.set(rig.position.x + kp[0], kp[1], rig.position.z + kp[2]);
     back.position.set(rig.position.x + bp[0], bp[1], rig.position.z + bp[2]);
-    placeKey();
-  }
-  function placeKey() {
-    const b = key.userData.base; if (!b) return;
-    const a = light.value;
-    key.position.set(rig.position.x + b.x * Math.cos(a) - b.z * Math.sin(a), b.y, rig.position.z + b.x * Math.sin(a) + b.z * Math.cos(a));
+    camera.position.copy(view.cam);
+    camera.rotation.set(0, 0, 0);
   }
 
-  /* render targets and the output pass */
+  /* render targets (two, for the dissolve) and the output pass */
   const size = { w: 1, h: 1, dw: 1, dh: 1, block: 1, rw: 1, rh: 1 };
-  let rt = null;
+  let rtCur = null, rtPrev = null;
   const postU = {
-    tScene: { value: null }, rtSize: { value: new Vector2(1, 1) }, outSize: { value: new Vector2(1, 1) },
+    tScene: { value: null }, tPrev: { value: null }, progress: { value: 1 },
+    rtSize: { value: new Vector2(1, 1) }, outSize: { value: new Vector2(1, 1) },
     block: { value: 1 }, levels: { value: 0 }, ditherAmt: { value: 1 }, grainAmt: { value: 0 }, vignetteAmt: { value: 0 }, seed: { value: 17.0 },
   };
   const postMat = new ShaderMaterial({ uniforms: postU, vertexShader: POST_VS, fragmentShader: POST_FS, depthTest: false, depthWrite: false });
@@ -517,13 +583,21 @@ export async function createSanctuaryScene(canvas, {
 
   function fxParams() {
     const on = !!opts.fx;
-    const d = on ? clamp01(num(opts.dither, 0.35)) : 0;
-    const gr = on ? clamp01(num(opts.grain, 0.5)) : 0;
-    const v = on ? clamp01(num(opts.vignette, 0)) : 0;
-    return { on, d, gr, v, scale: on ? Math.max(1, Math.min(4, Math.round(num(opts.pixelScale, 3)))) : 1 };
+    return {
+      d: on ? clamp01(num(opts.dither, 0.8)) : 0,
+      gr: on ? clamp01(num(opts.grain, 0.5)) : 0,
+      v: on ? clamp01(num(opts.vignette, 0)) : 0,
+      scale: on ? Math.max(1, Math.min(4, Math.round(num(opts.pixelScale, 4)))) : 1,
+    };
   }
+  const makeRT = samples => new WebGLRenderTarget(size.rw, size.rh, {
+    type: halfFloat ? HalfFloatType : UnsignedByteType,
+    colorSpace: halfFloat ? NoColorSpace : SRGBColorSpace,
+    minFilter: NearestFilter, magFilter: NearestFilter, depthBuffer: true, samples,
+  });
 
   function resize() {
+    if (disposed) return;
     const w = Math.max(1, Math.round(canvas.clientWidth || host.clientWidth || window.innerWidth));
     const h = Math.max(1, Math.round(canvas.clientHeight || host.clientHeight || window.innerHeight));
     const p = fxParams();
@@ -533,125 +607,101 @@ export async function createSanctuaryScene(canvas, {
     size.rw = Math.ceil(size.dw / size.block); size.rh = Math.ceil(size.dh / size.block);
     renderer.setSize(size.dw, size.dh, false);
     const samples = size.block === 1 && renderer.capabilities.isWebGL2 ? 4 : 0;
-    if (!rt || rt.width !== size.rw || rt.height !== size.rh || rt.samples !== samples) {
-      if (rt) rt.dispose();
-      rt = new WebGLRenderTarget(size.rw, size.rh, {
-        type: halfFloat ? HalfFloatType : UnsignedByteType,
-        colorSpace: halfFloat ? NoColorSpace : SRGBColorSpace,
-        minFilter: NearestFilter, magFilter: NearestFilter, depthBuffer: true, samples,
-      });
+    if (!rtCur || rtCur.width !== size.rw || rtCur.height !== size.rh || rtCur.samples !== samples) {
+      if (rtCur) rtCur.dispose();
+      if (rtPrev) rtPrev.dispose();
+      rtCur = makeRT(samples); rtPrev = makeRT(samples);
+      endDissolve();
     }
-    postU.tScene.value = rt.texture;
+    postU.tScene.value = rtCur.texture;
+    postU.tPrev.value = rtPrev.texture;
     postU.rtSize.value.set(size.rw, size.rh);
     postU.outSize.value.set(size.dw, size.dh);
     postU.block.value = size.block;
     postU.levels.value = p.d > 0 ? Math.round(34 - 26 * p.d) : 0;
-    postU.ditherAmt.value = 1;
     postU.grainAmt.value = p.gr * 0.045;
     postU.vignetteAmt.value = p.v * 0.4;
     frame3();
     camera.aspect = size.rw / size.rh;
     camera.fov = view.fov;
-    const ox = Math.round(view.offX * size.rw), oy = Math.round(view.offY * size.rh);
-    camera.setViewOffset(size.rw, size.rh, ox, oy, size.rw, size.rh);
+    camera.setViewOffset(size.rw, size.rh, Math.round(view.offX * size.rw), Math.round(view.offY * size.rh), size.rw, size.rh);
     camera.updateProjectionMatrix();
+    sceneDirty = true;
     requestRender();
   }
 
-  /* interaction (attached to the canvas's parent) */
-  const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
-  const turn = { value: 0, from: 0, target: 0, t0: 0, dur: 4600 };
-  const light = { value: 0, from: 0, target: 0, t0: 0, dur: 4600, index: 0 };
-  const LIGHT_ANGLES = [0, 1.05, -0.85];
-  const onMove = e => {
-    if (e.pointerType === 'touch' || !opts.motion) return;
-    const r = host.getBoundingClientRect();
-    pointer.tx = Math.max(-1, Math.min(1, ((e.clientX - r.left) / (r.width || 1)) * 2 - 1));
-    pointer.ty = Math.max(-1, Math.min(1, ((e.clientY - r.top) / (r.height || 1)) * 2 - 1));
-    requestRender();
-  };
-  const onLeave = () => { pointer.tx = 0; pointer.ty = 0; requestRender(); };
-  const onClick = e => {
-    if (!opts.motion || disposed) return;
-    if (e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, label, [role="button"], [data-no-tap]')) return;
-    const now = performance.now();
-    turn.from = turn.value; turn.target = turn.target + (kit.tap === 'light' ? Math.PI / 3 : Math.PI / 2); turn.t0 = now;
-    if (kit.tap === 'light') {
-      light.index = (light.index + 1) % LIGHT_ANGLES.length;
-      light.from = light.value; light.target = LIGHT_ANGLES[light.index]; light.t0 = now;
+  /* dissolve between two sculptures (motion on only); the scene itself never moves */
+  const DISSOLVE_MS = 800;
+  const dissolve = { active: false, t0: 0 };
+  function endDissolve() { dissolve.active = false; postU.progress.value = 1; }
+
+  function regenerate(next) {
+    if (disposed) return opts.seed;
+    let s = next === undefined || next === null ? randomSeed() : clampSeed(next);
+    if (next === undefined || next === null) while (s === opts.seed) s = randomSeed();
+    opts.seed = s;
+    if (opts.object !== 'escultura') return s;
+    const animate = !!opts.motion && ready && !lost && !document.hidden;
+    if (animate) {
+      // keep the last image of the old sculpture in rtPrev, render the new one into rtCur, then dissolve
+      const t = rtPrev; rtPrev = rtCur; rtCur = t;
+      postU.tScene.value = rtCur.texture; postU.tPrev.value = rtPrev.texture;
+      setKit('escultura', s);
+      frame3();
+      renderScene();
+      dissolve.active = true; dissolve.t0 = performance.now(); postU.progress.value = 0;
+      requestRender();
+    } else {
+      endDissolve();
+      setKit('escultura', s);
+      frame3();
+      sceneDirty = true;
+      requestRender();
     }
-    requestRender();
+    return s;
+  }
+
+  /* the only interaction: a click or tap on the scene shows another sculpture */
+  const onClick = e => {
+    if (!opts.interactive || disposed || opts.object !== 'escultura') return;
+    if (e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, label, [role="button"], [data-no-tap]')) return;
+    regenerate();
   };
-  host.addEventListener('pointermove', onMove, { passive: true });
-  host.addEventListener('pointerleave', onLeave);
   host.addEventListener('click', onClick);
 
-  /* render loop: on demand when still, about 30 fps while moving, paused when hidden */
-  let raf = 0, needs = false, lastRender = 0, lastUpdate = 0, clock = 0, ready = false, disposed = false, lost = false, slow = 0;
-  const ease = t => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, t)));
+  /* render loop: frames only on change, about 30 fps during a dissolve, nothing while hidden */
+  let raf = 0, needs = false, sceneDirty = true, lastRender = 0, ready = false, disposed = false, lost = false;
   function schedule() { if (!raf && !disposed && !lost && !document.hidden) raf = requestAnimationFrame(tick); }
   function requestRender() { needs = true; schedule(); }
-  function animating() {
-    return opts.motion && (MOOD.drift > 0 || Math.abs(pointer.x - pointer.tx) > 1e-3 || Math.abs(pointer.y - pointer.ty) > 1e-3 ||
-      turn.value !== turn.target || light.value !== light.target);
-  }
 
-  function update(now) {
-    const dt = lastUpdate ? Math.min(0.1, (now - lastUpdate) / 1000) : 0;
-    lastUpdate = now;
-    const motionOn = !!opts.motion;
-    if (motionOn) clock += dt;
-    const drift = motionOn ? MOOD.drift : 0;
-    if (!motionOn) { pointer.tx = pointer.ty = 0; pointer.x = pointer.y = 0; turn.value = turn.target; light.value = light.target; }
-    const k = 1 - Math.pow(0.02, dt / 1.2); // settles in about 1.2 s
-    pointer.x += (pointer.tx - pointer.x) * k; pointer.y += (pointer.ty - pointer.y) * k;
-    if (motionOn && turn.value !== turn.target) {
-      const e = ease((now - turn.t0) / turn.dur);
-      turn.value = e >= 1 ? turn.target : turn.from + (turn.target - turn.from) * e;
-    }
-    if (motionOn && light.value !== light.target) {
-      const e = ease((now - light.t0) / light.dur);
-      light.value = e >= 1 ? light.target : light.from + (light.target - light.from) * e;
-    }
-    placeKey();
-    // camera: a tiny lean and drift by rotation only, snapped to whole low-res pixels so the grid never shimmers
-    let yaw = -pointer.x * 0.55 * DEG + Math.sin(clock * 0.21) * 0.25 * DEG * drift;
-    let pitch = -pointer.y * 0.3 * DEG + Math.sin(clock * 0.17 + 1.3) * 0.15 * DEG * drift;
-    if (size.block > 1) { const q = (view.fov * DEG) / size.rh; yaw = Math.round(yaw / q) * q; pitch = Math.round(pitch / q) * q; }
-    camera.position.copy(view.cam);
-    camera.rotation.set(pitch, yaw, 0);
-    // the object leans at most 3 degrees toward the pointer and breathes slowly
-    for (const m of kit.movers) {
-      m.obj.rotation.y = m.baseY + turn.value + pointer.x * 3 * DEG + Math.sin(clock * 0.13) * 1.2 * DEG * drift;
-      m.obj.rotation.x = m.baseX + pointer.y * 1.5 * DEG;
-    }
-  }
-
-  function render() {
-    renderer.setRenderTarget(rt);
+  function renderScene() {
+    renderer.setRenderTarget(rtCur);
     renderer.render(scene, camera);
     renderer.setRenderTarget(null);
-    renderer.render(postScene, postCam);
+    sceneDirty = false;
   }
+  function renderPost() { renderer.render(postScene, postCam); }
 
   function tick(now) {
     raf = 0;
     if (disposed || lost || document.hidden) return;
-    const moving = animating();
-    if (!needs && !moving) return;
-    if (moving && !needs && now - lastRender < FRAME_MS) { schedule(); return; }
-    update(now);
-    render();
-    if (opts.motion && lastRender && now - lastRender > 55) {
-      if (++slow > 40 && dpr > 1) { dpr = 1; slow = 0; resize(); }
-    } else slow = Math.max(0, slow - 1);
+    if (dissolve.active) {
+      if (now - lastRender < FRAME_MS && !needs) { schedule(); return; }
+      const k = Math.min(1, (now - dissolve.t0) / DISSOLVE_MS);
+      postU.progress.value = k;
+      if (k >= 1) endDissolve();
+    } else if (!needs) return;
+    if (sceneDirty) renderScene();
+    renderPost();
     lastRender = now; needs = false;
     if (!ready) { ready = true; try { onReady(); } catch (e) { console.error(e); } }
-    if (animating()) schedule();
-    else lastUpdate = 0;
+    if (dissolve.active) schedule();
   }
 
-  const onVis = () => { if (document.hidden) { cancelAnimationFrame(raf); raf = 0; } else { lastUpdate = 0; requestRender(); } };
+  const onVis = () => {
+    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; endDissolve(); }
+    else requestRender();
+  };
   document.addEventListener('visibilitychange', onVis);
   const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => resize()) : null;
   if (ro) ro.observe(host);
@@ -663,28 +713,51 @@ export async function createSanctuaryScene(canvas, {
   };
   canvas.addEventListener('webglcontextlost', onLost);
 
-  setObject(opts.object);
+  setKit(opts.object = OBJECTS.includes(opts.object) ? opts.object : 'escultura', opts.seed);
   resize();
 
   return {
     setOptions(partial = {}) {
       if (disposed || !partial) return;
-      const prevObj = opts.object;
-      Object.assign(opts, partial);
-      if (opts.object !== prevObj) setObject(opts.object);
-      if (!opts.motion) { pointer.tx = pointer.ty = 0; }
-      lastUpdate = 0;
+      const prevObj = opts.object, prevSeed = opts.seed;
+      const { seed: nextSeed, ...rest } = partial;
+      Object.assign(opts, rest);
+      if (!OBJECTS.includes(opts.object)) opts.object = 'escultura';
+      if (!opts.motion) endDissolve();
+      if (nextSeed !== undefined && nextSeed !== null && clampSeed(nextSeed) !== prevSeed && opts.object === prevObj) {
+        regenerate(nextSeed);
+      } else if (nextSeed !== undefined && nextSeed !== null) {
+        opts.seed = clampSeed(nextSeed);
+      }
+      if (opts.object !== prevObj) { endDissolve(); setKit(opts.object, opts.seed); }
       resize();
     },
     resize,
+    regenerate,
+    get seed() { return opts.seed; },
     snapshot(type = 'image/jpeg', q = 0.86) {
       if (disposed || lost) return '';
-      update(performance.now()); render();
+      endDissolve(); renderScene(); renderPost();
       return canvas.toDataURL(type, q);
+    },
+    // Where to pin a museum label, in CSS px from the canvas's top-left corner.
+    // 'plinth': the front-right top corner of the (main) plinth. 'beside': right of the object at its middle height.
+    anchor(which = 'plinth') {
+      if (!kit) return null;
+      const p = kit.plinth, half = p.w / 2 + 0.07, z = (p.z || 0) + half;
+      const v = which === 'beside'
+        ? new Vector3(half + 0.06, p.h + 0.28, p.z || 0)
+        : new Vector3(half, p.h, z);
+      v.add(rig.position).project(camera);
+      const cropX = (size.rw * size.block - size.dw) / dpr, cropY = (size.rh * size.block - size.dh) / dpr;
+      return {
+        x: (v.x * 0.5 + 0.5) * (size.w + cropX),
+        y: (1 - (v.y * 0.5 + 0.5)) * (size.h + cropY) - cropY,
+      };
     },
     triangles(part = 'scene') {
       let n = 0;
-      const visible = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
+      const visible = o => { for (let q = o; q; q = q.parent) if (!q.visible) return false; return true; };
       (part === 'object' ? rig : scene).traverse(o => {
         if (o.isMesh && o !== sky && visible(o)) {
           const g = o.geometry;
@@ -697,8 +770,6 @@ export async function createSanctuaryScene(canvas, {
       if (disposed) return;
       disposed = true;
       cancelAnimationFrame(raf); raf = 0;
-      host.removeEventListener('pointermove', onMove);
-      host.removeEventListener('pointerleave', onLeave);
       host.removeEventListener('click', onClick);
       document.removeEventListener('visibilitychange', onVis);
       canvas.removeEventListener('webglcontextlost', onLost);
@@ -708,13 +779,16 @@ export async function createSanctuaryScene(canvas, {
       sky.geometry.dispose(); skyMat.dispose();
       materials.forEach(m => m.dispose());
       postGeo.dispose(); postMat.dispose(); shadowTex.dispose();
-      if (rt) rt.dispose();
+      if (rtCur) rtCur.dispose();
+      if (rtPrev) rtPrev.dispose();
       scene.traverse(o => { if (o.isInstancedMesh) o.dispose(); });
       renderer.dispose();
       renderer.forceContextLoss();
     },
   };
 }
+
+function clampSeed(v) { const n = Math.round(Number(v)); return Number.isFinite(n) ? ((n % (SEED_MAX + 1)) + SEED_MAX + 1) % (SEED_MAX + 1) : randomSeed(); }
 
 function num(v, d) { if (v === true) return d; if (v === false || v == null) return v === false ? 0 : d; const n = Number(v); return Number.isFinite(n) ? n : d; }
 function clamp01(v) { return Math.max(0, Math.min(1, v)); }
