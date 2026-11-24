@@ -72,7 +72,7 @@ the stakeholder meeting.
 |----|--------|-------|
 | W1 | done | Inventory in 01_APP_INVENTORY.md; neither demo mode is complete; txt2img workflow JSON is corrupt on this branch |
 | W2 | done | Wrote `02_PROJECT_HISTORY.md`: origin, epic timeline e0–e8, fork redesign branches, docs list, hygiene findings (tracked node_modules/.pyc, .env/.db in e0007e2 history, duplicate welcome sha), glossary. |
-| W3 | pending | |
+| W3 | done | `03_CURRENT_UI_AUDIT.md` + 63 screenshots in `screens/current/`. Demo: `?demo=1` = patient (home/workspace/gallery only); dev-preview = therapist only. |
 | W4 | done | 04_DESIGN_RESEARCH.md: 3 directions (Atmospheric Sanctuary / Paper Studio / Gallery Wall); w3.org fetch blocked, some links unverified |
 | I1 | pending | |
 | V1 | pending | |
@@ -88,3 +88,4 @@ the stakeholder meeting.
 - 2026-11-24 — W2: project history written to `docs/redesign/02_PROJECT_HISTORY.md`. Status done.
 - 2026-11-24 — W4: design research written to `docs/redesign/04_DESIGN_RESEARCH.md`. Status done.
 - 2026-11-24 — W1: app inventory written to `docs/redesign/01_APP_INVENTORY.md` (roles, flows, routes, API/WS/data model, workflows, both demo modes, i18n, tech debt, open questions). Status done.
+- 2026-11-24 — W3: current UI audit written to `docs/redesign/03_CURRENT_UI_AUDIT.md`, 63 screenshots in `screens/current/`. Status done.
