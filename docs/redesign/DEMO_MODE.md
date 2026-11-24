@@ -32,6 +32,11 @@ A normal `npx vite build` is unchanged (history routing, real API).
 - WebSockets: `createSocket()` (`lib/config.js`) returns `FakeSocket` (`lib/demo/fakeSocket.js`): same surface (`onopen/onmessage/onclose/send/close/readyState`), backed by BroadcastChannel, so a patient tab and a therapist tab chat and share submitted images live; `session_ended` and `new_session` are delivered too. With only one tab open, scripted counterparts keep it alive: "Marta" greets and answers chat / submitted images with open supportive questions after 3-5 s (ES/CA/EN following the UI language); a lone therapist tab gets a scripted "Alex" message and image submission.
 - Router: hash history in demo mode; guard sends users without a demo login to `/login`. 401 interceptor reads the hash path. Canvas uses Pointer Events (touch/stylus).
 - Config: API/WS URLs, image URLs and sockets are centralised in `src/lib/config.js` (non-demo behaviour unchanged).
+- Reflection notes and "kept" marks (B2): `state.notes` in `lib/demo/store.js`, one entry per image file name: `{ fileName, text, kept, ownerId, sessionId, updatedAt }`, broadcast to other tabs with the rest of the state. Use the service, not the store: `notesService` in `src/api/notesService.js`:
+  - `saveNote(fileName, text, { userId, sessionId })`: the ReflectionPrompt note
+  - `keepArtwork(fileName, { userId, sessionId })`: set by "Guardar en mis obras"
+  - `getNote(fileName)`, `getNotesForUser(userId)`, `getNotesForSession(sessionId)`: for the gallery detail and the therapist view
+  - Real backend: CONCEPT, kept in this browser's `localStorage` (`comfymind.notes.v1`) until the API has a notes endpoint. (Store-level functions: `demoNotes.*` with the same names.)
 
 ## Verified (Playwright against `build:demo` + `vite preview`)
 - Landing, login as patient (role button), home shows live session, join session, text-to-image (about 4 s wait), confirm/submit, gallery picker with 12 templates, free gallery, past session gallery.

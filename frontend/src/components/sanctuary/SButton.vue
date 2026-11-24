@@ -31,6 +31,12 @@ const props = withDefaults(defineProps<Props>(), {
 const tag = computed(() => props.as ?? (props.to ? RouterLink : props.href ? 'a' : 'button'))
 const isNativeButton = computed(() => tag.value === 'button')
 const inert = computed(() => props.disabled || props.busy)
+// Bind `to`/`href` only when set: an explicit `href: undefined` would override the href RouterLink computes.
+const linkAttrs = computed(() => {
+  if (props.to) return { to: props.to }
+  if (props.href) return { href: props.href }
+  return {}
+})
 
 const variants = {
   // dusk: peach fill + sky text; dawn: ink fill + white text (both come from --primary)
@@ -62,8 +68,7 @@ const classes = computed(() =>
     :disabled="isNativeButton ? inert : undefined"
     :aria-disabled="!isNativeButton && inert ? 'true' : undefined"
     :aria-busy="busy ? 'true' : undefined"
-    :to="to"
-    :href="href"
+    v-bind="linkAttrs"
     :class="classes"
   >
     <Loader2 v-if="busy" aria-hidden="true" class="animate-spin" />
