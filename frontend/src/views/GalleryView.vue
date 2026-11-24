@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Download, Plus, ArrowLeft, StickyNote } from 'lucide-vue-next'
+import { Download, Plus, ArrowLeft } from 'lucide-vue-next'
 import { imageUrl as fileUrl } from '@/lib/config'
 import { userService } from '@/api/userService'
 import { sessionsService } from '@/api/sessionsService'
@@ -187,7 +187,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
           <p class="type-body text-muted-foreground">{{ t('gallery.emptyHint') }}</p>
           <SButton v-if="!isTherapist" class="mt-2" @click="goCreate">
             <template #icon><Plus aria-hidden="true" /></template>
-            {{ t('gallery.create') }}
+            {{ t('gallery.createShort') }}
           </SButton>
         </div>
       </div>
@@ -216,7 +216,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
       <p v-if="shown.length === 0" class="type-body text-muted-foreground">{{ t('gallery.emptyFilter') }}</p>
 
       <!-- The wall: obras hang at different widths, grouped into rooms (one per session). -->
-      <section v-for="room in rooms" :key="room.key" class="flex flex-col gap-8" :aria-label="room.title || t('gallery.title')">
+      <section v-for="room in rooms" :key="room.key" class="mt-8 flex flex-col gap-8 first:mt-0" :aria-label="room.title || t('gallery.title')">
         <template v-if="room.title">
           <h2 class="type-h3 text-muted-foreground">{{ room.title }}</h2>
           <hr class="flute-rule" />
@@ -257,7 +257,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
             loading="eager"
           />
           <div class="flex flex-col gap-4">
-            <h3 class="type-h3 flex items-center gap-2"><StickyNote aria-hidden="true" class="size-5" /> {{ t('gallery.reflection') }}</h3>
+            <h3 class="type-h3">{{ t('gallery.reflection') }}</h3>
             <SCard v-if="note" :raised="false" padding="md"><p class="type-body">{{ note }}</p></SCard>
             <p v-else class="type-body text-muted-foreground">{{ t('gallery.noReflection') }}</p>
             <div class="mt-auto flex flex-wrap gap-3 pt-4">

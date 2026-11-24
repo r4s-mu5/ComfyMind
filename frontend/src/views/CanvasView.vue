@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// LEGACY (pre-redesign) screen, kept reachable under /legacy/*. The patient routes now use CreateView.vue.
 import { createSocket } from '@/lib/config'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -318,11 +319,11 @@ const uploadSavedImage = async () => {
     // Volver a la vista de generación con el boceto guardado
     if (sessionId.value) {
       router.push({ 
-        path: `/session/${sessionId.value}/patient`, 
+        path: `/legacy/session/${sessionId.value}/patient`, 
         query: { image: fname } 
       })
     } else {
-      router.push({ path: '/generation/', query: { image: fname } })
+      router.push({ path: '/legacy/generation/', query: { image: fname } })
     }
   } catch (e: any) {
     const detail = e?.response?.data?.detail || e?.message || String(e)

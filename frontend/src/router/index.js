@@ -7,6 +7,7 @@ import LoginView from '../views/LoginView.vue'
 import HomeView from '../views/HomeView.vue'
 import CanvasView from '../views/CanvasView.vue'
 import GenerationView from '../views/GenerationView.vue'
+import CreateView from '../views/CreateView.vue'
 import CalendarView from '../views/CalendarView.vue'
 import SessionView from '../views/SessionView.vue'
 import WelcomeView from '../views/WelcomeView.vue'
@@ -18,15 +19,20 @@ const routes = [
   { path: '/login', component: LoginView, meta: { hideHeader: true } },
   { path: '/signup/', component: SignupView, meta: { hideHeader: true } },
   { path: '/home/', component: HomeView },
-  { path: '/canvas/', component: CanvasView },
-  { path: '/generation/', component: GenerationView },
+  // Creation workspace (B2). Patient routes use CreateView; the old screens live under /legacy.
+  { path: '/canvas/', component: CreateView, meta: { hideHeader: true, way: 'draw' } },
+  { path: '/generation/', component: CreateView, meta: { hideHeader: true } },
   { path: '/freeimages/', component: GalleryView },
   // session-specific routes (use sessionId param)
-  { path: '/session/:sessionId/patient', component: GenerationView, props: true },
-  { path: '/session/:sessionId/patient/canvas', component: CanvasView, props: true },
+  { path: '/session/:sessionId/patient', component: CreateView, props: true, meta: { hideHeader: true } },
+  { path: '/session/:sessionId/patient/canvas', component: CreateView, props: true, meta: { hideHeader: true, way: 'draw' } },
   { path: '/session/:sessionId/therapist', component: TherapistSessionView, props: true, meta: { hideHeader: true } },
   { path: '/session/:sessionId', component: GalleryView, props: true },
   // Previous (pre-redesign) screens, kept reachable.
+  { path: '/legacy/generation/', component: GenerationView },
+  { path: '/legacy/canvas/', component: CanvasView },
+  { path: '/legacy/session/:sessionId/patient', component: GenerationView, props: true },
+  { path: '/legacy/session/:sessionId/patient/canvas', component: CanvasView, props: true },
   { path: '/legacy/session/:sessionId/therapist', component: TherapistGenerationView, props: true },
   { path: '/legacy/session/:sessionId', component: SessionView, props: true },
   { path: '/legacy/freeimages/', component: SessionView },

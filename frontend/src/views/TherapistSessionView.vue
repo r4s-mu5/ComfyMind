@@ -310,9 +310,8 @@ const onTabKey = (e: KeyboardEvent) => {
             rows="10"
             class="min-h-48 w-full rounded-control border-2 border-input bg-card p-4 text-[1.0625rem] leading-relaxed text-foreground"
           />
-          <p class="type-small flex items-center gap-2 text-muted-foreground" aria-live="polite">
-            <CheckCircle2 v-if="notesSavedAt" aria-hidden="true" class="size-4 text-success" />
-            <span v-if="notesSavedAt">{{ t('therapist.notesSaved') }} · </span>{{ t('therapist.notesConcept') }}
+          <p class="type-small text-muted-foreground" aria-live="polite">
+            <span v-if="notesSavedAt">{{ t('therapist.notesSaved') }}. </span>{{ t('therapist.notesConcept') }}
           </p>
         </div>
       </SCard>

@@ -514,3 +514,18 @@ html.no-3d .scene-3d canvas { display: none; }
   from { background-position: 150% 0; }
   to { background-position: -50% 0; }
 }
+
+/* B2 additions: drawing paper and the calm paint palette for the Dibujo canvas (CreateView). */
+:root {
+  --paper: #FBFAF6;
+  --paint-ink: #14202F;
+  --paint-blue: #3E5C8A;
+  --paint-teal: #1E6E6E;
+  --paint-sage: #6E8F5A;
+  --paint-ochre: #C8963E;
+  --paint-coral: #C2654F;
+  --paint-rose: #B9728C;
+  --paint-lilac: #7D6BAE;
+}
+.bg-paper { background-color: var(--paper); }
+.paper-frame { background: var(--dawn-surface-2); }

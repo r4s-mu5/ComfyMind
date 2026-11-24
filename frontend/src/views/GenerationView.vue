@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// LEGACY (pre-redesign) screen, kept reachable under /legacy/*. The patient routes now use CreateView.vue.
 import { imageUrl as fileUrl, createSocket } from '@/lib/config'
 import { ref, onMounted, onBeforeUnmount, computed, watch, nextTick } from 'vue'
 import ChatPanel from '@/components/ChatPanel.vue'
@@ -1004,9 +1005,9 @@ const confirmMultiSelect = async () => {
 const drawSketch = async () => {
   // Preserve sessionId if we're in a session context
   if (Number.isFinite(sessionId)) {
-    router.push(`/session/${sessionId}/patient/canvas`)
+    router.push(`/legacy/session/${sessionId}/patient/canvas`)
   } else {
-    router.push('/canvas/')
+    router.push('/legacy/canvas/')
   }
 }
 
