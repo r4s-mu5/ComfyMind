@@ -1,0 +1,268 @@
+COMFYMIND VISUAL PROTOTYPE — INTERFACE CHANGE DESCRIPTION
+=========================================================
+
+Purpose
+-------
+
+This document describes the interface changes made for the patient-facing
+ComfyMind visual prototype. The work is intended for stakeholder review of
+appearance, hierarchy, terminology, accessibility basics, and the main patient
+journey. It is not a production redesign.
+
+The therapist dashboard was intentionally deferred. The backend, database,
+authentication implementation, API contracts, WebSocket behavior, ComfyUI
+services, workflows, nodes, dependencies, drawing canvas, and unrelated legacy
+screens were not changed.
+
+
+1. Overall visual direction
+---------------------------
+
+- Replaced the previous mixed gray, cyan, and green presentation with a more
+  coherent patient-focused visual system.
+- Introduced a calm deep-teal primary color, warm neutral accent surfaces,
+  off-white page backgrounds, and dark green-gray text.
+- Increased the standard border radius to create softer but still professional
+  cards, fields, buttons, and menus.
+- Reduced decorative clutter and used restrained shadows to separate content
+  without making the application feel dense.
+- Added consistent page-width, title, introductory-text, and eyebrow-label
+  styles for the redesigned screens.
+- Increased spacing around important patient content and kept the primary
+  action visually dominant.
+- Added a reduced-motion rule so animations and transitions become effectively
+  instantaneous when the operating system requests reduced motion.
+
+
+2. Login screen
+---------------
+
+- Replaced the photographic full-screen background with a quiet, abstract
+  background made from soft neutral color fields.
+- Changed the layout to a balanced two-column presentation on wide screens:
+  brand and welcome information on the left, login form on the right.
+- Added a responsive single-column layout for narrow screens.
+- Added a visible language selector at the top of the screen.
+- Reworked the login card with clearer spacing, larger fields, larger buttons,
+  and stronger heading hierarchy.
+- Preserved the existing email/password authentication call and redirect flow.
+- Preserved the existing Create account action.
+- Added localized field labels, placeholders, button labels, validation
+  messages, and error headings.
+- Added correct email and password autocomplete attributes.
+- Added accessible invalid-field state and links between fields and their error
+  messages.
+- Enlarged the password visibility control and gave it a localized accessible
+  name for both show and hide states.
+- Removed the duplicated Enter-key handler and retained standard semantic form
+  submission.
+- The interface does not include or reveal any login credentials.
+
+
+3. Shared patient application shell
+------------------------------------
+
+- Replaced the dense desktop sidebar presentation with a simpler shared top
+  navigation for the patient prototype.
+- Added clear patient navigation for:
+    - Inicio / Inici / Home
+    - Mi sesión / La meva sessió / My session
+    - Mis obras / Les meves obres / My artwork
+- Added active-page styling that combines color, contrast, and placement rather
+  than relying on color alone.
+- Replaced full-page anchor reloads with Vue Router links for prototype
+  navigation.
+- Added a compact mobile navigation drawer using the existing Reka UI Sheet
+  component.
+- Kept the ComfyMind logo and name visible in the shell without using a large
+  decorative header image.
+- Added the language selector to the desktop header and a separate, reachable
+  placement on narrow screens.
+- Redesigned the profile control as a large, keyboard-reachable button.
+- Simplified the profile menu to show the current user context and Log out.
+- In demo mode, the shell displays only synthetic identity information.
+- Existing therapist navigation remains available for existing users, but no
+  therapist prototype or new therapist dashboard was introduced.
+
+
+4. Patient home screen
+----------------------
+
+- Replaced the previous single narrow session card with a wider, responsive
+  patient dashboard that still keeps information density low.
+- Added a calm welcome section with the patient’s first name and a short,
+  supportive description.
+- Made the current session the dominant card and the obvious next step.
+- Added clear session information for therapist, date, and time using both
+  icons and text labels.
+- Added a large Continue session action.
+- Added a separate warm-toned Free creation card with a Create an image action.
+- Added a clearly separated My artwork action.
+- Added dedicated loading and error presentations instead of leaving the main
+  card partially populated.
+- Preserved the existing API calls for current user, active session, upcoming
+  session, session history, and therapist information outside demo mode.
+- Preserved the existing patient home WebSocket refresh behavior outside demo
+  mode.
+- Preserved the existing therapist home responsibilities without expanding or
+  redesigning them as part of this prototype.
+- When `?demo=1` is present, the screen uses synthetic patient, therapist, date,
+  and session data and skips home API and WebSocket calls.
+
+
+5. Patient creation workspace
+-----------------------------
+
+- Added a dedicated prototype creation workspace that appears only when the
+  route includes `?demo=1`.
+- Kept the prototype workspace in one isolated component so it can be removed
+  without rewriting the existing generation view.
+- Added a clear page title, short supportive instructions, synthetic session
+  context, and a simple two-step progress presentation.
+- Added a visible notice explaining that the demo does not send anything to the
+  image-generation service.
+- Made text-based creation the single obvious primary task for the meeting.
+- Added a large prompt field with a plain-language example.
+- Added an accessible validation message when the patient attempts to generate
+  without entering an idea.
+- Added a representative loading state with a spinner and explanatory text.
+- Added a representative result state using bundled synthetic placeholder
+  artwork.
+- Added Try again and Save controls.
+- Added a visible Saved state and a route to My artwork.
+- Displayed image, sketch, and image-combination methods as disabled secondary
+  controls so stakeholders can understand the intended hierarchy without
+  opening or modifying the existing creation modals.
+- The result transition is local and temporary. It does not call a service or
+  persist artwork.
+- Without `?demo=1`, the existing GenerationView continues to use its original
+  API, ComfyUI, WebSocket, modal, gallery, canvas, and session logic.
+- No existing ComfyUI service functions or API contracts were replaced or
+  modified.
+
+
+6. Artwork and gallery screen
+-----------------------------
+
+- Redesigned SessionView.vue because it already owns the two relevant artwork
+  responsibilities:
+    - artwork associated with an existing session route;
+    - free-creation artwork shown through the existing /freeimages route.
+- Preserved those existing routes and data responsibilities.
+- Replaced the narrow single-image carousel presentation with a responsive
+  artwork grid.
+- Added a clear My artwork or Session artwork page heading, depending on route
+  context.
+- Added a Create an image action and a Back to home action.
+- Added dedicated loading and empty states.
+- Made every artwork card a keyboard-reachable button with meaningful
+  alternative text.
+- Added a larger dialog preview when an artwork is selected.
+- Preserved the existing session information dialog for session routes and
+  restyled it to match the prototype.
+- Preserved the existing authorization checks and artwork service calls outside
+  demo mode.
+- When `?demo=1` is present, the gallery uses only bundled synthetic artwork and
+  synthetic session information and skips artwork API calls.
+- No delete or destructive artwork behavior was added.
+
+
+7. Language switching
+----------------------
+
+- Added a lightweight Vue translation composable instead of adding an
+  internationalization dependency.
+- Added Catalan, Spanish, and English translations for the redesigned patient
+  journey and shared shell.
+- Preserved the approved terminology:
+    - Obra / Obras
+    - Creación libre / Creació lliure / Free creation
+    - Mi sesión / La meva sessió / My session
+- Added a visible native language selector that is keyboard-operable and has an
+  accessible label.
+- Stored the selected language in localStorage under a prototype-specific key.
+- Updated the HTML document language when the selected language changes.
+- Used one shared reactive language value so changing the selector updates all
+  visible redesigned labels immediately.
+- Legacy screens and creation modals outside the approved journey remain in
+  their previous language and were not expanded into the prototype dictionary.
+
+
+8. Accessibility-related interface changes
+--------------------------------------------
+
+- Added a consistent high-contrast focus ring for keyboard users.
+- Increased the height and spacing of primary controls.
+- Used semantic headings, forms, navigation, lists, buttons, definition lists,
+  and status regions in the redesigned screens.
+- Added accessible names to icon-only controls.
+- Ensured clickable artwork and navigation elements are real buttons or links,
+  not click-only generic containers.
+- Added text labels and icons alongside color for status and context.
+- Added aria-invalid and error-description relationships to form fields.
+- Added polite live regions for loading and generation-result feedback.
+- Kept disabled creation methods visibly and semantically disabled.
+- Added reduced-motion support.
+- Verified that the four redesigned screens do not create horizontal overflow
+  at a 390-pixel viewport width.
+- Verified keyboard focus styling and keyboard-reachable visible controls.
+
+
+9. Prototype demonstration isolation
+-------------------------------------
+
+- Added a small query-parameter helper that detects `?demo=1` and preserves it
+  when moving between the approved prototype screens.
+- Demo behavior is limited to the patient home, generation preview, artwork
+  gallery, shell identity, and navigation needed for the meeting.
+- The demo contains no login credentials, production account creation, seeded
+  database records, or backend changes.
+- All displayed demo names, email addresses, session details, therapist details,
+  and artwork are synthetic placeholders.
+- The demo path is intentionally easy to remove: delete the isolated demo
+  workspace and query helper, then remove the small conditional branches from
+  the affected views.
+
+
+10. Global feedback and session-expiry interface
+------------------------------------------------
+
+- Localized the existing global session-expired dialog for Catalan, Spanish,
+  and English.
+- Preserved its existing logout and return-to-login behavior.
+- Kept the existing global notification component and authentication-expiry
+  integration unchanged.
+
+
+11. Intentionally unchanged or incomplete
+-------------------------------------------
+
+- Therapist dashboard preview: deferred.
+- Authentication implementation and credentials: unchanged.
+- Backend and database: unchanged.
+- API contracts and Axios service behavior: unchanged.
+- ComfyUI generation functions, workflows, models, nodes, and missing-node
+  problem: unchanged.
+- Existing WebSocket behavior outside demo mode: unchanged.
+- CanvasView.vue: unchanged.
+- Creation modals: unchanged.
+- Signup, calendar, and unrelated legacy screens: not redesigned.
+- Demo Save action: visual only and not persisted.
+- Demo image, sketch, and combination methods: intentionally disabled.
+- Formal WCAG audit and screen-reader testing: deferred to a later phase.
+
+
+12. Validation completed
+------------------------
+
+- The production frontend build completed successfully.
+- Login, patient home, demo workspace, and artwork gallery were opened and
+  reviewed in a browser.
+- Navigation through the approved demo journey was verified.
+- Catalan, Spanish, and English switching was verified.
+- Language persistence and the HTML language value were verified.
+- Empty-input validation, loading, result, saved, and gallery states were
+  verified.
+- Desktop and narrow responsive layouts were reviewed.
+- Keyboard focus visibility was verified.
+- No browser console errors or warnings appeared during the reviewed journey.

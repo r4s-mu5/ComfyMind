@@ -12,12 +12,16 @@ function getCurrentPath() {
   }
 }
 
+function isLoginEntryPath(path) {
+  return path === '/' || path === '/login' || path === '/login/'
+}
+
 axios.interceptors.response.use(
   (response) => response,
   (error) => {
     if (
       error.response && error.response.status === 401 &&
-      getCurrentPath() !== '/'
+      !isLoginEntryPath(getCurrentPath())
     ) {
       sessionExpiredDialog.value = true
     }

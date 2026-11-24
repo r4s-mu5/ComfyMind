@@ -1,92 +1,57 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { AlertCircle, Eye, EyeOff, HeartHandshake } from 'lucide-vue-next'
+import { userService } from '../api/userService'
+import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
+import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+import LanguageSelector from '@/components/LanguageSelector.vue'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { ref, computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { Eye, EyeOff } from 'lucide-vue-next'
-import { userService } from '../api/userService'
-
-import { AlertCircleIcon} from 'lucide-vue-next'
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from '@/components/ui/alert'
-
-// Importar logo desde assets
-import logoImg from '/logo_comfymind.svg'
-import loginBg from '@/assets/utils/fondo_login.jpg'
 
 const email = ref('')
 const password = ref('')
 const message = ref('')
-const messageType = ref<'error' | 'success' | ''>('')
 const isLoading = ref(false)
 const showPassword = ref(false)
 const errors = ref<Record<string, string>>({})
 
-const bgStyle = computed(() => ({
-  backgroundImage: `url(${loginBg})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'top center',
-}))
-
 const router = useRouter()
+const { locationWithDemo } = usePrototypeDemo()
+const { t } = usePrototypeLocale()
 
-const validateEmail = (emailStr: string): boolean => {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(emailStr)
-}
+const validateEmail = (emailValue: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)
 
-const validateForm = (): boolean => {
+const validateForm = () => {
   errors.value = {}
 
-  if (!email.value.trim()) {
-    errors.value.email = 'El correo electrónico es requerido'
-  } else if (!validateEmail(email.value)) {
-    errors.value.email = 'Por favor, introduce un correo electrónico válido'
-  }
+  if (!email.value.trim()) errors.value.email = t('login.emailRequired')
+  else if (!validateEmail(email.value)) errors.value.email = t('login.emailInvalid')
 
-  if (!password.value) {
-    errors.value.password = 'La contraseña es requerida'
-  } else if (password.value.length < 8) {
-    errors.value.password = 'La contraseña debe tener al menos 8 caracteres'
-  }
+  if (!password.value) errors.value.password = t('login.passwordRequired')
+  else if (password.value.length < 8) errors.value.password = t('login.passwordLength')
 
   return Object.keys(errors.value).length === 0
 }
 
 const login = async () => {
   message.value = ''
-  messageType.value = ''
 
   if (!validateForm()) {
-    message.value = 'Por favor, verifica los campos indicados'
-    messageType.value = 'error'
+    message.value = t('login.errorCheck')
     return
   }
 
   isLoading.value = true
-
   try {
-    const credentials = { email: email.value, password: password.value }
-    await userService.login(credentials)
-    router.push('/home')
+    await userService.login({ email: email.value, password: password.value })
+    router.push(locationWithDemo('/home'))
   } catch (error: any) {
-    messageType.value = 'error'
     const detail = error?.response?.data?.detail
-    message.value = typeof detail === 'string' && detail
-      ? detail
-      : 'Error al iniciar sesión. Intenta de nuevo.'
+    message.value = typeof detail === 'string' && detail ? detail : t('login.errorGeneric')
   } finally {
     isLoading.value = false
   }
@@ -94,118 +59,119 @@ const login = async () => {
 </script>
 
 <template>
-  <div
-    class="relative flex flex-col items-center px-4 py-16 min-h-screen w-full"
-    :style="bgStyle"
-  >
-    <div class="absolute inset-0 bg-white/60"></div>
+  <main class="relative min-h-screen overflow-hidden bg-[#eef4f1] px-4 py-6 sm:px-6 sm:py-10">
+    <div aria-hidden="true" class="absolute -left-32 -top-36 size-96 rounded-full bg-[#cfe4de] blur-3xl" />
+    <div aria-hidden="true" class="absolute -bottom-36 -right-24 size-[28rem] rounded-full bg-[#f1dfca] blur-3xl" />
 
-    <div class="relative z-10 flex flex-col w-full max-w-md items-center">
-      <!-- Logo pequeño / Header simple -->
-      <div class="mb-6 text-center">
-        <img :src="logoImg" alt="ComfyMind" class="mx-auto h-32 w-32 mb-2" />
-        <h1 style="font-family: 'Nunito', sans-serif; font-size: 2.2rem; font-weight: 800; color: rgb(17, 24, 39)">ComfyMind</h1>
+    <div class="relative mx-auto flex min-h-[calc(100vh-5rem)] max-w-6xl flex-col">
+      <div class="flex justify-end">
+        <LanguageSelector />
       </div>
 
-      <!-- Card de login -->
-      <Card class="w-full text-gray-900 shadow-lg bg-white/95 border border-white/70">
-      <CardHeader>
-        <CardTitle>Inicia sesión en tu cuenta</CardTitle>
-        <CardDescription>
-          Introduce tu correo electrónico para acceder
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent>
-        <form @submit.prevent="login" @keyup.enter="login" class="space-y-4" autocomplete="off">
-          <!-- Email field -->
-          <div class="flex flex-col space-y-1.5">
-            <Label for="email">Correo electrónico</Label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="ejemplo@correo.com"
-              v-model="email"
-              :class="{ 'border-red-500': errors.email }"
-              @input="() => { if (errors.email) delete errors.email }"
-            />
-            <span v-if="errors.email" class="text-xs text-red-600 mt-0.5">
-              {{ errors.email }}
+      <div class="grid flex-1 items-center gap-10 py-8 lg:grid-cols-[1fr_28rem] lg:gap-20">
+        <section class="mx-auto max-w-xl text-center lg:mx-0 lg:text-left">
+          <img src="/logo_comfymind.svg" alt="ComfyMind" class="mx-auto mb-7 size-24 lg:mx-0" />
+          <p class="prototype-eyebrow">{{ t('login.eyebrow') }}</p>
+          <h1 class="mt-4 text-4xl font-bold tracking-tight text-[#17302d] sm:text-5xl">
+            {{ t('login.title') }}
+          </h1>
+          <p class="mt-5 text-lg leading-8 text-[#526762]">
+            {{ t('login.description') }}
+          </p>
+          <div class="mt-8 hidden items-center gap-3 text-sm font-semibold text-[#315b55] lg:flex">
+            <span class="flex size-10 items-center justify-center rounded-full bg-white shadow-sm">
+              <HeartHandshake aria-hidden="true" class="size-5" />
             </span>
+            <span>ComfyMind</span>
           </div>
+        </section>
 
-          <!-- Password field -->
-          <div class="flex flex-col space-y-1.5">
-            <Label for="password">Contraseña</Label>
-            <div class="relative">
-              <Input
-                id="password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="••••••••"
-                v-model="password"
-                :class="{ 'border-red-500': errors.password }"
-                @input="() => { if (errors.password) delete errors.password }"
-                class="pr-10"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                <Eye v-if="!showPassword" class="h-4 w-4" />
-                <EyeOff v-else class="h-4 w-4" />
-              </button>
-            </div>
-            <span v-if="errors.password" class="text-xs text-red-600 mt-0.5">
-              {{ errors.password }}
-            </span>
-          </div>
+        <Card class="w-full border-white/80 bg-white/95 shadow-[0_20px_60px_-30px_rgba(23,48,45,0.4)]">
+          <CardHeader class="space-y-2 px-6 pb-1 pt-7 sm:px-8">
+            <h2 class="text-2xl font-bold text-foreground">{{ t('login.submit') }}</h2>
+            <p class="text-sm leading-6 text-muted-foreground">{{ t('login.description') }}</p>
+          </CardHeader>
 
-          <!-- General message -->
-          <div
-            v-if="message"
-          >
-            <Alert class="bg-red-100 text-red-800 border border-red-300">
-              <AlertCircleIcon />
-              <AlertTitle>Error al iniciar sesión</AlertTitle>
-              <AlertDescription class="text-red-800">
-                {{ message }}
-              </AlertDescription>
-            </Alert>
-          </div>
-        </form>
-      </CardContent>
+          <CardContent class="px-6 sm:px-8">
+            <form class="space-y-5" novalidate @submit.prevent="login">
+              <div class="space-y-2">
+                <Label for="email" class="text-base">{{ t('login.email') }}</Label>
+                <Input
+                  id="email"
+                  v-model="email"
+                  type="email"
+                  autocomplete="email"
+                  :placeholder="t('login.emailPlaceholder')"
+                  :aria-invalid="Boolean(errors.email)"
+                  :aria-describedby="errors.email ? 'email-error' : undefined"
+                  class="h-12 rounded-xl bg-white px-4 text-base"
+                  @input="delete errors.email"
+                />
+                <p v-if="errors.email" id="email-error" class="text-sm font-medium text-red-700">
+                  {{ errors.email }}
+                </p>
+              </div>
 
-      <CardFooter class="flex flex-col gap-2">
-        <Button
-          class="w-full"
-          @click="login"
-          :disabled="isLoading"
-        >
-          {{ isLoading ? 'Iniciando sesión...' : 'Iniciar sesión' }}
-        </Button>
-        <Button
-          variant="outline"
-          class="w-full"
-          @click="() => router.push('/signup')"
-          :disabled="isLoading"
-        >
-          Crear cuenta
-        </Button>
-      </CardFooter>
-      </Card>
+              <div class="space-y-2">
+                <Label for="password" class="text-base">{{ t('login.password') }}</Label>
+                <div class="relative">
+                  <Input
+                    id="password"
+                    v-model="password"
+                    :type="showPassword ? 'text' : 'password'"
+                    autocomplete="current-password"
+                    placeholder="••••••••"
+                    :aria-invalid="Boolean(errors.password)"
+                    :aria-describedby="errors.password ? 'password-error' : undefined"
+                    class="h-12 rounded-xl bg-white px-4 pr-12 text-base"
+                    @input="delete errors.password"
+                  />
+                  <button
+                    type="button"
+                    class="absolute right-1 top-1/2 flex size-10 -translate-y-1/2 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
+                    :aria-label="showPassword ? t('login.hidePassword') : t('login.showPassword')"
+                    @click="showPassword = !showPassword"
+                  >
+                    <EyeOff v-if="showPassword" aria-hidden="true" class="size-5" />
+                    <Eye v-else aria-hidden="true" class="size-5" />
+                  </button>
+                </div>
+                <p v-if="errors.password" id="password-error" class="text-sm font-medium text-red-700">
+                  {{ errors.password }}
+                </p>
+              </div>
+
+              <Alert v-if="message" variant="destructive" class="bg-red-50">
+                <AlertCircle aria-hidden="true" />
+                <AlertTitle>{{ t('login.errorTitle') }}</AlertTitle>
+                <AlertDescription>{{ message }}</AlertDescription>
+              </Alert>
+
+              <Button type="submit" class="h-12 w-full rounded-xl text-base font-bold" :disabled="isLoading">
+                {{ isLoading ? t('login.submitting') : t('login.submit') }}
+              </Button>
+            </form>
+          </CardContent>
+
+          <CardFooter class="px-6 pb-7 sm:px-8">
+            <Button
+              variant="outline"
+              class="h-12 w-full rounded-xl text-base"
+              :disabled="isLoading"
+              @click="router.push(locationWithDemo('/signup'))"
+            >
+              {{ t('login.createAccount') }}
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
-  </div>
+  </main>
 </template>
 
 <style scoped>
-/* Ocultar el icono nativo de mostrar/ocultar contraseña del navegador */
 input[type="password"]::-ms-reveal,
 input[type="password"]::-ms-clear {
   display: none;
-}
-
-input[type="password"]::-webkit-credentials-auto-fill-button {
-  display: none !important;
 }
 </style>

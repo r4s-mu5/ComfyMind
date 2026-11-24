@@ -1,0 +1,297 @@
+COMFYMIND — DESCRIPCIÓN DE CAMBIOS DE LA INTERFAZ DEL PROTOTIPO VISUAL
+======================================================================
+
+Propósito
+---------
+
+Este documento describe los cambios de interfaz realizados para el prototipo
+visual de la experiencia de paciente de ComfyMind. El trabajo está destinado a
+que las personas interesadas revisen la apariencia, la jerarquía, la
+terminología, la accesibilidad básica y el recorrido principal del paciente.
+No se trata de un rediseño preparado para producción.
+
+El panel de terapeuta se ha aplazado intencionadamente. No se han modificado el
+backend, la base de datos, la implementación de autenticación, los contratos de
+la API, el comportamiento de WebSocket, los servicios de ComfyUI, los workflows,
+los nodos, las dependencias, el lienzo de dibujo ni las pantallas heredadas que
+quedan fuera del recorrido aprobado.
+
+
+1. Dirección visual general
+---------------------------
+
+- Se ha sustituido la anterior combinación de grises, cian y verde por un
+  sistema visual más coherente y orientado al paciente.
+- Se ha introducido un color verde azulado profundo como color principal,
+  superficies cálidas y neutras como acento, fondos blancos rotos y texto oscuro
+  en tonos verde grisáceo.
+- Se ha aumentado el radio estándar de los bordes para dar un aspecto más suave,
+  aunque todavía profesional, a tarjetas, campos, botones y menús.
+- Se ha reducido el ruido decorativo y se han utilizado sombras contenidas para
+  separar el contenido sin aumentar la sensación de densidad.
+- Se han añadido estilos coherentes para el ancho de página, títulos, textos
+  introductorios y pequeñas etiquetas superiores en las pantallas rediseñadas.
+- Se ha aumentado el espacio alrededor del contenido importante y se ha
+  mantenido una única acción principal claramente dominante.
+- Se ha añadido una regla de movimiento reducido para que las animaciones y
+  transiciones sean prácticamente instantáneas cuando el sistema operativo
+  solicite reducir el movimiento.
+
+
+2. Pantalla de inicio de sesión
+-------------------------------
+
+- Se ha sustituido la fotografía de fondo a pantalla completa por un fondo
+  abstracto y tranquilo formado por áreas de color neutras y suaves.
+- En pantallas anchas se ha creado una composición de dos columnas: información
+  de marca y bienvenida a la izquierda y formulario de acceso a la derecha.
+- En pantallas estrechas se utiliza una composición adaptable de una sola
+  columna.
+- Se ha añadido un selector de idioma visible en la parte superior.
+- Se ha rediseñado la tarjeta de acceso con más espacio, campos y botones más
+  grandes y una jerarquía de títulos más clara.
+- Se han conservado sin cambios la llamada de autenticación con correo y
+  contraseña y el flujo de redirección existente.
+- Se ha conservado la acción existente para crear una cuenta.
+- Se han localizado las etiquetas, textos de ejemplo, botones, validaciones y
+  encabezados de error.
+- Se han añadido atributos de autocompletado apropiados para el correo y la
+  contraseña.
+- Se ha añadido un estado accesible para campos no válidos y una relación
+  explícita entre cada campo y su mensaje de error.
+- Se ha ampliado el control para mostrar u ocultar la contraseña y se le ha dado
+  un nombre accesible localizado para ambos estados.
+- Se ha eliminado el manejador duplicado de la tecla Intro y se ha mantenido el
+  envío semántico estándar del formulario.
+- La interfaz no incluye ni revela credenciales de acceso.
+
+
+3. Estructura compartida de la aplicación del paciente
+-------------------------------------------------------
+
+- Se ha sustituido la barra lateral densa del escritorio por una navegación
+  superior compartida más sencilla para el prototipo de paciente.
+- Se ha añadido navegación clara para:
+    - Inicio / Inici / Home
+    - Mi sesión / La meva sessió / My session
+    - Mis obras / Les meves obres / My artwork
+- Se ha añadido un estilo de página activa que combina color, contraste y
+  posición y no depende únicamente del color.
+- Se han sustituido los enlaces que recargaban la página completa por enlaces de
+  Vue Router en la navegación del prototipo.
+- Se ha añadido un menú lateral compacto para móviles mediante el componente
+  Sheet ya disponible en Reka UI.
+- Se han mantenido visibles el logotipo y el nombre de ComfyMind sin utilizar una
+  cabecera decorativa de gran tamaño.
+- Se ha colocado el selector de idioma en la cabecera de escritorio y en una
+  posición independiente y accesible en pantallas estrechas.
+- Se ha rediseñado el acceso al perfil como un botón grande y accesible mediante
+  teclado.
+- Se ha simplificado el menú del perfil para mostrar el contexto del usuario y
+  la acción Cerrar sesión.
+- En modo demostración, la cabecera muestra únicamente una identidad sintética.
+- La navegación existente para terapeutas continúa disponible para los usuarios
+  actuales, pero no se ha creado ningún prototipo ni panel nuevo de terapeuta.
+
+
+4. Pantalla de inicio del paciente
+----------------------------------
+
+- Se ha sustituido la anterior tarjeta estrecha de sesión por una pantalla más
+  amplia y adaptable, manteniendo una densidad de información reducida.
+- Se ha añadido una bienvenida tranquila con el nombre del paciente y una breve
+  descripción de apoyo.
+- La sesión actual se presenta como la tarjeta dominante y como el siguiente
+  paso más evidente.
+- Se muestra información clara de terapeuta, fecha y horario mediante iconos y
+  etiquetas de texto.
+- Se ha añadido una acción grande para Continuar sesión.
+- Se ha añadido una tarjeta independiente de tono cálido para Creación libre,
+  con la acción Crear una imagen.
+- Se ha añadido un acceso claramente separado a Mis obras.
+- Se han añadido presentaciones específicas para los estados de carga y error,
+  evitando mostrar una tarjeta principal parcialmente completada.
+- Fuera del modo demostración se conservan las llamadas existentes para obtener
+  el usuario actual, la sesión activa, la próxima sesión, el historial y la
+  información del terapeuta.
+- Fuera del modo demostración se conserva la actualización mediante WebSocket
+  existente en la pantalla de inicio del paciente.
+- Se mantienen las responsabilidades existentes del inicio del terapeuta, sin
+  ampliarlas ni convertirlas en parte del prototipo.
+- Cuando la URL incluye `?demo=1`, se utilizan datos sintéticos de paciente,
+  terapeuta, fecha y sesión, y no se ejecutan las llamadas de datos ni la conexión
+  WebSocket de la pantalla de inicio.
+
+
+5. Espacio de creación del paciente
+-----------------------------------
+
+- Se ha añadido un espacio de creación específico para el prototipo que solo se
+  muestra cuando la ruta contiene `?demo=1`.
+- El espacio de demostración se ha mantenido en un único componente aislado para
+  que pueda retirarse sin reescribir la vista de generación existente.
+- Se han añadido un título claro, instrucciones breves y tranquilizadoras,
+  contexto de sesión sintético y un indicador sencillo de dos pasos.
+- Se ha añadido un aviso visible que explica que la demostración no envía datos
+  al servicio de generación de imágenes.
+- La creación mediante texto se ha convertido en la única tarea principal para
+  la reunión.
+- Se ha añadido un campo grande para describir la idea, acompañado de un ejemplo
+  escrito en lenguaje sencillo.
+- Se muestra una validación accesible cuando se intenta generar sin escribir una
+  idea.
+- Se ha añadido un estado representativo de carga con indicador y texto
+  explicativo.
+- Se ha añadido un estado representativo de resultado mediante una obra
+  sintética incluida en el frontend.
+- Se han añadido las acciones Volver a intentar y Guardar.
+- Se ha añadido un estado visible de Guardado y una acción para acceder a Mis
+  obras.
+- Las opciones de imagen, boceto y combinación de imágenes se muestran como
+  controles secundarios desactivados. Esto permite revisar la jerarquía prevista
+  sin abrir ni modificar los modales de creación existentes.
+- La transición al resultado es local y temporal. No llama a ningún servicio ni
+  guarda una obra de forma persistente.
+- Sin `?demo=1`, GenerationView conserva sus llamadas y comportamientos
+  originales de API, ComfyUI, WebSocket, modales, galería, lienzo y sesión.
+- No se ha sustituido ni modificado ninguna función existente de los servicios
+  de ComfyUI ni ningún contrato de la API.
+
+
+6. Pantalla de obras y galería
+------------------------------
+
+- Se ha rediseñado SessionView.vue porque ya tenía las dos responsabilidades
+  necesarias:
+    - mostrar obras asociadas a la ruta de una sesión existente;
+    - mostrar obras de creación libre mediante la ruta existente /freeimages.
+- Se han conservado esas rutas y responsabilidades de datos.
+- Se ha sustituido el carrusel estrecho de una sola imagen por una cuadrícula de
+  obras adaptable.
+- Se ha añadido el encabezado Mis obras u Obras de la sesión según el contexto
+  de la ruta.
+- Se han añadido las acciones Crear una imagen y Volver al inicio.
+- Se han añadido estados específicos de carga y galería vacía.
+- Cada tarjeta de obra es ahora un botón accesible mediante teclado y dispone de
+  un texto alternativo significativo.
+- Al seleccionar una obra se abre una vista previa de mayor tamaño en un diálogo.
+- Se ha conservado el diálogo de información de la sesión para las rutas de
+  sesión y se ha adaptado al estilo del prototipo.
+- Fuera del modo demostración se mantienen las comprobaciones de autorización y
+  las llamadas existentes a los servicios de obras.
+- Cuando se utiliza `?demo=1`, la galería muestra únicamente obras incluidas en el
+  frontend e información de sesión sintética, sin ejecutar llamadas a la API de
+  obras.
+- No se ha añadido ninguna acción destructiva ni de eliminación de obras.
+
+
+7. Cambio de idioma
+-------------------
+
+- Se ha añadido un composable ligero de Vue para las traducciones, sin incorporar
+  ninguna dependencia de internacionalización.
+- Se han añadido traducciones en catalán, español e inglés para el recorrido
+  rediseñado del paciente y la estructura compartida.
+- Se ha conservado la terminología aprobada:
+    - Obra / Obras
+    - Creación libre / Creació lliure / Free creation
+    - Mi sesión / La meva sessió / My session
+- Se ha añadido un selector nativo visible, accesible mediante teclado y con un
+  nombre accesible.
+- El idioma seleccionado se guarda en localStorage mediante una clave específica
+  del prototipo.
+- El idioma del documento HTML se actualiza cuando cambia la selección.
+- Se utiliza un único valor reactivo compartido para actualizar inmediatamente
+  todas las etiquetas visibles del recorrido rediseñado.
+- Las pantallas y modales heredados que quedan fuera del recorrido aprobado
+  conservan su idioma anterior y no se han añadido al diccionario del prototipo.
+
+
+8. Cambios de accesibilidad en la interfaz
+------------------------------------------
+
+- Se ha añadido un indicador de foco coherente y de alto contraste para usuarios
+  de teclado.
+- Se ha aumentado la altura y separación de los controles principales.
+- Se utilizan encabezados, formularios, elementos de navegación, listas,
+  botones, listas de definiciones y regiones de estado semánticos.
+- Se han añadido nombres accesibles a los controles que solo muestran un icono.
+- Las obras y los elementos de navegación interactivos son botones o enlaces
+  reales, no contenedores genéricos con un evento de clic.
+- Los estados y el contexto combinan texto e iconos además del color.
+- Se han añadido aria-invalid y relaciones entre campos y mensajes de error.
+- Se han añadido regiones vivas discretas para la carga y el resultado de la
+  generación.
+- Los métodos de creación no disponibles son visibles y están desactivados tanto
+  visual como semánticamente.
+- Se ha añadido compatibilidad con la preferencia de movimiento reducido.
+- Se ha comprobado que las cuatro pantallas rediseñadas no producen
+  desplazamiento horizontal en un ancho de 390 píxeles.
+- Se ha verificado que los controles visibles son accesibles mediante teclado y
+  que el foco resulta claramente visible.
+
+
+9. Aislamiento de la demostración
+---------------------------------
+
+- Se ha añadido un pequeño helper que detecta el parámetro `?demo=1` y lo
+  conserva al navegar entre las pantallas aprobadas del prototipo.
+- El comportamiento de demostración se limita al inicio del paciente, la vista
+  previa de generación, la galería, la identidad mostrada en la cabecera y la
+  navegación necesaria para la reunión.
+- La demostración no contiene credenciales, creación de cuentas de producción,
+  registros insertados en la base de datos ni cambios en el backend.
+- Todos los nombres, correos, datos de sesión, datos de terapeuta y obras que se
+  muestran en la demostración son elementos sintéticos.
+- La ruta de demostración se puede retirar fácilmente: se elimina el componente
+  aislado de creación y el helper del parámetro, y después se quitan las pequeñas
+  ramas condicionales de las vistas afectadas.
+
+
+10. Avisos globales y sesión expirada
+-------------------------------------
+
+- Se ha traducido el diálogo global existente de sesión expirada al catalán,
+  español e inglés.
+- Se han conservado su comportamiento existente de cierre de sesión y retorno a
+  la pantalla de acceso.
+- Se han mantenido sin cambios el componente global de notificaciones y la
+  integración que detecta la caducidad de la autenticación.
+
+
+11. Elementos que permanecen sin cambios o incompletos
+------------------------------------------------------
+
+- Vista previa del panel de terapeuta: aplazada.
+- Implementación y credenciales de autenticación: sin cambios.
+- Backend y base de datos: sin cambios.
+- Contratos de la API y comportamiento de los servicios Axios: sin cambios.
+- Funciones, workflows, modelos y nodos de ComfyUI, incluido el problema de nodos
+  ausentes: sin cambios.
+- Comportamiento existente de WebSocket fuera del modo demostración: sin cambios.
+- CanvasView.vue: sin cambios.
+- Modales de creación: sin cambios.
+- Registro, calendario y demás pantallas heredadas: no rediseñados.
+- Acción Guardar de la demostración: únicamente visual, sin persistencia.
+- Métodos de demostración mediante imagen, boceto y combinación: desactivados
+  intencionadamente.
+- Auditoría formal WCAG y pruebas con lectores de pantalla: aplazadas para una
+  fase posterior.
+
+
+12. Validación realizada
+------------------------
+
+- La compilación de producción del frontend finalizó correctamente.
+- Se abrieron y revisaron en el navegador el acceso, el inicio del paciente, el
+  espacio de creación y la galería.
+- Se verificó la navegación completa del recorrido de demostración aprobado.
+- Se verificó el cambio entre catalán, español e inglés.
+- Se verificaron la persistencia del idioma y el valor de idioma del documento
+  HTML.
+- Se verificaron los estados de validación de entrada vacía, carga, resultado,
+  guardado y galería.
+- Se revisaron las composiciones de escritorio y de pantalla estrecha.
+- Se verificó la visibilidad del foco de teclado.
+- No aparecieron errores ni avisos en la consola del navegador durante el
+  recorrido revisado.

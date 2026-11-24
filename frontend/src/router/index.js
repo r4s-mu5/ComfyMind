@@ -7,10 +7,12 @@ import CanvasView from '../views/CanvasView.vue'
 import GenerationView from '../views/GenerationView.vue'
 import CalendarView from '../views/CalendarView.vue'
 import SessionView from '../views/SessionView.vue'
+import WelcomeView from '../views/WelcomeView.vue'
 
 const routes = [
-  { path: '/', component: LoginView },
-  { path: '/signup/', component: SignupView },
+  { path: '/', component: WelcomeView, meta: { hideHeader: true } },
+  { path: '/login', component: LoginView, meta: { hideHeader: true } },
+  { path: '/signup/', component: SignupView, meta: { hideHeader: true } },
   { path: '/home/', component: HomeView },
   { path: '/canvas/', component: CanvasView },
   { path: '/generation/', component: GenerationView },
