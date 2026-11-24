@@ -84,6 +84,7 @@ the stakeholder meeting.
 | B0 | done | Tokens in style.css, 15 components in components/sanctuary/ (+README), useComfort, AppShell wired in App.vue, locale ES/CA/EN, `/design` style guide (+ `/design/dusk` DuskLayout demo). Builds pass; contrast script all ok. Header.vue removed. |
 | B0a | done | demo engine: `VITE_DEMO`, fake backend + sockets, hash routing; see `DEMO_MODE.md` |
 | B1 | pending | |
+| L2 | in_progress | abstract objects + post-FX |
 | B2 | pending | |
 | B3 | pending | |
 | R1 | pending | |
