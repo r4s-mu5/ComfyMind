@@ -46,10 +46,7 @@ const validateForm = () => {
 
 const login = async () => {
   message.value = ''
-  if (!validateForm()) {
-    message.value = t('login.errorCheck')
-    return
-  }
+  if (!validateForm()) return // field errors are shown under each field
   isLoading.value = true
   try {
     await userService.login({ email: email.value, password: password.value })

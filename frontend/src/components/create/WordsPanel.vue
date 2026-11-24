@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, ref, useId } from 'vue'
-import { Plus } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import { SButton, SCard } from '@/components/sanctuary'
+import { SButton } from '@/components/sanctuary'
 
 /**
  * Way in "Palabras": a large textarea, a few gentle suggestion chips that add text, and Crear.
@@ -35,8 +34,7 @@ defineExpose({ focus: () => area.value?.focus() })
 </script>
 
 <template>
-  <SCard padding="lg" class="flex flex-col gap-6">
-    <form class="flex flex-col gap-6" @submit.prevent="submit">
+  <form class="flex flex-col gap-8" @submit.prevent="submit">
       <div class="flex flex-col gap-2">
         <label :for="id" class="type-h2">{{ t('create.wordsLabel') }}</label>
         <p :id="`${id}-help`" class="type-small text-muted-foreground">{{ t('create.wordsHelp') }}</p>
@@ -59,21 +57,20 @@ defineExpose({ focus: () => area.value?.focus() })
           <li v-for="chip in chips" :key="chip">
             <button
               type="button"
-              class="type-small inline-flex min-h-12 items-center gap-2 rounded-pill border-2 border-input bg-card px-5 font-semibold text-foreground transition-colors hover:bg-secondary"
+              class="type-body inline-flex min-h-12 items-center rounded-control border-2 border-input bg-card px-4 text-foreground transition-colors hover:border-ring hover:bg-secondary"
               :aria-label="t('create.chipAdd', { text: chip })"
               @click="addChip(chip)"
             >
-              <Plus aria-hidden="true" class="size-4 text-mark" />
-              {{ chip }}
+              {{ t('create.quote', { text: chip }) }}
             </button>
           </li>
         </ul>
       </div>
 
-      <div class="flex flex-wrap items-center gap-4 border-t border-border pt-6">
+      <hr class="flute-rule" />
+      <div class="flex flex-wrap items-center gap-4">
         <SButton type="submit" :disabled="!canCreate" :busy="busy">{{ t('create.create') }}</SButton>
         <p v-if="!canCreate" class="type-small text-muted-foreground">{{ t('create.wordsNeeded') }}</p>
       </div>
-    </form>
-  </SCard>
+  </form>
 </template>

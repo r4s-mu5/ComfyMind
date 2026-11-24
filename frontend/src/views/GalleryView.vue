@@ -121,6 +121,21 @@ const sessionDate = computed(() =>
     : '',
 )
 
+const widths = ['w-[17rem]', 'w-[21rem]', 'w-[15rem]', 'w-[19rem]']
+const ratios = ['1 / 1', '4 / 5', '5 / 4', '1 / 1']
+const dateLabel = (d?: string) =>
+  d ? new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long' }).format(new Date(ensureUTCString(d))) : ''
+const rooms = computed(() => {
+  if (isSessionView.value) return [{ key: 'one', title: '', items: shown.value }]
+  const map = new Map<string, { key: string; title: string; items: Obra[] }>()
+  shown.value.forEach((o) => {
+    const key = o.sessionId ? `s${o.sessionId}` : 'own'
+    if (!map.has(key)) map.set(key, { key, title: o.sessionId ? t('gallery.sessionOf', { date: dateLabel(o.date) }) : t('gallery.filterOwn'), items: [] })
+    map.get(key)!.items.push(o)
+  })
+  return [...map.values()]
+})
+
 const open = async (o: Obra) => {
   selected.value = o
   note.value = ''
@@ -180,19 +195,18 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
 
     <template v-else>
       <div class="flex flex-wrap items-center justify-between gap-4">
-        <div v-if="!isSessionView" role="group" :aria-label="t('gallery.filterLabel')" class="flex flex-wrap gap-3">
+        <div v-if="!isSessionView" role="group" :aria-label="t('gallery.filterLabel')" class="flex flex-wrap gap-6">
           <button
             v-for="f in filters"
             :key="f.id"
             type="button"
             :aria-pressed="filter === f.id"
             :class="[
-              'inline-flex min-h-12 items-center gap-2 rounded-control border-2 px-5 text-base font-semibold',
-              filter === f.id ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-card text-foreground hover:bg-secondary',
+              'min-h-12 border-b-[3px] px-2 text-lg',
+              filter === f.id ? 'border-foreground font-bold text-foreground' : 'border-transparent font-medium text-muted-foreground hover:border-border hover:text-foreground',
             ]"
             @click="filter = f.id"
           >
-            <span v-if="filter === f.id" aria-hidden="true">✓</span>
             {{ f.label }}
           </button>
         </div>
@@ -201,24 +215,32 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
 
       <p v-if="shown.length === 0" class="type-body text-muted-foreground">{{ t('gallery.emptyFilter') }}</p>
 
-      <ul class="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-        <li v-for="o in shown" :key="o.id">
-          <button
-            type="button"
-            class="block w-full rounded-card text-left"
-            :aria-label="t('gallery.open', { title: t('art.untitled') })"
-            @click="open(o)"
-          >
-            <ArtworkMount
-              :src="o.src"
-              :technique="technique(o)"
-              :date="o.date ? ensureUTCString(o.date) : undefined"
-              :made-by="madeBy"
-              mat="sm"
-            />
-          </button>
-        </li>
-      </ul>
+      <!-- The wall: obras hang at different widths, grouped into rooms (one per session). -->
+      <section v-for="room in rooms" :key="room.key" class="flex flex-col gap-8" :aria-label="room.title || t('gallery.title')">
+        <template v-if="room.title">
+          <h2 class="type-h3 text-muted-foreground">{{ room.title }}</h2>
+          <hr class="flute-rule" />
+        </template>
+        <ul class="flex flex-wrap items-end gap-x-12 gap-y-14">
+          <li v-for="(o, i) in room.items" :key="o.id" :class="widths[i % widths.length]">
+            <button
+              type="button"
+              class="block w-full text-left"
+              :aria-label="t('gallery.open', { title: t('art.untitled') })"
+              @click="open(o)"
+            >
+              <ArtworkMount
+                :src="o.src"
+                :technique="technique(o)"
+                :date="o.date ? ensureUTCString(o.date) : undefined"
+                :made-by="madeBy"
+                :ratio="ratios[i % ratios.length]"
+                mat="sm"
+              />
+            </button>
+          </li>
+        </ul>
+      </section>
     </template>
 
     <Dialog :open="Boolean(selected)" @update:open="(v: boolean) => !v && close()">

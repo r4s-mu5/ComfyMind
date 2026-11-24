@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, useId } from 'vue'
-import { Brush, Check, Eraser, Trash2, Undo2 } from 'lucide-vue-next'
+import { Brush, Check, Eraser } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import { SButton, SCard } from '@/components/sanctuary'
+import { SButton } from '@/components/sanctuary'
 import {
   AlertDialog,
   AlertDialogContent,
@@ -156,7 +156,7 @@ const toolBtn = (active: boolean) => [
 </script>
 
 <template>
-  <SCard padding="lg" class="flex flex-col gap-6">
+  <div class="flex flex-col gap-6">
     <div class="flex flex-col gap-1">
       <h2 class="type-h2">{{ t('create.drawTitle') }}</h2>
       <p class="type-small text-muted-foreground">{{ t('create.drawHelp') }}</p>
@@ -191,11 +191,9 @@ const toolBtn = (active: boolean) => [
 
         <div class="ml-auto flex gap-3">
           <SButton variant="secondary" :disabled="!strokes.length" @click="undo">
-            <template #icon><Undo2 aria-hidden="true" /></template>
             {{ t('create.undo') }}
           </SButton>
           <SButton variant="secondary" :disabled="!strokes.length" @click="confirmClear = true">
-            <template #icon><Trash2 aria-hidden="true" /></template>
             {{ t('create.clear') }}
           </SButton>
         </div>
@@ -212,7 +210,7 @@ const toolBtn = (active: boolean) => [
           :title="t(`create.colour.${c}`)"
           :class="[
             'relative inline-flex size-14 items-center justify-center rounded-full border-2 transition-colors',
-            colour === c && tool === 'brush' ? 'border-ring ring-2 ring-ring ring-offset-2 ring-offset-card' : 'border-input',
+            colour === c && tool === 'brush' ? 'border-dawn-surface outline outline-[3px] outline-ring' : 'border-input',
           ]"
           :style="{ background: `var(--paint-${c})` }"
           @click="colour = c; tool = 'brush'"
@@ -252,7 +250,8 @@ const toolBtn = (active: boolean) => [
       />
     </div>
 
-    <div class="flex flex-wrap items-center gap-4 border-t border-border pt-6">
+    <hr class="flute-rule" />
+    <div class="flex flex-wrap items-center gap-4">
       <SButton :disabled="!hasDrawing" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
       <p v-if="!hasDrawing" class="type-small text-muted-foreground">{{ t('create.drawNeeded') }}</p>
     </div>
@@ -269,5 +268,5 @@ const toolBtn = (active: boolean) => [
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  </SCard>
+  </div>
 </template>
