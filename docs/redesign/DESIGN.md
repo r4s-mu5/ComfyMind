@@ -167,12 +167,14 @@ Working screens quote the sanctuary lightly:
 ### 5.3 The Sanctuary scene (3D)
 
 - **Component:** `<SanctuaryScene preset="quiet|dreaming|liminal" />`, lazy-loaded. It always renders its **poster** first and upgrades to WebGL only if allowed.
-- **Contents:** a colonnade or atrium in fog, a low sun disc, a pastel sky, a calm floor, and one classical fragment (bust, hand, capital) in pale marble with a pastel rim light.
+- **Contents:** a colonnade or atrium in fog, a low sun disc, a pastel sky, a calm floor, and one **abstract, non-figurative** marble object (options: *Ruina*, an Ionic capital and broken drums; *Escultura abstracta*, a pierced modernist form; *Estudio*, geometric solids), with a pastel rim light.
+- **No human or figurative shapes, ever** (busts, heads, hands, bodies, faces). The project's advisors asked for this, and patient generations are abstract only. The same rule applies to illustrations, posters and empty states.
+- **Post-FX:** low-resolution render (1/3 by default) upscaled with crisp pixels, 4×4 ordered dithering to a pastel palette, and static or slow (≤ 2 Hz) grain. It reads as a remembered place, not a photo. No per-frame flicker. It can be turned off.
 - **Reaction:** the fragment and camera ease ≤ 3° toward the pointer; a click turns the fragment slowly to face you; idle drift is slow. Nothing on touch.
 - **Used on:** landing (full), login (background), the waiting state (small, calm), session end, and the empty gallery.
 - **Never on:** the workspace, the canvas, the therapist console, or behind running text.
-- **Assets:** only public-domain or CC0 museum scans, each listed in `docs/redesign/liminal/ASSETS.md`. Budget: < 60k triangles, ≤ 1.5 MB per model, DPR capped at 1.5, paused when the tab is hidden.
-- The prototype and intensity presets are in `docs/redesign/liminal/`. The demo uses **Quiet** by default.
+- **Assets:** procedural three.js geometry (no third-party models). The scene code lives in `frontend/src/components/sanctuary/scene/sanctuaryScene.js`, wrapped by `SanctuaryScene.vue`. Budget: < 60k triangles, DPR capped at 1.5, paused when the tab is hidden.
+- The prototype is in `docs/redesign/liminal/`. The owner chose the **Quiet** mood; the object choice is pending (default *Escultura abstracta*).
 
 ### 5.4 Comfort panel (patient and therapist)
 
