@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { createSocket } from '@/lib/config'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { RouterLink, useRouter } from 'vue-router'
 import { userService } from '../api/userService'
 import { sessionsService } from '../api/sessionsService'
 import { comfyService } from '../api/comfyService'
 import { urlFor } from '@/components/create/images'
+import { useNavLink } from '@/components/create/useNavLink'
 import { ArtworkMount, SButton, SessionCard, SNotice } from '@/components/sanctuary'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
@@ -16,6 +17,7 @@ import CreateSessionModal from '@/components/CreateSessionModal.vue'
 const router = useRouter()
 const { ensureUTCString } = useDateHelpers()
 const { locationWithDemo } = usePrototypeDemo()
+const nav = useNavLink()
 const { locale, t } = usePrototypeLocale()
 
 const user = ref<any>(null)
@@ -215,7 +217,7 @@ onBeforeUnmount(disconnectHomeWs)
             <p class="type-body measure text-muted-foreground">{{ t('home.ownBody') }}</p>
             <SButton
               :variant="hasActiveSession ? 'secondary' : 'primary'"
-              :to="locationWithDemo('/generation')"
+              v-bind="nav('/generation')"
               class="mt-2 self-start"
             >
               {{ hasActiveSession ? t('home.ownAction') : t('home.create') }}
@@ -224,7 +226,7 @@ onBeforeUnmount(disconnectHomeWs)
         </div>
 
         <section class="flex flex-col gap-5" aria-labelledby="home-latest">
-          <h2 id="home-latest" class="type-h3 text-muted-foreground">{{ t('home.latest') }}</h2>
+          <h2 id="home-latest" class="type-h2">{{ t('home.latest') }}</h2>
           <ArtworkMount v-if="latest" :src="latest.src" :made-by="displayName" niche mat="md" ratio="4 / 5" />
           <div
             v-else
@@ -232,7 +234,7 @@ onBeforeUnmount(disconnectHomeWs)
           >
             <p class="type-body text-muted-foreground">{{ t('home.latestEmpty') }}</p>
           </div>
-          <SButton variant="quiet" :to="locationWithDemo('/freeimages')" class="self-start px-0">{{ t('home.allWorks') }}</SButton>
+          <RouterLink :to="locationWithDemo('/freeimages')" class="type-body inline-flex min-h-12 items-center self-start font-semibold text-link underline underline-offset-4 hover:no-underline">{{ t('home.allWorks') }}</RouterLink>
         </section>
       </div>
     </template>
@@ -256,7 +258,7 @@ onBeforeUnmount(disconnectHomeWs)
       </SessionCard>
       <div class="flex flex-wrap gap-3">
         <SButton :variant="hasActiveSession ? 'secondary' : 'primary'" size="compact" @click="showCreateModal = true">{{ t('home.therapistCreate') }}</SButton>
-        <SButton variant="quiet" size="compact" :to="locationWithDemo('/calendar')">{{ t('home.therapistCalendar') }}</SButton>
+        <SButton variant="quiet" size="compact" v-bind="nav('/calendar')">{{ t('home.therapistCalendar') }}</SButton>
       </div>
     </section>
 

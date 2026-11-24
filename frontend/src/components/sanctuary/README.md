@@ -43,15 +43,16 @@ Mode-aware classes follow the nearest `.dusk` ancestor. Prefer these in componen
 Fixed-mode classes (use in layouts and for things that never change mode, like the white artwork mat):
 `bg-dawn-bg`, `bg-dawn-surface`, `text-dawn-ink`, `text-dawn-violet`, `bg-dusk-sky`, `text-dusk-text`, `bg-dusk-light`, `border-dusk-border`, ... (all names in `style.css`).
 
-Type: `font-display` (Tenor Sans), `font-body` (Readex Pro), `text-body` (18px), `text-small` (15px), and the roles `type-wordmark`, `type-display`, `type-h1`, `type-h2`, `type-h3`, `type-body`, `type-small`, `type-button`, plus `measure` (max 60ch).
-Shape: `rounded-control` (12px), `rounded-card` (16px), `rounded-pill` (primary actions only), `.niche` (arch), `.elev` (lift at dawn, glow at dusk).
-Atmosphere: `.sky`, `.sun-disc`, `.mist`, `.grain`, `.scrim`, `.dawn-glow`, `.flute-rule`.
+Type: `font-display` (Tenor Sans), `font-body` (Readex Pro), `text-body` (18px), `text-small` (15px), and the roles `type-wordmark`, `type-display`, `type-h1`, `type-h2`, `type-h3`, `type-label`, `type-body`, `type-small`, `type-button`, plus `measure` (max 60ch).
+**Tenor caps is only for the wordmark, the display line and museum labels (`type-label`).** Every other heading and tile label is sentence case: `type-h3` is Readex 600. (`.prototype-eyebrow/-title/-lead` are legacy aliases in the same style; do not use them in new code.)
+Shape: `rounded-control` (12px), `rounded-card` (16px), `rounded-pill` (primary actions only), `.niche` (arch), `.elev` (soft lift at dawn, for floating panels only), `shadow-hung` (a frame on a wall: artwork mats only). Cards have no shadow.
+Atmosphere (the atrium at dusk): `.sky` (sky, 2px horizon line, darker floor; `--horizon` sets its height), `.sun-disc` (a crisp disc seated on the horizon; `--sun-size`, `--sun-x`), `.mist` (low horizontal strata), `.dither` (4x4 Bayer overlay), `.grain`, `.scrim` (panel behind forms only, no glow), `.dawn-glow`, `.flute-rule`.
 Spacing: Tailwind steps match the scale: `gap-1 2 3 4 6 8 12 16 24` = 4 8 12 16 24 32 48 64 96 px. Targets: `min-h-14` (56px patient), `min-h-11` (44px).
 
 ```vue
 <!-- DO -->
 <p class="type-body text-muted-foreground">Marta puede ver lo que compartes.</p>
-<div class="rounded-card bg-card border-[1.5px] border-border p-6 elev">...</div>
+<div class="rounded-card bg-card border-[1.5px] border-border p-6">...</div>
 
 <!-- DON'T -->
 <p style="color:#526762; font-size:14px">...</p>      <!-- hex, px font size, below 15px -->
@@ -67,18 +68,18 @@ Need a colour that does not exist? Add a token in `style.css`, show it in `Desig
 |---|---|---|
 | `SButton` | every button and button-looking link | `variant` primary/secondary/quiet/danger, `size` patient(56px)/compact(44px), `to`/`href`/`as`, `busy`, `disabled`, `block`; slot `icon` |
 | `SField` | any labelled input | `v-model`, `label`, `type` (text, email, password, textarea...), `help`, `error`, `optional`; default slot for a custom control |
-| `SCard` | one card = one thing | `padding`, `selected`, `raised`, `as` |
+| `SCard` | one card = one thing, no shadow by default | `padding`, `selected`, `raised` (optional soft lift), `as` |
 | `SNotice` | persistent message | `tone` info/success/warning/danger, `title`, `dismissible`, event `dismiss` |
-| `ArtworkMount` | showing an artwork | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `niche`, `mat`, `ratio`, `label` |
+| `ArtworkMount` | showing an artwork on a square white museum mat with a hung shadow (not a card) | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `niche`, `mat`, `ratio`, `label` |
 | `MuseumLabel` | caption under artwork | `title` (falls back to "Sin título"), `technique`, `date`, `madeBy` |
-| `SessionCard` | a session | `date`, `time`, `therapist`, `status` now/today/next; slot `action` |
+| `SessionCard` | a session; the status is a word on the date leaf ("Ahora" turns the leaf peach), no pill | `date`, `time`, `therapist`, `status` now/today/next; slot `action` |
 | `WayInPicker` | Palabras / Dibujo / Imagen | `v-model` `'words' \| 'draw' \| 'image'` |
 | `CalmProgress` | waiting | `progress` 0..1 or none (indeterminate), `status`, `hint`; slot `actions` |
 | `ReflectionPrompt` | the post-save question | `question`; events `save(note)`, `skip` |
 | `VersionsStrip` | versions in this sitting | `versions: {id, src}[]`, `v-model` current id, event `select` |
 | `DemoTag` | "Demo" chip | none (AppShell shows it automatically) |
-| `ComfortPanel` | Comfort popover | `variant` |
-| `DuskLayout` | threshold screens | `scrim`, `align`, `width`, `showComfort`; slots `default`, `scene`, `top` |
+| `ComfortPanel` | Comfort popover; the selected option shows a check icon, and the panel turns dark when opened inside `.dusk` | `variant`, `mode` auto/dawn/dusk |
+| `DuskLayout` | threshold screens; content is left-aligned wall text on the sky by default | `scrim` (only behind forms), `align` start/center, `width`, `showComfort`; slots `default`, `scene`, `top` |
 | `AppShell` | working screens | `role`, `profile`; slots `default`, `aside` (collapsible right panel); `v-model:asideOpen` |
 
 ```vue
@@ -94,14 +95,17 @@ Need a colour that does not exist? Add a token in `style.css`, show it in `Desig
 
 <!-- A threshold screen -->
 <template>
-  <DuskLayout scrim>
-    <h1 class="type-display">{{ t('welcome.heading') }}</h1>
-    <SButton class="mt-6">{{ t('welcome.begin') }}</SButton>
+  <!-- wall text goes directly on the sky; add `scrim` only behind a form -->
+  <DuskLayout>
+    <h1 class="type-display">{{ t('landing.display') }}</h1>
+    <SButton class="mt-6">{{ t('landing.begin') }}</SButton>
   </DuskLayout>
 </template>
 ```
 
-Rules of thumb: one primary `SButton` per screen; icons only together with text; state is never colour alone; errors never auto-dismiss; no "generate / result / try again" words on patient screens (see DESIGN.md §8).
+The header nav in `AppShell` is text-only on a solid background with a flute rule below; the current page is bold with a 3px underline plus `aria-current="page"`.
+
+Rules of thumb: one primary `SButton` per screen; icons only together with text; state is never colour alone; errors never auto-dismiss; no "generate / result / try again" words on user screens, and never "paciente / pacient / patient" in visible text (see DESIGN.md §8).
 
 ## 4. Words
 

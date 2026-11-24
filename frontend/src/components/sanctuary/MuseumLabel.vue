@@ -33,7 +33,7 @@ const byline = computed(() => (props.madeBy ? t('art.madeBy', { name: props.made
 
 <template>
   <div :class="['flex flex-col gap-1', align === 'center' ? 'items-center text-center' : 'items-start text-left']">
-    <p class="type-h3 text-foreground">{{ heading }}</p>
+    <p class="type-label text-foreground">{{ heading }}</p>
     <p v-if="technique" class="type-small text-muted-foreground">{{ technique }}</p>
     <p v-if="dateText || byline" class="type-small text-muted-foreground">
       <time v-if="dateText" :datetime="parsed?.toISOString()">{{ dateText }}</time>

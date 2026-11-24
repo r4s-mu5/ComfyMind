@@ -346,7 +346,7 @@ watch(chatMessages, persistState, { deep: true })
           <DialogDescription>Consulta la información detallada de la sesión actual.</DialogDescription>
         </DialogHeader>
         <dl v-if="sessionInfo" class="grid grid-cols-2 gap-x-1.5 gap-y-1 text-m">
-          <dt class="font-semibold">Paciente</dt>
+          <dt class="font-semibold">Usuario</dt>
           <dd>{{ patientUser?.full_name ?? 'Cargando...' }}</dd>
 
           <dt class="font-semibold">Fecha</dt>
@@ -366,10 +366,10 @@ watch(chatMessages, persistState, { deep: true })
         <div class="flex items-start justify-between gap-3">
           <div class="space-y-1">
             <h1 class="text-2xl font-semibold text-slate-900">
-              {{ artworkConfirmed ? 'El paciente ha completado su obra' : 'Se está generando la obra' }}
+              {{ artworkConfirmed ? 'La persona usuaria ha completado su obra' : 'Se está generando la obra' }}
             </h1>
             <p class="text-sm text-slate-600">
-              {{ artworkConfirmed ? 'El paciente ha finalizado su obra.' : 'El paciente está trabajando en su obra.' }}
+              {{ artworkConfirmed ? 'La persona usuaria ha finalizado su obra.' : 'La persona usuaria está trabajando en su obra.' }}
             </p>
           </div>
 
@@ -398,7 +398,7 @@ watch(chatMessages, persistState, { deep: true })
               </div>
               <div v-else class="text-center text-muted-foreground space-y-2">
                 <ImageIcon class="h-12 w-12 mx-auto opacity-50" />
-                <p class="text-sm">Esperando imagen del paciente...</p>
+                <p class="text-sm">Esperando imagen de la persona usuaria...</p>
               </div>
             </CardContent>
           </Card>
@@ -410,10 +410,10 @@ watch(chatMessages, persistState, { deep: true })
               :messages="chatMessages"
               :role="role"
               :otherUser="patientUser"
-              title="Chat con paciente"
+              title="Chat con la persona usuaria"
               selfTone="blue"
               otherTone="gray"
-              otherLabel="Paciente"
+              otherLabel="Usuario"
               @send="(text) => sendChatMessage(text)"
             />
           </div>

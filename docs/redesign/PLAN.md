@@ -91,6 +91,7 @@ the stakeholder meeting.
 | L2 | in_progress | abstract objects + post-FX |
 | B2 | in_progress | |
 | B3 | done | GalleryView.vue (Mis obras wall by sala, filter, detail dialog; also /session/:id), TherapistSessionView.vue (+TherapistChat.vue), CalendarView on tokens. Old views at /legacy/... |
+| F1 | done | VC1 must-fixes + patient sweep |
 | R1 | pending | |
 | VC1 | done | foundation vibecheck: somewhat vibecoded (generic dusk blobs/orb/centred card, card-everything, caps eyebrows, Sparkles on Crear); 9 must-fix in reviews/VC1_FOUNDATION.md |
 
@@ -109,3 +110,4 @@ the stakeholder meeting.
 - 2026-11-24 — B0: design-system foundation done: tokens + atmosphere CSS (`style.css`), self-hosted Tenor Sans/Readex Pro, `useComfort`, sanctuary components + README, AppShell/DuskLayout, `/design` style guide (+ `/design/dusk` DuskLayout demo); both builds pass, screenshots at 1440/1024 checked. Status done.
 - 2026-11-24 — B1: landing, login, signup, SanctuaryScene wrapper, SessionEndOverlay done; both builds pass; no console errors; 3D pending L2 module. Status done.
 - 2026-11-24 — B3: Mis obras gallery wall, therapist live session (AppShell aside: chat + private notes, danger end dialog), calendar tokens; demo + normal builds pass, Playwright two-page live check (BroadcastChannel), no console errors. Status done.
+- 2026-11-24 — F1: VC1 must-fixes applied to the foundation (dusk horizon, sun on the horizon, strata mist, dither, left-aligned DuskLayout, square hung ArtworkMount, flat SCard, Tenor caps only for wordmark/display/museum labels, SessionCard status on the date leaf, Comfort check + dusk panel, text-only nav, profile menu without role label) and the "patient" sweep of visible text; both builds pass.

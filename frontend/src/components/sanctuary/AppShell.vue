@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, useSlots, type Component } from 'vue'
+import { computed, onMounted, ref, useSlots } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { CalendarDays, CircleHelp, Home, Image as ImageIcon, PanelRightClose, PanelRightOpen, UserRound } from 'lucide-vue-next'
+import { PanelRightClose, PanelRightOpen, UserRound } from 'lucide-vue-next'
 import { userService } from '@/api/userService'
 import { isDemo } from '@/lib/demo/isDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
@@ -13,7 +13,8 @@ import DemoTag from './DemoTag.vue'
 import SButton from './SButton.vue'
 
 /**
- * Dawn page for working screens: warm glow on top, header (COMFYMIND wordmark, role-based nav,
+ * Dawn page for working screens: warm glow on top, header on a solid background with a flute rule
+ * (COMFYMIND wordmark, text-only role-based nav with the current page underlined + aria-current,
  * Comfort, language, profile, Demo tag), content up to 1120px and an optional collapsible right panel.
  *
  * Slots
@@ -50,18 +51,18 @@ const wrapWidth = computed(() => (slots.aside ? 'max-w-[calc(1120px+24px+22rem)]
 
 const isTherapist = computed(() => (props.role ?? userType.value) === 'therapist')
 
-interface NavItem { label: string; path?: string; icon: Component; help?: boolean }
-// Nav per DESIGN.md §6. "Pacientes" (therapist) has no route yet: add it here when the screen exists.
+interface NavItem { label: string; path?: string; help?: boolean }
+// Nav per DESIGN.md §6. "Usuarios" (therapist) has no route yet: add it here when the screen exists.
 const navItems = computed<NavItem[]>(() =>
   isTherapist.value
     ? [
-        { label: t('nav.today'), path: '/home', icon: Home },
-        { label: t('nav.calendar'), path: '/calendar', icon: CalendarDays },
+        { label: t('nav.today'), path: '/home' },
+        { label: t('nav.calendar'), path: '/calendar' },
       ]
     : [
-        { label: t('nav.home'), path: '/home', icon: Home },
-        { label: t('nav.artwork'), path: '/freeimages', icon: ImageIcon },
-        { label: t('nav.help'), icon: CircleHelp, help: true },
+        { label: t('nav.home'), path: '/home' },
+        { label: t('nav.artwork'), path: '/freeimages' },
+        { label: t('nav.help'), help: true },
       ],
 )
 
@@ -74,8 +75,8 @@ const isActive = (path?: string) => {
 const skipToMain = () => document.getElementById('main')?.focus()
 
 const navClass = (active: boolean) => [
-  'type-small inline-flex min-h-11 items-center gap-2 rounded-control border-b-[3px] px-4 font-semibold transition-colors hover:bg-secondary',
-  active ? 'border-mark bg-secondary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+  'type-small inline-flex min-h-11 items-center border-b-[3px] px-3 transition-colors hover:text-foreground',
+  active ? 'border-foreground font-bold text-foreground' : 'border-transparent font-medium text-muted-foreground',
 ]
 </script>
 
@@ -94,7 +95,7 @@ const navClass = (active: boolean) => [
       {{ t('shell.skip') }}
     </a>
 
-    <header class="sticky top-0 z-40 border-b border-border bg-background/90 backdrop-blur">
+    <header class="sticky top-0 z-40 bg-background">
       <div :class="[wrapWidth, 'mx-auto flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 sm:px-6']">
         <RouterLink
           to="/home"
@@ -109,7 +110,6 @@ const navClass = (active: boolean) => [
             <Popover v-if="item.help">
               <PopoverTrigger as-child>
                 <button type="button" :class="navClass(false)">
-                  <component :is="item.icon" aria-hidden="true" class="size-4" />
                   {{ item.label }}
                 </button>
               </PopoverTrigger>
@@ -119,7 +119,6 @@ const navClass = (active: boolean) => [
               </PopoverContent>
             </Popover>
             <RouterLink v-else :to="item.path!" :class="navClass(isActive(item.path))" :aria-current="isActive(item.path) ? 'page' : undefined">
-              <component :is="item.icon" aria-hidden="true" class="size-4" />
               {{ item.label }}
             </RouterLink>
           </template>
@@ -144,6 +143,7 @@ const navClass = (active: boolean) => [
           </SButton>
         </div>
       </div>
+      <hr class="flute-rule" />
     </header>
 
     <div :class="[wrapWidth, 'mx-auto flex flex-col gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-start']">

@@ -191,7 +191,7 @@ export const demoSessions = {
   async createSession(patientId, data) {
     const t = requireMe()
     if (t.type !== 'therapist') throw httpError(403, 'Solo los terapeutas pueden crear sesiones')
-    if (!state.users.some((u) => u.id === Number(patientId))) throw httpError(404, 'Paciente no encontrado')
+    if (!state.users.some((u) => u.id === Number(patientId))) throw httpError(404, 'Usuario no encontrado')
     if (new Date(data.start_date) >= new Date(data.end_date)) throw httpError(400, 'La fecha de inicio debe ser anterior a la de fin')
     const s = {
       id: nextId(), patient_id: Number(patientId), therapist_id: t.id, created_at: iso(Date.now()),

@@ -1,96 +1,85 @@
-# Liminal Sanctuary: prototype notes (L1)
+# Liminal Sanctuary: prototype notes (L2)
 
-`index.html` is a standalone prototype of the landing hero. It shows an empty colonnade at dusk with a pastel sky and a sculpture fragment on a plinth.
-Three intensity presets let the owner feel how far to push the idea. The landing copy is real (ES, CA and EN) and sits on a scrim.
+`index.html` is a standalone prototype of the landing hero: an empty colonnade at dusk, a pastel sky, light fog and
+**one abstract object** on a plinth, seen through a low-resolution, dithered "pixel" pass. The landing copy is real
+(ES, CA, EN) and sits on a scrim. The scene code is `scene/sanctuaryScene.js`, a copy of the app module
+`frontend/src/components/sanctuary/scene/sanctuaryScene.js` (the source of truth).
 
-## The three presets
+The mood is the approved **Quiet** preset from L1 (pastel dusk, light fog, 2 × 6 columns, near-still).
+The Dreaming and Liminal presets and the classical heads are gone: the owner ruled out human or figurative forms,
+and generated artworks will be abstract, so the scene now speaks about *making* (architecture, carving, geometry).
 
-| | Quiet | Dreaming | Liminal |
+## The three objects (dock: "Object")
+
+| | Ruina | Escultura abstracta (default) | Estudio |
 |---|---|---|---|
-| Feeling | The sanctuary first | Soft vaporwave | Empty, faintly uncanny (de Chirico) |
-| Sky | Indigo to lilac to rose, small soft sun | More saturated violet, lilac and peach; a large sun with yellow-to-pink gradient and soft horizontal gaps | Slate to dusty mauve, a dim sun low on the left |
-| Architecture | 2 × 6 columns with beams | 2 × 7 columns | 16 columns on the left, an arcade wall on the right, a fallen drum, a lit doorway far down the nave |
-| Floor | Matte | Mirror (Reflector at half resolution) under a 58 % tint | Matte, with long shadows from a side light |
-| Fragment | Venus de Milo head | Venus, plus a floating Apollo head and two floating drums | Apollo Belvedere head, off-centre |
-| Motion amount (×) | 0.35 | 1.0 | 0.6 |
-| Triangles | ≈ 30k | ≈ 42k | ≈ 29k |
+| What | An Ionic capital with spiral volutes on the plinth; two broken fluted drums on the floor | A twisted, open cradle form drilled through once, carved out of a still-rough block ("non finito") | The sculptor's study: Dürer's solid (from *Melencolia I*), a sphere and a ring on three plinths of different heights |
+| Tap | Turns slowly by 90° (4.6 s, eased) | Turns slowly by 90° | The key light moves round (3 positions) and the solid and ring turn 60° |
+| Object triangles | ≈ 14.7k | ≈ 20.0k | ≈ 3.6k |
+| Scene triangles | ≈ 24.6k | ≈ 29.8k | ≈ 13.5k |
 
-All three stay under the 60k budget. The `renderer.info` count for Dreaming is about twice that, because the mirror renders the scene again.
+The architecture (instanced columns, beams, floor) is about 9.9k triangles. No shadow maps, no mirror floor, no models.
+
+### Vibecheck (VIBECHECK.md): first idea → flags → what we did instead
+
+- **Escultura:** first idea, a smooth glossy pebble with two holes → flags: "stock 3D blob", glossy orb, and two holes read as eyes (figurative) →
+  instead, matte marble, one drilled opening, an open asymmetric cradle with a twist, and a hewn block left rough underneath (the carving process is visible).
+- **Ruina:** first idea, a capital with an egg-and-dart moulding → flags: at low resolution the eggs read as a row of teeth (figurative) →
+  instead, a plain ovolo echinus; the volutes carry the detail, and the drums lie further back so the group reads as a quiet ruin.
+- **Estudio:** first idea, a polished chrome sphere with a glossy torus → flags: gradient orb / glossy blob, generic 3D-render still life →
+  instead, honed (satin) marble, a faceted Dürer solid as the focus, and a tap that moves the *light*, as in a drawing class.
+
+## Post-FX (dock: "FX")
+
+One custom fullscreen pass (no EffectComposer): the scene renders into a half-float target at reduced size and is upscaled
+with NEAREST filtering in whole device-pixel blocks, so the pixels are crisp and evenly sized. HTML text is never affected.
+
+| Control | Options | Default |
+|---|---|---|
+| FX | on / off ("off" is the clean render with 4× MSAA) | **on** |
+| Pixel size | 1/2, 1/3, 1/4 of CSS resolution | **1/3** |
+| Dither | off / light / strong (4×4 Bayer, quantising each channel to about 25 or 13 levels) | **light** |
+| Film grain | on / off; **static** (a fixed hash per pixel, never refreshed) | **on** |
+| Vignette | on / off; soft | off |
+
+- **Stable pixel grid:** the camera never translates. Its lean and idle drift are rotations snapped to whole low-res pixels,
+  so the background moves in single, rare steps and nothing shimmers.
+- Grain and dither are computed per low-res pixel, so they form part of the pixel art rather than a screen-door overlay.
+- The sky writes alpha 0, so the output pass skips tone mapping for it and keeps the exact pastel colours.
 
 ## Motion rules as built
 
-- **Default:** on, unless `prefers-reduced-motion: reduce` is set; then it is off and the canvas renders **once** (0 frames per second afterwards).
-  The visible "Motion" toggle overrides the OS setting, and the choice is remembered (localStorage, try/catch).
-- **Idle drift:** the camera moves at most 5 cm and 2.5 cm on sine waves with periods of 30–37 s. The fragment turns ±1.5° over about 48 s. Floaters bob 5 cm.
-- **Pointer:** mouse and pen only, never touch. The camera leans at most about 1.2° of view, and the fragment turns at most 3° (yaw) and 2° (pitch). The easing takes about 1.2 s.
-- **Tap or click** on the scene (outside the panel and controls): the fragment turns to face the viewer over 3.6 s with a sine ease. Tap again and it returns to rest.
-  The tap does nothing when Motion is off. It is decorative and never needed to operate the page.
-- Rendering is capped at about 30 fps, which is plenty for movement this slow. It stops entirely when nothing moves, when the tab is hidden or when 3D is off.
-- Nothing flashes, there are no glitch, scan-line or VHS effects, and there is no zoom or dolly. A preset change swaps the scene in one frame, with no animated transition.
-  The canvas fades in once, over 0.2 s, on first load, and not at all under reduced motion.
+- Motion follows `prefers-reduced-motion` unless the dock toggle overrides it (remembered in localStorage, try/catch).
+  Motion off: the canvas renders still frames only, on change or resize.
+- Idle: the camera drifts at most ±0.1° and the object "breathes" ±0.4° over about 48 s. Pointer (mouse and pen only, never touch):
+  the camera leans ≤ 0.55°, the object ≤ 3° (yaw) and ≤ 1.5° (pitch), eased over about 1.2 s.
+- About 30 fps while something moves; no frames when still or when the tab is hidden. DPR capped at 1.5, dropping to 1 if frames stay slow.
+- Nothing flashes, no glitch, scan lines or VHS. The grain is static. Object changes swap in one frame.
 
-## Robustness
+## Module API (used by `SanctuaryScene.vue`)
 
-- devicePixelRatio is capped at 1.5. If frames stay above 50 ms, the page drops to 1× on its own.
-- WebGL missing, or the context lost: the poster stays and a plain message appears inside the panel ("3D isn't available on this device…").
-- The poster `<picture>` (landscape or portrait JPG for each preset) is visible from the first paint and hides only once the first 3D frame is ready. A slow CDN therefore never shows a blank page.
-- "3D: off" hides the canvas (`display:none`), stops the loop and shows the poster of the current preset.
-- No horizontal scroll at 390, 768 or 1440 (checked).
-
-## Accessibility safeguards
-
-- **Contrast** (computed). The text panel is `rgba(24,25,46,.88)`. Even over pure white, its composite gives: headline and body `#F4F3F7` **10.9:1**, secondary `#D8DAE6` **8.6:1**, link `#A9DCD6` **8.0:1**, focus ring **9.6:1**, button text on `#F0D5BF` **12.1:1**.
-  Over the real sky, every value is higher. Every piece of text sits on a scrim, and none sits directly on the scene.
-- **Targets:** primary button 56 px tall, language buttons 44×52 px, links 48 px tall, prototype controls 44 px. `touch-action: manipulation` is set everywhere.
-- **Focus:** a 3 px `#FFE3A3` outline with a 2 px dark gap ring, so it reads on the peach button as well as on the dark panel.
-- **Language:** `<html lang>` and the panel's `lang` follow the ES / CA / EN switch. The buttons carry full language names as `aria-label` and `aria-pressed`.
-- **Diplopia and vertigo:** one focal object per screen. Text never moves. The parallax is tiny and mouse-only. There are no fine repeating patterns behind text.
-  The sun bands are only five soft gaps, and only in Dreaming. The prototype dock is visually separate (dashed outline, labelled "Prototype").
-- The canvas is `aria-hidden`. The page is complete as a still image.
-- **Caveat for "Liminal":** the long repeating colonnade is a repeating pattern at the periphery. It is meant to be the most stimulating option, so test it with users before choosing it as the default.
-
-## Turning it into a Vue component
-
-```vue
-<!-- WelcomeView.vue -->
-<SanctuaryScene :preset="comfort.scenePreset" :motion="comfort.motion" :enabled="comfort.scene3d" class="absolute inset-0" />
+```js
+const s = await createSanctuaryScene(canvas, { object: 'escultura', fx: true, pixelScale: 3, motion: true, framing: 'landing', onReady });
+s.setOptions({ object: 'ruina', fx: false, motion: false, framing: 'background', dither: 0.8, grain: 0, vignette: 1 });
+s.resize(); s.snapshot('image/jpeg', 0.86); s.dispose();
 ```
 
-- **`src/components/sanctuary/SanctuaryScene.vue`**: a thin wrapper. It renders the `<picture>` poster immediately, then `defineAsyncComponent` / dynamic `import('./sanctuaryEngine')` only when `enabled && hasWebGL()`.
-  three.js then stays out of the main bundle (roughly 150–200 KB gzip with the loaders; measure it), and the login and app routes never pay for it.
-- **`sanctuaryEngine.ts`**: the scene code from this file, almost unchanged, exposing `mount(canvas, opts)`, `setPreset`, `setMotion`, `snapshot` and `dispose`.
-  Pointer and visibility listeners live inside the engine, not as Vue reactive state (no re-render per pointer event, as the Welcome brief asks).
-  `onBeforeUnmount` calls `dispose()` (geometries, materials, render targets, `renderer.forceContextLoss()`).
-- **Assets:** `src/assets/sanctuary/*.glb` and the posters via Vite `?url` imports, or `public/sanctuary/`. Self-host three instead of the CDN (`npm i three@0.160`).
-  Self-host the fonts with Fontsource: research §4 notes patient IP addresses and GDPR.
-- **Comfort panel:** add "Background: Still image / Moving scene / Off (plain)" plus the existing "Reduce motion". Store both per user in Pinia and persist them.
-  The default for patients is `motion = !prefersReducedMotion` and preset `quiet`. Never default to `liminal`.
-- **Props:** `preset: 'quiet' | 'dreaming' | 'liminal'`, `motion: boolean`, `enabled: boolean`, `fragment?: 'venus' | 'apollo'`, `framing?: 'hero-right' | 'centre' | 'top'` (for reuse below).
-- Keep the poster JPGs in the repo as the no-JS / no-WebGL / 3D-off fallback, and regenerate them with `snapshot()` whenever the scene changes.
+Extra options: `dither` (0–1, default 0.35), `grain` (0–1, default 0.5), `vignette` (0–1, default 0), `onError(err)` for a lost
+WebGL context (without it the handler throws). `triangles('scene' | 'object')` is a debugging helper.
+Framings: `landing` (object at two thirds in landscape, top band in portrait), `background` (centred, smaller, high),
+`small` (tight, centred, for a small canvas such as the waiting state).
 
-## Where else it could appear (dusk screens)
+Verified in Chromium (SwiftShader): 1440×900 and 390×844 for each object with FX on and off, no console errors, no horizontal
+scroll, lean, tap, keyboard access to the FX panel, 3D off shows the poster. The lazy `sanctuaryScene` chunk in the app build is
+542 KB raw / 143 KB gzip (three core + MarchingCubes + ConvexGeometry); three is not in the main bundle.
 
-| Screen | How |
-|---|---|
-| **Login / session code** | The same scene in `quiet`, still image by default (the poster), with the form on the same scrim. The fragment framed `top` so the keypad has room. |
-| **Generation waiting state** | The fragment slowly turns to face you over the full wait, once, then rests. This replaces a spinner and is a progress cue without numbers. Under reduced motion: the poster plus a text line "Creating your image…". |
-| **Session end / goodbye** | The doorway from `liminal`, warm and lit, framed centrally, with "See you next time". This is the only place the doorway carries meaning: a calm exit. |
-| **Empty gallery** | An empty plinth (no fragment) and the line "Your first piece will stand here." It is a gentle invitation, and the absence reads as space, not as failure. |
-| **Therapist screens** | No 3D. Only the palette and the column motif in the header. |
+### Possible saving for `small` (not built)
 
-## How the dawn (light) working screens can echo it without 3D
+For the small framing, the sky sphere and the colonnade could be skipped: the output pass already knows which pixels are sky
+(alpha 0), so it could draw the gradient and sun itself from the view ray (inverse projection), with no sky geometry at all.
 
-- **Column motif:** a thin fluted-column divider (an SVG of 3–4 vertical strokes with a capital) as a section separator, or a column silhouette at 4–6 % opacity at the edge of the patient home. Never behind text.
-- **Sun disc:** a flat soft-peach circle as the "Create" card's accent, with the same `#F0D5BF`. In dawn it sits *above* the horizon (morning), echoing the dusk sun below it.
-- **Marble-white mats for artwork:** the patient's images sit on an off-white "mat" `#F6F2EE` with a 1 px warm line and generous margins, as if on a plinth.
-  Artwork labels in Tenor Sans caps, like museum labels (DESIGN.md). This keeps "the patient's work is the only strong colour" from the research.
-- **Plinth cards:** cards with a slightly heavier bottom edge (a 4 px darker band), so items "stand" rather than float.
-- **Palette continuity:** dusk lilac `#C9BFEA` and peach `#F0D5BF` become dawn tints (`#EEEAF8`, `#FBEFE5`) for selected and hover states.
-- **Fragments as illustrations:** the posters, or one still render of a head on a plinth (for example the empty-state art), used as static images on light screens, so there is no WebGL in the working app.
+## Regenerating the posters
 
-## Open points for the owner
-
-1. Pick an intensity. My recommendation: **Quiet** as the default landing, with **Dreaming** behind the Comfort panel as "a more playful sky". **Liminal** would be a striking session-end screen, but it is the most unsettling as a front door.
-2. Which fragment: Venus (soft, calm and famously a "fragment") or Apollo (more dramatic). Both are public domain, from SMK casts.
-3. Type: the display and wordmark already use **Tenor Sans** caps, following DESIGN.md D8. The body is still **Atkinson Hyperlegible**, as the brief asked, but D8 picked **Readex Pro**, and T1 found that Atkinson lacks `Ŀ ŀ`.
-   Switching to Readex Pro is one change to `--font-body` plus the Google Fonts URL. The product should self-host both fonts (DESIGN.md).
+Load `index.html?object=<name>&motion=0&fx=1`, then save `__liminal.snapshot('image/jpeg', 0.86)` at 1440×900 and at
+390×844 (DPR 1.5) into `posters/`, and copy them to `frontend/src/assets/sanctuary/poster-<name>[-portrait].jpg`.
+Useful URL parameters: `object`, `motion`, `fx`, `px` (2, 3, 4), `dither` (off, light, strong), `grain`, `vignette`, `framing`, `lang`.

@@ -3,7 +3,9 @@ import { computed } from 'vue'
 import { cn } from '@/lib/utils'
 
 /**
- * One card = one thing. 16px radius, surface fill, hairline border.
+ * One card = one thing. 16px radius, surface fill, hairline border, NO shadow by default.
+ * `raised` adds the soft lift: use it only for something that floats (a popover-like panel). Hung
+ * things (artwork) use ArtworkMount instead.
  * `padding`: none | md (24px, default) | lg (32px). `selected` outlines it (never colour alone: add a label).
  */
 interface Props {
@@ -12,7 +14,7 @@ interface Props {
   selected?: boolean
   raised?: boolean
 }
-const props = withDefaults(defineProps<Props>(), { as: 'div', padding: 'md', raised: true })
+const props = withDefaults(defineProps<Props>(), { as: 'div', padding: 'md', raised: false })
 
 const classes = computed(() =>
   cn(

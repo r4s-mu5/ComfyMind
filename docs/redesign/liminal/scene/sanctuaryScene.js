@@ -32,8 +32,8 @@ const MOOD = {
   sun: { color: '#FFE6CC', color2: '#F7CDBE', size: 5.0, dir: [0.05, 0.05], glow: 0.3, alpha: 0.8 },
   fog: { color: '#D9B4AE', density: 0.036 },
   floor: '#6C6486',
-  hemi: ['#B7B2E0', '#3A3150', 0.8],
-  key: ['#FFE1C6', 2.2, [-3, 4.5, 4]],
+  hemi: ['#B7B2E0', '#5A4C72', 0.85],
+  key: ['#FFE1C6', 2.3, [-4.6, 4.2, 2.4]],
   back: ['#C8B7FF', 1.4, [2, 3, -6]],
   rim: ['#D2C4FF', 0.42],
   stone: '#E7E0E2',
@@ -162,20 +162,18 @@ function ionicCapital() {
 function sdfSculpture(x, y, z) {
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
   const smax = (a, b, k) => -smin(-a, -b, k);
-  // hewn block: a low box with two broad chamfers and faint chisel ripples
+  // hewn block: a low box with two broad chamfers
   const yb = y + 0.66;
   let block = Math.max(Math.abs(x) - 0.62, Math.abs(yb) - 0.2, Math.abs(z) - 0.44);
   block = Math.max(block, (0.5 * x + yb + 0.35 * z) / 1.17 - 0.33, (-0.45 * x + yb - 0.3 * z) / 1.13 - 0.34);
-  block += 0.01 * Math.sin(x * 29 + z * 9) * Math.sin(z * 23 - x * 5);
   // carved part: twist about the vertical axis as it rises
   const tw = 0.75 * (y + 0.4), c = Math.cos(tw), s = Math.sin(tw);
   const px = c * x - s * z, pz = s * x + c * z;
-  // crescent outline in the front plane: a leaning ellipse minus an offset ellipse
-  const rot = -0.38, cr = Math.cos(rot), sr = Math.sin(rot);
-  const ex = (cr * px - sr * (y + 0.02)) / 0.6, ey = (sr * px + cr * (y + 0.02)) / 0.82;
-  const outer = (Math.hypot(ex, ey) - 1) * 0.6;
-  const ix = (px - 0.36) / 0.46, iy = (y - 0.42) / 0.5;
-  const inner = (Math.hypot(ix, iy) - 1) * 0.46;
+  // open cradle outline in the front plane: a broad ellipse with an off-centre bite from above, two uneven horns
+  const ex = px / 0.7, ey = (y + 0.02) / 0.78;
+  const outer = (Math.hypot(ex, ey) - 1) * 0.7;
+  const ix = (px - 0.1) / 0.36, iy = (y - 0.62) / 0.6;
+  const inner = (Math.hypot(ix, iy) - 1) * 0.36;
   let form = smax(outer, -inner, 0.12);
   // thickness: full at the base, thinning toward the tips, slightly curved in plan
   const th = 0.2 - 0.07 * Math.max(0, y) + 0.04 * Math.cos(px * 2.2);
@@ -183,7 +181,7 @@ function sdfSculpture(x, y, z) {
   form = smax(form, Math.abs(pz - bow) - th, 0.12);
   form = smax(form, -(y + 0.5), 0.02);
   // one drilled opening through the mass, low and off centre, with eased edges
-  const hole = Math.hypot(px + 0.14, y + 0.12) - 0.13;
+  const hole = Math.hypot(px + 0.14, y + 0.16) - 0.15;
   form = smax(form, -hole, 0.08);
   return smin(block, form, 0.1);
 }
@@ -349,7 +347,7 @@ export async function createSanctuaryScene(canvas, {
   const plinthMat = withRim(new MeshStandardMaterial({ color: 0xE4DCDB, roughness: 0.8 }), 0.3);
   const marble = withRim(new MeshStandardMaterial({ color: 0xF1EBE6, roughness: 0.62 }));
   const ruinStone = withRim(new MeshStandardMaterial({ color: 0xE9E1DE, roughness: 0.78 }), 0.32);
-  const facetMat = withRim(new MeshStandardMaterial({ color: 0xF0E2D8, roughness: 0.66, flatShading: true }), 0.3);
+  const facetMat = withRim(new MeshStandardMaterial({ color: 0xF0E2D8, emissive: 0x2a2238, roughness: 0.66, flatShading: true }), 0.3);
   const honed = withRim(new MeshStandardMaterial({ color: 0xECE6EC, roughness: 0.38 }), 0.36);
   const ringMat = withRim(new MeshStandardMaterial({ color: 0xE3DDEE, roughness: 0.55 }), 0.36);
 
@@ -414,10 +412,10 @@ export async function createSanctuaryScene(canvas, {
       cap.scale.setScalar(1.05); cap.position.y = PH; cap.rotation.y = -30 * DEG;
       g.add(cap); movers = [mover(cap)];
       const d1 = mesh(G(brokenDrum(0.62, 7)), ruinStone);
-      d1.rotation.set(0, 0.55, Math.PI / 2); d1.position.set(-0.72, R * 0.94, 0.5);
+      d1.rotation.set(0, 0.5, Math.PI / 2); d1.position.set(-1.05, R * 0.94, -1.1);
       const d2 = mesh(G(brokenDrum(0.44, 19)), ruinStone);
-      d2.rotation.set(0, -0.35, -Math.PI / 2); d2.position.set(0.95, R * 0.94, -0.9);
-      g.add(d1, d2, contact(-0.72, 0.5, 1.0, 0.85, 0.55, 0.9), contact(0.95, -0.9, 0.78, 0.8, -0.35, 0.9));
+      d2.rotation.set(0, -0.4, -Math.PI / 2); d2.position.set(0.95, R * 0.94, -1.9);
+      g.add(d1, d2, contact(-1.05, -1.1, 1.0, 0.85, 0.5, 0.9), contact(0.95, -1.9, 0.78, 0.8, -0.4, 0.9));
       focusY = 1.42; extent = 0.75;
     } else if (name === 'escultura') {
       const PH = 1.04;
@@ -470,7 +468,7 @@ export async function createSanctuaryScene(canvas, {
       const dist = (k.extent * 1.25) / Math.tan(view.fov * DEG / 2) / Math.min(1, size.w / size.h);
       rig.position.set(0, 0, 0);
       view.cam.set(0, k.focusY + 0.1, dist);
-      view.offX = 0; view.offY = 0.04;
+      view.offX = 0; view.offY = 0.16;
     } else if (f === 'background') {
       view.fov = portrait ? 52 : 36;
       rig.position.set(0, 0, 0);
@@ -549,7 +547,7 @@ export async function createSanctuaryScene(canvas, {
     postU.block.value = size.block;
     postU.levels.value = p.d > 0 ? Math.round(34 - 26 * p.d) : 0;
     postU.ditherAmt.value = 1;
-    postU.grainAmt.value = p.gr * 0.07;
+    postU.grainAmt.value = p.gr * 0.045;
     postU.vignetteAmt.value = p.v * 0.4;
     frame3();
     camera.aspect = size.rw / size.rh;

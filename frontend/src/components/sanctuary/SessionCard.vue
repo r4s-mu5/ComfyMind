@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { CalendarClock, Radio, Sun } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import SCard from './SCard.vue'
 
 /**
- * A session: date "leaf" (month + day), time, therapist and a status chip (Now / Today / Next).
+ * A session: a date "leaf" (month, day and the status in a word: Now / Today / Next), time and therapist.
+ * "Now" turns the leaf peach with a small sun dot; the word carries the state, never colour alone.
  * Put the single action in the `action` slot (e.g. <SButton>Entrar a la sesión</SButton>).
  */
 interface Props {
@@ -22,32 +22,27 @@ const d = computed(() => (props.date instanceof Date ? props.date : new Date(pro
 const month = computed(() => new Intl.DateTimeFormat(locale.value, { month: 'short' }).format(d.value).replace('.', ''))
 const day = computed(() => d.value.getDate())
 const timeText = computed(() => props.time ?? new Intl.DateTimeFormat(locale.value, { hour: '2-digit', minute: '2-digit' }).format(d.value))
-const chipIcon = { now: Radio, today: Sun, next: CalendarClock }
-const chipClass = {
-  now: 'bg-primary text-primary-foreground border-transparent',
-  today: 'bg-secondary text-secondary-foreground border-input',
-  next: 'bg-card text-card-foreground border-input',
-}
+const fullDate = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyle: 'full' }).format(d.value))
 </script>
 
 <template>
   <SCard class="flex flex-wrap items-center gap-6">
     <div
-      class="flex size-20 shrink-0 flex-col items-center justify-center rounded-card border-2 border-input bg-card text-card-foreground"
-      aria-hidden="true"
+      :class="[
+        'flex min-h-24 w-24 shrink-0 flex-col items-center justify-center gap-0.5 rounded-control border-2 px-1 py-2 text-center',
+        status === 'now' ? 'border-dawn-ink bg-dawn-sun text-dawn-ink' : 'border-input bg-card text-card-foreground',
+      ]"
     >
-      <span class="type-small font-display uppercase tracking-[0.14em]">{{ month }}</span>
-      <span class="font-display text-3xl leading-none">{{ day }}</span>
+      <span class="sr-only">{{ fullDate }}</span>
+      <span class="type-label" aria-hidden="true">{{ month }}</span>
+      <span class="font-display text-3xl leading-none" aria-hidden="true">{{ day }}</span>
+      <span v-if="status" class="type-small mt-1 inline-flex items-center gap-1.5 font-semibold">
+        <span v-if="status === 'now'" aria-hidden="true" class="size-2.5 rounded-full bg-dawn-ink" />
+        {{ t(`session.${status}`) }}
+      </span>
     </div>
 
     <div class="flex min-w-[12rem] flex-1 flex-col gap-1">
-      <span
-        v-if="status"
-        :class="['type-small inline-flex w-fit items-center gap-2 rounded-pill border-2 px-3 py-0.5 font-semibold', chipClass[status]]"
-      >
-        <component :is="chipIcon[status]" aria-hidden="true" class="size-4" />
-        {{ t(`session.${status}`) }}
-      </span>
       <p class="type-h2">
         <time :datetime="d.toISOString()">{{ timeText }}</time>
       </p>

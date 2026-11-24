@@ -344,7 +344,7 @@ async function start(){
   loading = import('./scene/sanctuaryScene.js').then(async ({ createSanctuaryScene, hasWebGL }) => {
     if (!hasWebGL()) throw new Error('no WebGL');
     scene = await createSanctuaryScene(canvas, {
-      ...sceneOptions(), framing: 'landing',
+      ...sceneOptions(), framing: ['landing', 'background', 'small'].includes(qs.get('framing')) ? qs.get('framing') : 'landing',
       onReady(){ canvas.classList.add('ready'); stage.classList.add('rendered'); },
       onError(err){ console.warn('3D stopped:', err.message); stop(); noWebGL(); },
     });

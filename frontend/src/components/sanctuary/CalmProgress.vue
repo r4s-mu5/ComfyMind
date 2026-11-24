@@ -22,10 +22,11 @@ const statusText = computed(() => props.status ?? t('progress.onItsWay'))
 </script>
 
 <template>
-  <div class="dusk relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-card px-6 pb-20 pt-10 text-center">
-    <div class="sky absolute inset-0 -z-10" aria-hidden="true">
+  <div class="dusk relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-card px-6 pb-24 pt-10 text-center">
+    <div class="sky absolute inset-0 -z-10 [--horizon:20%] [--sun-size:10rem]" aria-hidden="true">
       <div class="mist" />
-      <div class="sun-disc is-breathing" style="bottom: -85%; width: 100%" />
+      <div class="sun-disc is-breathing" />
+      <div class="dither" />
       <div class="grain" />
     </div>
 

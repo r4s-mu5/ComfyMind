@@ -13,7 +13,7 @@
         <div class="grid gap-4">
           <!-- Paciente -->
           <div class="grid gap-2">
-            <Label for="patient">Paciente</Label>
+            <Label for="patient">Usuario</Label>
             <Popover :open="openCB" @update:open="openCB = $event">
               <PopoverTrigger as-child>
                 <Button
@@ -25,7 +25,7 @@
                   {{
                     formData.patientId != null
                       ? patients.find(patient => patient.id === formData.patientId)?.full_name
-                      : 'Selecciona paciente...'
+                      : 'Selecciona usuario...'
                   }}
                   <ChevronsUpDownIcon class="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
@@ -33,9 +33,9 @@
 
               <PopoverContent class="w-full p-0">
                 <Command>
-                  <CommandInput placeholder="Buscar paciente..." />
+                  <CommandInput placeholder="Buscar usuario..." />
                   <CommandList>
-                    <CommandEmpty>No se encontró el paciente.</CommandEmpty>
+                    <CommandEmpty>No se encontró a la persona usuaria.</CommandEmpty>
                     <CommandGroup>
                       <CommandItem
                         v-for="patient in patients"

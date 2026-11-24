@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { Check } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import { ArtworkMount, ReflectionPrompt, SButton, VersionsStrip } from '@/components/sanctuary'
+import { useNavLink } from './useNavLink'
 
 /**
  * The obra just made: a large mounted piece in its niche and, beside it, the choices.
@@ -37,6 +38,7 @@ const emit = defineEmits<{
   fresh: []
 }>()
 const { t } = usePrototypeLocale()
+const nav = useNavLink()
 const noteDraft = ref('')
 const heading = ref<HTMLElement | null>(null)
 
@@ -50,7 +52,7 @@ defineExpose({ focus: () => heading.value?.focus() })
 </script>
 
 <template>
-  <div class="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-start">
+  <div class="grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(16rem,2fr)] lg:items-start">
     <div class="mx-auto w-full max-w-[36rem]">
       <ArtworkMount
         :src="version.src"
@@ -66,7 +68,7 @@ defineExpose({ focus: () => heading.value?.focus() })
     <div class="flex flex-col gap-8">
       <div class="flex flex-col gap-2">
         <h2 ref="heading" tabindex="-1" class="type-h2 outline-offset-4">{{ t('create.resultTitle') }}</h2>
-        <p class="type-body text-muted-foreground">{{ t('create.resultLede') }}</p>
+        <p v-if="!kept" class="type-body text-muted-foreground">{{ t('create.resultLede') }}</p>
       </div>
 
       <ul v-if="kept || shared || hasNote" class="flex flex-col gap-2" role="list">
@@ -90,7 +92,7 @@ defineExpose({ focus: () => heading.value?.focus() })
             {{ t('create.share', { name: therapistName }) }}
           </SButton>
         </div>
-        <SButton v-if="!hasNote" variant="quiet" class="self-start px-0" @click="emit('note')">{{ t('create.addThought') }}</SButton>
+        <button v-if="!hasNote" type="button" class="type-body inline-flex min-h-12 items-center self-start font-semibold text-link underline underline-offset-4 hover:no-underline" @click="emit('note')">{{ t('create.addThought') }}</button>
         <p v-if="inSession" class="type-small text-muted-foreground">{{ t('session.canSee', { name: therapistName }) }}</p>
       </div>
 
@@ -101,7 +103,7 @@ defineExpose({ focus: () => heading.value?.focus() })
       <div v-else class="flex flex-col gap-4">
         <SButton class="self-start" @click="emit('fresh')">{{ t('create.fresh') }}</SButton>
         <div class="flex flex-wrap gap-3">
-          <SButton variant="secondary" :to="galleryTo">{{ t('create.toGallery') }}</SButton>
+          <SButton variant="secondary" v-bind="nav(galleryTo)">{{ t('create.toGallery') }}</SButton>
           <SButton v-if="inSession && !shared" variant="secondary" :busy="busy?.share" @click="emit('share')">
             {{ t('create.share', { name: therapistName }) }}
           </SButton>

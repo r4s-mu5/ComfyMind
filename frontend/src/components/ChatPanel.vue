@@ -57,7 +57,7 @@ const getSenderLabel = (msg: { sender: string }) => {
   return (
     resolvedOtherUser.value?.full_name ||
     props.otherLabel ||
-    (props.role === 'patient' ? 'Terapeuta' : 'Paciente')
+    (props.role === 'patient' ? 'Terapeuta' : 'Usuario')
   )
 }
 

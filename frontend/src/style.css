@@ -78,6 +78,11 @@
   --target-compact: 2.75rem;  /* 44px therapist / dense controls */
   --content-max: 1120px;
 
+  /* Dusk horizon: height of the floor band (share of the sky box) and the sun size. */
+  --horizon: 22%;
+  --sun-size: min(34vmin, 320px);
+  --sun-x: 50%;
+
   /* Motion */
   --dur-fade: 150ms;
   --dur-breathe: 6s;
@@ -182,6 +187,8 @@
   /* Elevation: dawn gets one soft lift, dusk gets a warm glow and no shadows (see .elev). */
   --shadow-lift: 0 1px 0 rgba(20, 32, 47, 0.06), 0 10px 26px rgba(20, 32, 47, 0.07);
   --shadow-glow: 0 0 40px rgba(240, 213, 191, 0.16);
+  /* Hung: a frame on a wall. A short drop plus a long soft shadow below. Artwork mats only. */
+  --shadow-hung: 0 2px 0 rgba(20, 32, 47, 0.06), 0 14px 22px -10px rgba(20, 32, 47, 0.18);
 
   --ease-calm: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -329,6 +336,7 @@ html.text-150 { font-size: 150%; }
 /* Plain atmosphere: no mist, grain, sun, glow; dusk sky becomes a flat colour. */
 html.atmo-plain .mist,
 html.atmo-plain .grain,
+html.atmo-plain .dither,
 html.atmo-plain .sun-disc,
 html.atmo-plain .dawn-glow,
 html.atmo-plain .atmo-layer { display: none; }
@@ -393,7 +401,15 @@ html.no-3d .scene-3d canvas { display: none; }
     font-size: 1.5rem;
     line-height: 1.25;
   }
+  /* Subsection headings and tile labels: sentence case, Readex. Tenor caps is NOT for these. */
   .type-h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1.0625rem;
+    line-height: 1.3;
+  }
+  /* Museum label title (and the date-leaf month): the only other use of Tenor caps. */
+  .type-label {
     font-family: var(--font-display);
     text-transform: uppercase;
     letter-spacing: 0.14em;
@@ -406,36 +422,55 @@ html.no-3d .scene-3d canvas { display: none; }
   .type-button { font-weight: 600; font-size: 1.125rem; line-height: 1.2; }
   .measure { max-width: 60ch; }
 
-  /* Atmosphere (DESIGN.md §5.1-5.2). Pure CSS, no images. Place inside a `relative overflow-hidden` parent. */
+  /* Atmosphere (DESIGN.md §5.1-5.2): the atrium at dusk in plain CSS. Pure CSS, no images.
+     Place inside a `relative overflow-hidden` parent. Layers, back to front:
+     .sky (sky + horizon + floor) > .mist (low strata) > .sun-disc (sits ON the horizon) > .dither > .grain */
   .sky {
     background:
-      radial-gradient(120% 55% at 50% 100%, var(--dusk-horizon) 0%, transparent 70%),
-      linear-gradient(180deg, var(--dusk-sky-deep) 0%, var(--dusk-sky) 35%, var(--dusk-sky-mid) 72%, var(--dusk-sky-low) 100%);
+      /* floor: below the horizon line, darker than the sky, with a crisp 2px horizon */
+      linear-gradient(to top, var(--dusk-sky-deep) 0%, var(--dusk-sky) calc(var(--horizon) - 2px), var(--dusk-horizon) calc(var(--horizon) - 2px), var(--dusk-horizon) var(--horizon), transparent var(--horizon)),
+      /* sky: ends at the horizon */
+      linear-gradient(180deg, var(--dusk-sky-deep) 0%, var(--dusk-sky) 32%, var(--dusk-sky-mid) 64%, var(--dusk-sky-low) calc(100% - var(--horizon)), var(--dusk-sky-low) 100%);
   }
 
+  /* A disc with a crisp edge, centred slightly above the horizon so the floor hides its lowest 30%. */
   .sun-disc {
     position: absolute;
-    left: 50%;
-    bottom: -14vmin;
-    width: min(72vmin, 680px);
+    left: var(--sun-x);
+    bottom: calc(var(--horizon) - var(--sun-size) * 0.3);
+    width: var(--sun-size);
     aspect-ratio: 1;
     transform: translateX(-50%);
     border-radius: 50%;
     pointer-events: none;
-    background: radial-gradient(circle, rgba(240, 213, 191, 0.95) 0%, rgba(240, 213, 191, 0.55) 32%, rgba(240, 213, 191, 0.14) 58%, transparent 72%);
+    background: var(--dusk-light);
+    clip-path: inset(0 0 30% 0);
   }
   .sun-disc.is-breathing { animation: sun-breathe var(--dur-breathe) ease-in-out infinite; }
 
+  /* Mist as low horizontal strata lying just above the horizon (never round blobs). */
   .mist {
     position: absolute;
-    inset: -4%;
+    inset: 0 -4%;
     pointer-events: none;
-    filter: blur(36px);
+    filter: blur(10px);
     background:
-      radial-gradient(40% 32% at 22% 68%, rgba(127, 196, 196, 0.30) 0%, transparent 70%),
-      radial-gradient(46% 34% at 78% 58%, rgba(185, 175, 214, 0.32) 0%, transparent 70%),
-      radial-gradient(60% 30% at 50% 92%, rgba(240, 213, 191, 0.30) 0%, transparent 70%);
+      radial-gradient(70% 3.5% at 30% calc(100% - var(--horizon) - 2%), rgba(185, 175, 214, 0.34) 0%, transparent 100%),
+      radial-gradient(80% 3% at 72% calc(100% - var(--horizon) - 6%), rgba(127, 196, 196, 0.22) 0%, transparent 100%),
+      radial-gradient(90% 2.5% at 45% calc(100% - var(--horizon) - 11%), rgba(240, 213, 191, 0.20) 0%, transparent 100%);
     animation: mist-drift var(--dur-drift) ease-in-out infinite alternate;
+  }
+
+  /* Ordered dither: a 4x4 Bayer matrix at 2x, so the CSS sky matches the dithered 3D scene. */
+  .dither {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.09;
+    mix-blend-mode: soft-light;
+    image-rendering: pixelated;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='4' height='4' shape-rendering='crispEdges'><rect x='0' y='0' width='1' height='1' fill='white' fill-opacity='0.03'/><rect x='1' y='0' width='1' height='1' fill='white' fill-opacity='0.53'/><rect x='2' y='0' width='1' height='1' fill='white' fill-opacity='0.16'/><rect x='3' y='0' width='1' height='1' fill='white' fill-opacity='0.66'/><rect x='0' y='1' width='1' height='1' fill='white' fill-opacity='0.78'/><rect x='1' y='1' width='1' height='1' fill='white' fill-opacity='0.28'/><rect x='2' y='1' width='1' height='1' fill='white' fill-opacity='0.91'/><rect x='3' y='1' width='1' height='1' fill='white' fill-opacity='0.41'/><rect x='0' y='2' width='1' height='1' fill='white' fill-opacity='0.22'/><rect x='1' y='2' width='1' height='1' fill='white' fill-opacity='0.72'/><rect x='2' y='2' width='1' height='1' fill='white' fill-opacity='0.09'/><rect x='3' y='2' width='1' height='1' fill='white' fill-opacity='0.59'/><rect x='0' y='3' width='1' height='1' fill='white' fill-opacity='0.97'/><rect x='1' y='3' width='1' height='1' fill='white' fill-opacity='0.47'/><rect x='2' y='3' width='1' height='1' fill='white' fill-opacity='0.84'/><rect x='3' y='3' width='1' height='1' fill='white' fill-opacity='0.34'/></svg>");
+    background-size: 8px 8px;
   }
 
   .grain {
@@ -448,12 +483,12 @@ html.no-3d .scene-3d canvas { display: none; }
     background-size: 180px 180px;
   }
 
-  /* Text container that sits on the dusk sky: surface at 92% opacity (DESIGN.md §5.1.6). */
+  /* Panel behind FORMS on the dusk sky: surface at 92% opacity (DESIGN.md §5.1.6). Wall text sits
+     directly on the sky and needs no scrim. No glow. */
   .scrim {
     background: color-mix(in srgb, var(--dusk-surface) 92%, transparent);
     border: 1.5px solid var(--hairline);
     border-radius: var(--radius-card);
-    box-shadow: var(--shadow-glow);
   }
 
   /* Warm glow at the top of working screens. */
@@ -488,11 +523,12 @@ html.no-3d .scene-3d canvas { display: none; }
   .prototype-page {
     @apply mx-auto w-full max-w-[1120px] px-4 py-8 sm:px-6 sm:py-10;
   }
+  /* Legacy names kept for screens that still use them; same style as .type-h3 (sentence case). */
   .prototype-eyebrow {
-    @apply font-display text-sm uppercase tracking-[0.14em] text-link;
+    @apply font-semibold text-base text-link;
   }
   .prototype-title {
-    @apply font-display text-3xl tracking-tight text-foreground sm:text-4xl;
+    @apply font-display text-3xl text-foreground sm:text-4xl;
   }
   .prototype-lead {
     @apply max-w-[60ch] text-base leading-7 text-muted-foreground sm:text-lg;
@@ -503,8 +539,8 @@ html.no-3d .scene-3d canvas { display: none; }
 }
 
 @keyframes mist-drift {
-  from { transform: translate3d(-1.5%, 0, 0); }
-  to { transform: translate3d(1.5%, -1%, 0); }
+  from { transform: translate3d(-2%, 0, 0); }
+  to { transform: translate3d(2%, 0, 0); }
 }
 @keyframes sun-breathe {
   0%, 100% { opacity: 1; }

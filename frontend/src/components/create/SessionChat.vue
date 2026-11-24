@@ -41,7 +41,7 @@ const send = () => {
 <template>
   <section class="flex flex-col gap-4 rounded-card border-[1.5px] border-border bg-card p-5" :aria-labelledby="`${inputId}-title`">
     <div class="flex flex-col gap-1">
-      <h2 :id="`${inputId}-title`" class="type-h3">{{ t('session.chatTitle', { name: therapistName }) }}</h2>
+      <h2 :id="`${inputId}-title`" class="type-body font-semibold">{{ t('session.chatTitle', { name: therapistName }) }}</h2>
       <p class="type-small text-muted-foreground">{{ t('session.canSee', { name: therapistName }) }}</p>
     </div>
 

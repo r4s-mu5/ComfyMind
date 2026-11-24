@@ -7,7 +7,7 @@
  */
 import { onMounted, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
-import { ArrowRight, Check, Sparkles } from 'lucide-vue-next'
+import { ArrowRight, Check } from 'lucide-vue-next'
 import { resolveDemoImage } from '@/lib/demo/images'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import {
@@ -80,9 +80,11 @@ const groups: Group[] = [
 const values = reactive<Record<string, string>>({})
 
 const parseHex = (v: string): [number, number, number] | null => {
-  const m = v.trim().match(/^#([0-9a-f]{6})$/i)
-  if (!m) return null
-  const n = parseInt(m[1], 16)
+  // Accepts #rrggbb and #rgb (the build minifies #FFFFFF to #fff).
+  let hex = v.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)?.[1]
+  if (!hex) return null
+  if (hex.length === 3) hex = [...hex].map((c) => c + c).join('')
+  const n = parseInt(hex, 16)
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
 }
 const lum = ([r, g, b]: [number, number, number]) => {
@@ -108,7 +110,8 @@ const typeRoles = [
   { cls: 'type-display', name: 'Display', spec: 'Tenor caps +0.10em, clamp 28-44px. 8 words max, never running text', sample: 'Un lugar tranquilo para crear' },
   { cls: 'type-h1', name: 'Heading 1', spec: 'Tenor mixed case, 32-36px', sample: 'Buenas tardes, Alex' },
   { cls: 'type-h2', name: 'Heading 2', spec: 'Readex 600, 24px', sample: 'Tu obra está en camino' },
-  { cls: 'type-h3', name: 'Heading 3 / label', spec: 'Tenor caps +0.14em, 17px', sample: 'Sin título' },
+  { cls: 'type-h3', name: 'Heading 3', spec: 'Readex 600, 17px, sentence case: subsection headings, tile labels', sample: 'Versiones de esta sesión' },
+  { cls: 'type-label', name: 'Museum label', spec: 'Tenor caps +0.14em, 17px. Only for museum labels and the date-leaf month', sample: 'Sin título' },
   { cls: 'type-body', name: 'Body', spec: 'Readex 400, 18px / 1.6, max 60ch', sample: 'Puedes tomarte el tiempo que necesites. No hay una manera correcta de crear.' },
   { cls: 'type-small', name: 'Small', spec: 'Readex 400, 15px, the minimum', sample: 'Marta puede ver lo que compartes.' },
   { cls: 'type-button', name: 'Button', spec: 'Readex 600, 18px, sentence case', sample: 'Entrar a la sesión' },
@@ -133,7 +136,6 @@ const reflectionLog = ref('')
   <AppShell role="patient" :profile="false">
     <div class="flex flex-col gap-16 pb-16">
       <header class="flex flex-col gap-4">
-        <p class="type-h3 text-mark">Design system</p>
         <h1 class="type-h1">Liminal Sanctuary: style guide</h1>
         <p class="type-body measure text-muted-foreground">
           Dusk outside, dawn inside. Tokens live in <code class="rounded-sm bg-secondary px-1.5">src/style.css</code>, components in
@@ -169,7 +171,7 @@ const reflectionLog = ref('')
                 <p class="type-small text-muted-foreground">{{ s.use }}</p>
                 <p v-if="ratioOf(s.token, s.on) || ratioOf(s.on ?? '', s.token)" class="type-small font-semibold">
                   {{ (ratioOf(s.token, s.on) ?? 0).toFixed(1) }} : 1
-                  <span class="ml-1 rounded-pill bg-secondary px-2 py-0.5">{{ grade(ratioOf(s.token, s.on)) }}</span>
+                  <span class="ml-1 rounded-sm bg-secondary px-2 py-0.5">{{ grade(ratioOf(s.token, s.on)) }}</span>
                   <span class="sr-only"> contrast against {{ s.on }}</span>
                 </p>
               </div>
@@ -182,7 +184,7 @@ const reflectionLog = ref('')
       <section id="type" class="flex flex-col gap-6">
         <h2 class="type-h2">Typography</h2>
         <p class="type-body measure text-muted-foreground">
-          Tenor Sans for display, Readex Pro for everything people read. Use the <code>type-*</code> classes, or <code>font-display</code> /
+          Tenor Sans caps only for the wordmark, the display line and museum labels; Readex Pro for everything people read, headings included. Use the <code>type-*</code> classes, or <code>font-display</code> /
           <code>font-body</code>, <code>text-body</code>, <code>text-small</code>. Sizes are rem, so Comfort text scaling works.
         </p>
         <div class="flex flex-col divide-y divide-border rounded-card border-[1.5px] border-border bg-card">
@@ -222,7 +224,8 @@ const reflectionLog = ref('')
           <div class="flex flex-col gap-2"><div class="niche h-24 border-2 border-input bg-card" /><p class="type-small"><code>.niche</code>: arch for featured art</p></div>
         </div>
         <div class="grid gap-4 sm:grid-cols-2">
-          <div class="flex flex-col gap-2"><div class="elev h-24 rounded-card bg-card" /><p class="type-small"><code>.elev</code> (dawn lift) / <code>shadow-lift</code></p></div>
+          <div class="flex flex-col gap-2"><div class="elev h-24 rounded-card bg-card" /><p class="type-small"><code>.elev</code> (dawn lift) / <code>shadow-lift</code>: floating panels only. Cards have no shadow.</p></div>
+          <div class="flex flex-col gap-2"><div class="h-24 rounded-[2px] bg-dawn-surface shadow-hung" /><p class="type-small"><code>shadow-hung</code>: a frame on a wall. Artwork mats only.</p></div>
           <div class="dusk sky relative flex flex-col gap-2 overflow-hidden rounded-card p-4"><div class="elev h-16 rounded-card bg-card" /><p class="type-small"><code>.elev</code> inside <code>.dusk</code>: warm glow, no shadow</p></div>
         </div>
         <div class="flex flex-col gap-3">
@@ -245,12 +248,12 @@ const reflectionLog = ref('')
       <!-- ATMOSPHERE -->
       <section id="atmosphere" class="flex flex-col gap-6">
         <h2 class="type-h2">Atmosphere utilities</h2>
-        <p class="type-body measure text-muted-foreground">Pure CSS. Layers go inside a <code>relative overflow-hidden</code> parent: <code>.sky</code>, <code>.mist</code>, <code>.sun-disc</code>, <code>.grain</code>. Text on top sits on <code>.scrim</code>.</p>
-        <div class="dusk sky relative isolate flex min-h-72 items-center justify-center overflow-hidden rounded-card p-6">
-          <div class="mist" aria-hidden="true" /><div class="sun-disc is-breathing" aria-hidden="true" /><div class="grain" aria-hidden="true" />
-          <div class="scrim relative z-10 max-w-md p-6 text-center">
-            <p class="type-display">Atrium</p>
-            <p class="type-body mt-2">Text on the dusk sky always sits on a scrim.</p>
+        <p class="type-body measure text-muted-foreground">Pure CSS: the atrium at dusk. Layers go inside a <code>relative overflow-hidden</code> parent, back to front: <code>.sky</code> (sky, a 2px horizon line and a darker floor; height set by <code>--horizon</code>), <code>.mist</code> (low strata), <code>.sun-disc</code> (a crisp disc sitting on the horizon; <code>--sun-size</code>, <code>--sun-x</code>), <code>.dither</code> (4×4 Bayer overlay), <code>.grain</code>. Wall text sits directly on the upper sky, left-aligned. Use <code>.scrim</code> only behind forms.</p>
+        <div class="dusk sky relative isolate flex min-h-80 items-start overflow-hidden rounded-card p-8 [--sun-x:72%]">
+          <div class="mist" aria-hidden="true" /><div class="sun-disc is-breathing" aria-hidden="true" /><div class="dither" aria-hidden="true" /><div class="grain" aria-hidden="true" />
+          <div class="relative z-10 max-w-md">
+            <p class="type-display">Atrio</p>
+            <p class="type-body mt-3">Wall text sits directly on the sky, no panel.</p>
           </div>
         </div>
         <div class="relative overflow-hidden rounded-card border-[1.5px] border-border bg-background p-8">
@@ -269,7 +272,7 @@ const reflectionLog = ref('')
         <div class="flex flex-col gap-4">
           <h3 class="type-h3">SButton</h3>
           <div class="flex flex-wrap items-center gap-3">
-            <SButton><template #icon><Sparkles aria-hidden="true" /></template>Crear</SButton>
+            <SButton>Crear</SButton>
             <SButton variant="secondary">Guardar en mis obras</SButton>
             <SButton variant="quiet">Anotar un pensamiento</SButton>
             <SButton variant="danger">Finalizar sesión</SButton>
@@ -308,14 +311,15 @@ const reflectionLog = ref('')
         <div class="flex flex-col gap-4">
           <h3 class="type-h3">SCard</h3>
           <div class="grid gap-4 md:grid-cols-3">
-            <SCard><p class="type-h2">Normal</p><p class="type-small mt-2 text-muted-foreground">One card, one thing.</p></SCard>
+            <SCard><p class="type-h2">Normal</p><p class="type-small mt-2 text-muted-foreground">One card, one thing. No shadow.</p></SCard>
             <SCard selected><p class="type-h2">Selected</p><p class="type-small mt-2 text-muted-foreground">2px ring outline.</p></SCard>
-            <SCard :raised="false" padding="lg"><p class="type-h2">Flat, lg</p><p class="type-small mt-2 text-muted-foreground">No lift.</p></SCard>
+            <SCard raised padding="lg"><p class="type-h2">Raised, lg</p><p class="type-small mt-2 text-muted-foreground">Optional soft lift (<code>raised</code>).</p></SCard>
           </div>
         </div>
 
         <div class="flex flex-col gap-4">
           <h3 class="type-h3">ArtworkMount + MuseumLabel</h3>
+          <p class="type-small measure text-muted-foreground">A square-cornered white museum mat with a hung shadow, not a card. <code>niche</code> adds the arch.</p>
           <div class="grid items-start gap-8 md:grid-cols-3">
             <ArtworkMount :src="art" title="Bosque al amanecer" :technique="t('art.technique.words')" :date="sessionDate" made-by="Alex" niche mat="lg" ratio="4 / 5" />
             <ArtworkMount :src="art2" :technique="t('art.technique.sketch')" :date="sessionDate" made-by="Alex" mat="md" ratio="4 / 3" />
@@ -386,7 +390,7 @@ const reflectionLog = ref('')
             <SField label="Nombre" model-value="Alex" />
           </div>
           <div class="dusk sky relative isolate flex flex-col gap-4 overflow-hidden rounded-card p-6">
-            <div class="mist" aria-hidden="true" /><div class="grain" aria-hidden="true" />
+            <div class="mist" aria-hidden="true" /><div class="sun-disc" aria-hidden="true" /><div class="dither" aria-hidden="true" /><div class="grain" aria-hidden="true" />
             <div class="scrim relative z-10 flex flex-col gap-4 p-5">
               <p class="type-h3">Dusk</p>
               <p class="type-display">Un lugar tranquilo para crear</p>

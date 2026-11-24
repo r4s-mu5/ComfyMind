@@ -220,14 +220,14 @@ const toolBtn = (active: boolean) => [
       </div>
     </div>
 
-    <div class="paper-frame rounded-card border-[1.5px] border-border p-2">
+    <div class="paper-frame flex justify-center rounded-card border-[1.5px] border-border p-2">
       <canvas
         ref="canvas"
         :width="W"
         :height="H"
         role="img"
         :aria-label="hasDrawing ? t('create.canvasLabelDrawn') : t('create.canvasLabel')"
-        class="block aspect-[4/3] w-full cursor-crosshair touch-none rounded-control bg-paper"
+        class="block aspect-[4/3] w-full max-w-[calc((100vh-18rem)*4/3)] min-w-[min(100%,28rem)] cursor-crosshair touch-none rounded-control bg-paper"
         @pointerdown.prevent="down"
         @pointermove.prevent="move"
         @pointerup="up"

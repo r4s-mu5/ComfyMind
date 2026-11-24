@@ -27,10 +27,12 @@ import ImagePanel from '@/components/create/ImagePanel.vue'
 import ResultStage, { type ResultVersion } from '@/components/create/ResultStage.vue'
 import SessionChat from '@/components/create/SessionChat.vue'
 import { urlFor, type CreateKind } from '@/components/create/images'
+import { useNavLink } from '@/components/create/useNavLink'
 
 const route = useRoute()
 const { t, locale } = usePrototypeLocale()
 const { ensureUTCString } = useDateHelpers()
+const nav = useNavLink()
 
 const sid = Number(route.params.sessionId)
 const inSession = Number.isFinite(sid)
@@ -360,8 +362,8 @@ onBeforeUnmount(() => {
           {{ t(`create.access.${access}Body`, { time: sessionTime(session?.start_date) }) }}
         </SNotice>
         <div class="flex flex-wrap gap-3">
-          <SButton to="/home">{{ t('create.backHome') }}</SButton>
-          <SButton v-if="access !== 'error'" variant="secondary" to="/generation">{{ t('create.ownInstead') }}</SButton>
+          <SButton v-bind="nav('/home')">{{ t('create.backHome') }}</SButton>
+          <SButton v-if="access !== 'error'" variant="secondary" v-bind="nav('/generation')">{{ t('create.ownInstead') }}</SButton>
         </div>
       </div>
 
@@ -424,8 +426,9 @@ onBeforeUnmount(() => {
       </template>
     </div>
 
-    <template v-if="inSession && access === 'ready'" #aside>
-      <SessionChat :messages="messages" :therapist-name="therapistName" :connected="connected" @send="sendChat" />
+    <!-- Always pass the slot in a session: AppShell sizes its columns from the slot when it mounts. -->
+    <template v-if="inSession" #aside>
+      <SessionChat v-if="access === 'ready'" :messages="messages" :therapist-name="therapistName" :connected="connected" @send="sendChat" />
     </template>
   </AppShell>
 
