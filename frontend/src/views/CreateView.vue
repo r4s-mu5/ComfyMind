@@ -331,7 +331,7 @@ watch(way, async (w, prev) => {
 watch(phase, async (p) => {
   if (p !== 'reflect') return
   await nextTick()
-  document.querySelector<HTMLTextAreaElement>('#main form textarea')?.focus()
+  document.querySelector<HTMLTextAreaElement>('[data-reflect] textarea')?.focus()
 })
 
 const galleryTo = computed(() => (inSession ? `/session/${sid}` : '/freeimages'))

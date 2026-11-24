@@ -52,8 +52,10 @@ defineExpose({ focus: () => heading.value?.focus() })
 </script>
 
 <template>
-  <div class="grid gap-10 lg:grid-cols-[minmax(0,3fr)_minmax(16rem,2fr)] lg:items-start">
-    <div class="mx-auto w-full max-w-[36rem]">
+  <!-- Container query: side by side only when the column itself is wide enough (aside open, 150% text). -->
+  <div class="@container">
+  <div class="grid gap-10 @[40rem]:grid-cols-[minmax(0,3fr)_minmax(15rem,2fr)] @[40rem]:items-start">
+    <div class="mx-auto w-full max-w-[min(36rem,50vh)] @[40rem]:max-w-[36rem]">
       <ArtworkMount
         :src="version.src"
         :technique="version.technique"
@@ -96,7 +98,7 @@ defineExpose({ focus: () => heading.value?.focus() })
         <p v-if="inSession" class="type-small text-muted-foreground">{{ t('session.canSee', { name: therapistName }) }}</p>
       </div>
 
-      <div v-else-if="phase === 'reflect'" class="rounded-card border-[1.5px] border-border bg-card p-6">
+      <div v-else-if="phase === 'reflect'" data-reflect class="rounded-card border-[1.5px] border-border bg-card p-6">
         <ReflectionPrompt v-model="noteDraft" :busy="busy?.note" @save="(n) => emit('saveNote', n)" @skip="emit('skipNote')" />
       </div>
 
@@ -117,5 +119,6 @@ defineExpose({ focus: () => heading.value?.focus() })
         <VersionsStrip v-model="current" :versions="strip" />
       </template>
     </div>
+  </div>
   </div>
 </template>
