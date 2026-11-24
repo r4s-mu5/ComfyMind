@@ -295,18 +295,18 @@ No recommendation: this is a fact question.
 
 | Round | Question | Answer | Notes |
 |---|---|---|---|
-| 1 | Q1 Audience | | |
-| 1 | Q2 Demo goal | | |
-| 1 | Q3 Feeling | | |
-| 1 | Q4 Metaphor | | |
-| 2 | Q1 Direction | | |
-| 2 | Q2 Light/dark | | |
-| 2 | Q3 Typography | | |
-| 2 | Q4 Decor/motion | | |
-| 3 | Q1 Login | | |
-| 3 | Q2 Reflection | | |
-| 3 | Q3 Vocabulary | | |
-| 3 | Q4 Therapist | | |
+| 1 | Q1 Audience | Academic reviewers + the research project's director | The director supervises several final-degree projects (TFGs), each building part of the app. **Our deliverable is a design direction and system that students can implement now and adapt future parts to.** |
+| 1 | Q2 Demo goal | Creating feels calm, safe | |
+| 1 | Q3 Feeling | All four: safe/unhurried, capable/absorbed, respected/proud, curious/playful | Weighted, all kept in mind. Lead with safe (sanctuary), support capable and proud through artwork framing, and allow gentle curiosity. |
+| 1 | Q4 Metaphor | A sanctuary | |
+| 2 | Q1 Direction | A + artwork frames | A as the identity. B's mounted print and C's museum label for artworks. **Later addition from the owner:** a *liminal, soft-vaporwave sanctuary*: an empty museum atrium at dusk, a pastel sky, columns and classical statue fragments, with reactive 3D models on the landing and where it makes sense. Keep it gentle rather than unsettling. Prototype: L1. |
+| 2 | Q2 Light/dark | Dusk outside, dawn inside | Dark twilight on the landing, login and in-between moments; a light 'dawn' variant on working screens, in one palette. |
+| 2 | Q3 Typography | Open: avoid the 'obvious LLM' look | Owner: type must not read as an obvious Claude creation. Run a critique exercise ('review the first idea and why it could be wrong'). Fraunces is under suspicion. Exploration: T1. |
+| 2 | Q4 Decor/motion | Mist on dusk screens + mist everywhere, both behind user toggles | Goes into a Comfort panel: atmosphere level, motion on/off, 3D off, text size. |
+| 3 | Q1 Login | Email and password | Keep the standard login, made larger and clearer. The demo keeps the 'enter as patient/therapist' shortcut. Show password, no timeouts, paste allowed (WCAG 3.3.8). |
+| 3 | Q2 Reflection | Optional gentle pause | One open question after keeping a piece, with a clear 'Not now'. This is the future chatbot slot. |
+| 3 | Q3 Vocabulary | Obra · obra · artwork | |
+| 3 | Q4 Therapist | Live session view | Current piece and versions, chat, private notes (concept). |
 | 4 | Q1 Waiting | | |
 | 4 | Q2 Language | | |
 | 4 | Q3 Demo art | | |
