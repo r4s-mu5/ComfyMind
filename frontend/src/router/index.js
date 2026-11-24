@@ -10,6 +10,8 @@ import GenerationView from '../views/GenerationView.vue'
 import CalendarView from '../views/CalendarView.vue'
 import SessionView from '../views/SessionView.vue'
 import WelcomeView from '../views/WelcomeView.vue'
+import GalleryView from '../views/GalleryView.vue'
+import TherapistSessionView from '../views/TherapistSessionView.vue'
 
 const routes = [
   { path: '/', component: WelcomeView, meta: { hideHeader: true } },
@@ -18,12 +20,16 @@ const routes = [
   { path: '/home/', component: HomeView },
   { path: '/canvas/', component: CanvasView },
   { path: '/generation/', component: GenerationView },
-  { path: '/freeimages/', component: SessionView },
+  { path: '/freeimages/', component: GalleryView },
   // session-specific routes (use sessionId param)
   { path: '/session/:sessionId/patient', component: GenerationView, props: true },
   { path: '/session/:sessionId/patient/canvas', component: CanvasView, props: true },
-  { path: '/session/:sessionId/therapist', component: TherapistGenerationView, props: true },
-  { path: '/session/:sessionId', component: SessionView, props: true },
+  { path: '/session/:sessionId/therapist', component: TherapistSessionView, props: true, meta: { hideHeader: true } },
+  { path: '/session/:sessionId', component: GalleryView, props: true },
+  // Previous (pre-redesign) screens, kept reachable.
+  { path: '/legacy/session/:sessionId/therapist', component: TherapistGenerationView, props: true },
+  { path: '/legacy/session/:sessionId', component: SessionView, props: true },
+  { path: '/legacy/freeimages/', component: SessionView },
   { path: '/calendar', component: CalendarView },
   // Living style guide (tokens + components). Public, also in demo mode.
   { path: '/design', component: () => import('../views/DesignView.vue'), meta: { hideHeader: true } },

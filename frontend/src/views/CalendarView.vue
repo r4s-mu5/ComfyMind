@@ -1,15 +1,21 @@
 <template>
-  <div class="mx-auto p-4 space-y-4 bg-slate-300/30">
-    <div class="flex flex-wrap items-center justify-between gap-3 px-6">
-      <div class="space-y-1">
-        <h1 class="text-2xl font-semibold text-slate-900">Calendario</h1>
-        <p v-if="user?.type === 'therapist'" class="text-sm text-slate-600">Consulta tu agenda y gestiona tus sesiones.</p>
-        <p v-if="user?.type === 'patient'" class="text-sm text-slate-600">Consulta las sesiones programadas en tu agenda.</p>
+  <div class="flex flex-col gap-6">
+    <header class="flex flex-wrap items-end justify-between gap-4">
+      <div class="flex flex-col gap-2">
+        <h1 class="type-h1">{{ t('calendar.title') }}</h1>
+        <p class="type-body text-muted-foreground">
+          {{ user?.type === 'therapist' ? t('calendar.subtitleTherapist') : t('calendar.subtitlePatient') }}
+        </p>
       </div>
-    </div>
+      <SButton v-if="user?.type === 'therapist'" size="compact" @click="showCreateModal = true">
+        <template #icon><Plus aria-hidden="true" /></template>
+        {{ t('calendar.create') }}
+      </SButton>
+    </header>
 
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden mx-6">
+    <div class="overflow-hidden rounded-card border-[1.5px] border-border bg-card p-2 elev sm:p-4">
       <FullCalendar
+        :key="locale"
         ref="calendarRef"
         :options="calendarOptions"
         @eventClick="handleEventClick"
@@ -17,45 +23,51 @@
       />
     </div>
 
+    <ul class="type-small flex flex-wrap gap-x-6 gap-y-2 text-muted-foreground" aria-hidden="true">
+      <li class="flex items-center gap-2"><span class="legend-chip legend-now">&#9654;</span> {{ t('calendar.legendNow') }}</li>
+      <li class="flex items-center gap-2"><span class="legend-chip legend-next"></span> {{ t('calendar.legendNext') }}</li>
+      <li class="flex items-center gap-2"><span class="legend-chip legend-done">&#10003;</span> {{ t('calendar.legendDone') }}</li>
+    </ul>
+
     <Dialog :open="showModal"  @update:open="(val) => !val && closeModal()" >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Detalles de la sesión</DialogTitle>
+          <DialogTitle>{{ t('calendar.detailTitle') }}</DialogTitle>
           <DialogDescription>
-            Consulta la información detallada de la sesión seleccionada.
+            {{ t('calendar.detailBody') }}
           </DialogDescription>
         </DialogHeader>
         <div v-if="selectedSession">
-          <dl class="grid grid-cols-2 gap-x-1.5 gap-y-1 text-m">
+          <dl class="grid grid-cols-2 gap-x-1.5 gap-y-1 text-[1.0625rem]">
             <template v-if="user?.type === 'therapist'">
-              <dt class="font-semibold">Paciente</dt>
+              <dt class="font-semibold">{{ t('calendar.patient') }}</dt>
               <dd>{{ patient?.full_name ?? 'Cargando...' }}</dd>
             </template>
             <template v-else>
-              <dt class="font-semibold">Terapeuta</dt>
+              <dt class="font-semibold">{{ t('calendar.therapist') }}</dt>
               <dd>{{ therapist?.full_name ?? 'Cargando...' }}</dd>
             </template>
 
-            <dt class="font-semibold">Fecha</dt>
+            <dt class="font-semibold">{{ t('calendar.date') }}</dt>
             <dd>{{ formatLocalDate(selectedSession.start_date).slice(0,8) }}</dd>
 
-            <dt class="font-semibold">Hora</dt>
+            <dt class="font-semibold">{{ t('calendar.time') }}</dt>
             <dd>{{ formatLocalDate(selectedSession.start_date).slice(10,16) }} - {{ formatLocalDate(selectedSession.end_date).slice(10,16) }}</dd>
           </dl>
 
-          <div class="mt-4 flex justify-end gap-2">
-            <Button class="bg-emerald-600 text-white hover:bg-emerald-700" v-if="isSessionActive(selectedSession)" @click="router.push(`/session/${selectedSession.id}/${user?.type}`)">
-              Ir a sesión activa
-            </Button>
-            <Button class="bg-cyan-600 text-white hover:bg-cyan-700" v-if="selectedSession.ended_at" @click="router.push(`/session/${selectedSession.id}`)">
-              Ir al registro de la sesión
-            </Button>
-            <Button v-if="user?.type==='therapist' && canModify(selectedSession)" variant="destructive" @click="eliminarSesion(selectedSession.id)">
-              Cancelar sesión
-            </Button>
-            <Button v-if="user?.type==='therapist' && canModify(selectedSession)" variant="default" @click="actualizarSesion(selectedSession.id)">
-              Actualizar sesión
-            </Button>
+          <div class="mt-6 flex flex-wrap justify-end gap-3">
+            <SButton size="compact" v-if="isSessionActive(selectedSession)" @click="router.push(`/session/${selectedSession.id}/${user?.type}`)">
+              {{ t('calendar.enterActive') }}
+            </SButton>
+            <SButton size="compact" variant="secondary" v-if="selectedSession.ended_at" @click="router.push(`/session/${selectedSession.id}`)">
+              {{ t('calendar.viewRecord') }}
+            </SButton>
+            <SButton size="compact" variant="secondary" v-if="user?.type==='therapist' && canModify(selectedSession)" @click="actualizarSesion(selectedSession.id)">
+              {{ t('calendar.update') }}
+            </SButton>
+            <SButton size="compact" variant="danger" v-if="user?.type==='therapist' && canModify(selectedSession)" @click="eliminarSesion(selectedSession.id)">
+              {{ t('calendar.cancelSession') }}
+            </SButton>
           </div>
         </div>
       </DialogContent>
@@ -166,16 +178,16 @@
     <AlertDialog :open="showCancelDialog" @update:open="showCancelDialog = $event">
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Cancelar sesión</AlertDialogTitle>
+          <AlertDialogTitle>{{ t('calendar.cancelSession') }}</AlertDialogTitle>
           <AlertDialogDescription>
-            Esta acción cancelará la sesión seleccionada. ¿Deseas continuar?
+            {{ t('calendar.cancelBody') }}
           </AlertDialogDescription>
         </AlertDialogHeader>
 
         <AlertDialogFooter>
-          <AlertDialogCancel @click="cancelCancel">Mantener</AlertDialogCancel>
-          <AlertDialogAction @click="confirmCancel" variant="destructive">
-            Cancelar sesión
+          <AlertDialogCancel @click="cancelCancel" class="min-h-11">{{ t('calendar.keep') }}</AlertDialogCancel>
+          <AlertDialogAction @click="confirmCancel" class="min-h-11 rounded-pill bg-danger text-danger-foreground hover:bg-danger/90">
+            {{ t('calendar.cancelSession') }}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
@@ -185,7 +197,7 @@
 
 <script setup lang="ts">
 import { createSocket } from '@/lib/config'
-import { ref, onMounted, nextTick, onBeforeUnmount } from "vue";
+import { ref, onMounted, nextTick, onBeforeUnmount, watch } from "vue";
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import { userService } from '../api/userService';
@@ -229,6 +241,11 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
 import CreateSessionModal from '@/components/CreateSessionModal.vue'
+import { Plus } from 'lucide-vue-next'
+import { SButton } from '@/components/sanctuary'
+import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+
+const { t, locale } = usePrototypeLocale()
 
 
 const showModal = ref(false)
@@ -293,7 +310,7 @@ const cancelCancel = () => {
 const calendarOptions = ref({
   plugins: [dayGridPlugin],
   initialView: 'dayGridMonth',
-  locale: 'es',
+  locale: locale.value,
   events: [],
   headerToolbar: {
     left: '',
@@ -305,7 +322,7 @@ const calendarOptions = ref({
     month: 'long'
   },
   buttonText: {
-    today: 'Hoy',
+    today: t('calendar.today'),
     month: 'Mes',
     week: 'Semana',
     day: 'Día'
@@ -316,6 +333,7 @@ const calendarOptions = ref({
     meridiem: false,
     hour12: false
   },
+  buttonHints: { prev: t('calendar.prev'), next: t('calendar.next') },
   eventClick: null,
   firstDay: 1,
   height: 'auto',
@@ -382,9 +400,8 @@ onMounted(async () => {
   try {
     user.value = await userService.getCurrentUser()
     if (user.value && user.value.type === 'therapist') {
-      calendarOptions.value.headerToolbar.left = 'prev,next today';
-      calendarOptions.value.headerToolbar.center = 'title';
-      calendarOptions.value.headerToolbar.right = 'customCreateButton';
+      calendarOptions.value.headerToolbar.left = 'title';
+      calendarOptions.value.headerToolbar.right = 'prev,next today';
     } else {
       calendarOptions.value.headerToolbar.left = 'title';
       calendarOptions.value.headerToolbar.right = 'prev,next today';
@@ -603,7 +620,7 @@ async function loadSessions() {
       end: dateToLocalString(new Date(ensureUTCString(s.end_date))),
       displayEventTime: true,
       extendedProps: { session: s },
-      classNames: isSessionActive(s) ? ['active-event'] : (s.ended_at ? [] : ['pending-event']),
+      classNames: isSessionActive(s) ? ['active-event'] : (s.ended_at ? ['done-event'] : ['pending-event']),
     })),
     eventClick: handleEventClick,
   };
@@ -614,6 +631,15 @@ const closeUpdate = () => {
   selectedSession.value = null
 }
 
+watch(locale, (l) => {
+  calendarOptions.value = {
+    ...calendarOptions.value,
+    locale: l,
+    buttonText: { ...calendarOptions.value.buttonText, today: t('calendar.today') },
+    buttonHints: { prev: t('calendar.prev'), next: t('calendar.next') },
+  }
+})
+
 onBeforeUnmount(() => {
   disconnectCalendarWs()
 })
@@ -623,130 +649,79 @@ onBeforeUnmount(() => {
 </script>
 
 <style>
+/* Calendar on Sanctuary tokens (dawn). Event chips >= 4.5:1, clear "today", 44px nav buttons. */
 .fc-shadcn {
-  --fc-border-color: #e2e8f0;
-  --fc-button-bg-color: #059669;
-  --fc-button-border-color: #059669;
-  --fc-button-text-color: #f8fafc;
-  --fc-button-hover-bg-color: #047857;
-  --fc-button-hover-border-color: #047857;
-  --fc-today-bg-color: #f1f5f9;
-  --fc-neutral-bg-color: #ffffff;
-  --fc-page-bg-color: #ffffff;
-  --fc-list-event-dot-width: 8px;
-  --fc-event-bg-color: #0ea5e9;
-  --fc-event-border-color: #0ea5e9;
-  --fc-event-text-color: #f8fafc;
+  --fc-border-color: var(--dawn-hairline);
+  --fc-button-bg-color: var(--card);
+  --fc-button-border-color: var(--input);
+  --fc-button-text-color: var(--foreground);
+  --fc-button-hover-bg-color: var(--secondary);
+  --fc-button-hover-border-color: var(--input);
+  --fc-button-active-bg-color: var(--secondary);
+  --fc-button-active-border-color: var(--input);
+  --fc-today-bg-color: transparent;
+  --fc-neutral-bg-color: var(--secondary);
+  --fc-page-bg-color: var(--card);
+  --fc-event-text-color: var(--primary-foreground);
+  font-family: inherit;
 }
-
-.fc-shadcn .fc-toolbar {
-  padding-top: 0.75rem;
-  padding-right: 1rem;
-  padding-left: 1rem;
-  gap: 0.65rem;
-}
-
+.fc-shadcn .fc-toolbar { gap: 0.75rem; padding: 0.5rem 0.5rem 1rem; flex-wrap: wrap; }
+.fc-shadcn .fc-toolbar-chunk { display: flex; gap: 0.75rem; align-items: center; }
 .fc-shadcn .fc-toolbar-title {
-  padding-top: 0.5rem;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
+  font-family: var(--font-display, inherit);
+  font-size: 1.5rem; font-weight: 400; color: var(--foreground);
 }
-
-.fc-toolbar-title::first-letter {
-  text-transform: uppercase; /* solo la primera letra en mayúscula */
-}
-
+.fc-shadcn .fc-toolbar-title::first-letter { text-transform: uppercase; }
 .fc-shadcn .fc-button {
-  border-radius: 0.75rem;
-  font-weight: 600;
-  padding: 0.5rem 0.9rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  transition: all 0.18s ease;
+  min-height: 2.75rem; min-width: 2.75rem; padding: 0 1rem;
+  border-width: 2px; border-radius: 0.75rem; font-size: 1rem; font-weight: 600;
+  box-shadow: none; text-transform: none;
 }
-
-.fc-shadcn .fc-button:focus,
-.fc-shadcn .fc-button:focus-visible,
-.fc-shadcn .fc-button:active {
-  outline: none;
-  box-shadow: none;
-}
-
-.fc-shadcn .fc-toolbar-chunk {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.fc-shadcn .fc-daygrid-event {
-  border-radius: 0.6rem;
-  padding: 0.25rem 0.5rem;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.12);
-  font-weight: 600;
-  font-size: 0.9rem;
-  border: none;
-}
-
-.fc-shadcn .fc-daygrid-event:hover {
-  filter: brightness(0.97);
-}
-
-.fc-shadcn .pending-event {
-  background-color: #6366f1;
-  border-color: #6366f1;
-}
-
-.fc-shadcn .active-event {
-  background-color: #48d421;
-  border-color: #48d421;
-}
-
-.fc-shadcn .fc-daygrid-day-number {
-  color: #0f172a;
-  font-weight: 600;
-}
-
-
-.fc-shadcn .fc-daygrid-day.fc-day-today .fc-daygrid-day-frame {
-  background-color: #fffcd5 !important;
-  border: 1px solid #899141;
-  border-radius: 0.5rem;
-}
-
-/* Número del día ligeramente más destacado */
-.fc-shadcn .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
-  font-weight: 700; /* un poquito más pesado */
-}
-
-.fc-shadcn .fc-col-header-cell-cushion,
-.fc-shadcn .fc-daygrid-day-number {
-  padding: 0.5rem;
-}
-
+.fc-shadcn .fc-button:focus-visible { outline: 3px solid var(--ring); outline-offset: 3px; box-shadow: none; }
+.fc-shadcn .fc-button:disabled { background: var(--secondary); color: var(--muted-foreground); opacity: 1; }
 .fc-shadcn .fc-col-header-cell-cushion {
-  font-size: 0.85rem;
-  color: #475569;
-  text-transform: capitalize;
+  padding: 0.5rem; font-size: 0.9375rem; font-weight: 600;
+  color: var(--muted-foreground); text-transform: capitalize; text-decoration: none;
 }
-
-.fc-shadcn .fc-daygrid-day-frame {
-  padding: 0.4rem;
-  border-radius: 0.75rem;
+.fc-shadcn .fc-daygrid-day-number {
+  padding: 0.5rem; font-size: 1rem; font-weight: 600; color: var(--foreground); text-decoration: none;
 }
-
-.fc-shadcn .fc-daygrid-day.fc-day-sat,
-.fc-shadcn .fc-daygrid-day.fc-day-sun {
-  background-color: #f8fafc;
+.fc-shadcn .fc-day-other .fc-daygrid-day-number { color: var(--muted-foreground); font-weight: 400; }
+.fc-shadcn .fc-daygrid-day.fc-day-sat, .fc-shadcn .fc-daygrid-day.fc-day-sun { background: color-mix(in srgb, var(--secondary) 45%, transparent); }
+/* Today: a filled number disc + an outlined cell, never colour alone. */
+.fc-shadcn .fc-daygrid-day.fc-day-today { background: var(--secondary); box-shadow: inset 0 0 0 2px var(--link); }
+.fc-shadcn .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  margin: 0.25rem; min-width: 2rem; min-height: 2rem; padding: 0 0.4rem;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 999px; background: var(--primary); color: var(--primary-foreground); font-weight: 700;
 }
-
-.fc-shadcn .fc-scrollgrid-sync-table {
-  border-radius: 0.75rem;
+.fc-shadcn .fc-daygrid-event {
+  margin: 2px 4px; padding: 0.25rem 0.5rem; border-radius: 0.5rem; border: 2px solid transparent;
+  font-size: 0.9375rem; font-weight: 600; box-shadow: none; cursor: pointer;
 }
-
-.fc-theme-standard td,
-.fc-theme-standard th {
-  border-color: #e2e8f0;
+.fc-shadcn .fc-daygrid-event:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
+.fc-shadcn .fc-event-title, .fc-shadcn .fc-event-time { color: inherit; font-weight: 600; }
+/* upcoming: ink on light (>= 12:1) */
+.fc-shadcn .pending-event, .fc-shadcn .fc-daygrid-event.pending-event {
+  background: var(--card); color: var(--foreground); border-color: var(--link);
 }
+.fc-shadcn .pending-event * { color: var(--foreground); }
+/* happening now: solid success + "play" cue */
+.fc-shadcn .active-event { background: var(--success); color: var(--dawn-surface); border-color: var(--success); }
+.fc-shadcn .active-event * { color: var(--dawn-surface); }
+.fc-shadcn .active-event .fc-event-main::before { content: "\25B6\00a0"; }
+/* done: soft fill + check cue */
+.fc-shadcn .done-event { background: var(--secondary); color: var(--foreground); border-color: var(--border); }
+.fc-shadcn .done-event * { color: var(--foreground); }
+.fc-shadcn .done-event .fc-event-main::before { content: "\2713\00a0"; }
+.fc-shadcn .fc-daygrid-event-dot { display: none; }
+.fc-theme-standard td, .fc-theme-standard th, .fc-theme-standard .fc-scrollgrid { border-color: var(--dawn-hairline); }
 
-
+.legend-chip {
+  display: inline-flex; min-width: 1.5rem; height: 1.25rem; align-items: center; justify-content: center;
+  border-radius: 0.4rem; border: 2px solid transparent; font-size: 0.7rem; line-height: 1;
+}
+.legend-now { background: var(--success); color: var(--dawn-surface); border-color: var(--success); }
+.legend-next { background: var(--card); border-color: var(--link); }
+.legend-done { background: var(--secondary); color: var(--foreground); border-color: var(--border); }
 </style>

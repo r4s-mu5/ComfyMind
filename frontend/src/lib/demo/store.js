@@ -92,8 +92,8 @@ const save = () => {
 save()
 
 const broadcastState = () => {
-  const { users, sessions, images, nextId } = state
-  post({ kind: 'state', from: 'store', payload: { users, sessions, images, nextId } })
+  const { users, sessions, images, nextId, notes } = state
+  post({ kind: 'state', from: 'store', payload: { users, sessions, images, nextId, notes } })
 }
 
 const commit = () => {
@@ -286,6 +286,35 @@ export const demoComfy = {
     state.images.push(rec)
     commit()
     return imageOut(rec)
+  },
+}
+
+// ---------------------------------------------------------------- notes (B2: reflection notes + "kept")
+// One entry per image file name: { fileName, text, kept, ownerId, sessionId, updatedAt }.
+// Read by the gallery (Mis obras detail) and the therapist view. See DEMO_MODE.md.
+const notesMap = () => (state.notes ||= {})
+const noteOut = (n) => (n ? { ...n } : null)
+const upsertNote = (fileName, patch) => {
+  const key = nameOf(fileName)
+  const prev = notesMap()[key] || { fileName: key, text: '', kept: false, ownerId: null, sessionId: null }
+  notesMap()[key] = { ...prev, ...patch, fileName: key, updatedAt: iso(Date.now()) }
+  commit()
+  return noteOut(notesMap()[key])
+}
+
+export const demoNotes = {
+  async saveNote(fileName, text, { userId = null, sessionId = null } = {}) {
+    return upsertNote(fileName, { text: String(text ?? ''), ownerId: userId ?? me()?.id ?? null, sessionId: sessionId ?? null })
+  },
+  async keepArtwork(fileName, { userId = null, sessionId = null } = {}) {
+    return upsertNote(fileName, { kept: true, ownerId: userId ?? me()?.id ?? null, sessionId: sessionId ?? null })
+  },
+  async getNote(fileName) { return noteOut(notesMap()[nameOf(fileName)]) },
+  async getNotesForUser(userId) {
+    return Object.values(notesMap()).filter((n) => n.ownerId === Number(userId)).map(noteOut)
+  },
+  async getNotesForSession(sessionId) {
+    return Object.values(notesMap()).filter((n) => n.sessionId === Number(sessionId)).map(noteOut)
   },
 }
 
