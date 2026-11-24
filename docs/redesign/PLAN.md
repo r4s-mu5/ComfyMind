@@ -26,6 +26,7 @@ the stakeholder meeting.
 | D10 | **Vibecheck rule:** criticise the first idea against LLM red flags and move away from them; regular fresh-eyes reviews. `VIBECHECK.md`, also in AGENTS.md and CLAUDE.md. | User |
 | D11 | **No "patient" in the GUI.** Use the person's name and *tú*; the role word is usuario · usuari · user ("persona usuaria" in sentences). Code identifiers are unchanged. | User |
 | D12 | 3D = **procedural three.js only** (no model files), lazy-loaded, low-res render pass, tight budget. A shader-only scene was considered and kept as an option. | User + orchestrator |
+| D13 | 3D: **generative Escultura abstracta**, a new seeded sculpture on click/tap plus a keyboard button, with a museum label "Escultura nº NNNN". FX = 1/4 pixels + strong dither + static grain. **No camera or object motion** except the regenerate transition. | User |
 | D9 | Demo: Spanish default; reviewers view it over a video call and on their own computers, so desktop QA comes first; curated template images. | User (interview) |
 
 ## Known facts / constraints

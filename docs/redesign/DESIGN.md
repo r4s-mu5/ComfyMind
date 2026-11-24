@@ -175,7 +175,8 @@ Working screens quote the sanctuary lightly:
 - **Used on:** landing (full), login (background), the waiting state (small, calm), session end, and the empty gallery.
 - **Never on:** the workspace, the canvas, the therapist console, or behind running text.
 - **Assets:** procedural three.js geometry (no third-party models). The scene code lives in `frontend/src/components/sanctuary/scene/sanctuaryScene.js`, wrapped by `SanctuaryScene.vue`. Budget: < 60k triangles, DPR capped at 1.5, paused when the tab is hidden.
-- The prototype is in `docs/redesign/liminal/`. The owner chose the **Quiet** mood; the object choice is pending (default *Escultura abstracta*).
+- The prototype is in `docs/redesign/liminal/`. Owner's choices: the **Quiet** mood; the object is a **generative *Escultura abstracta***: each visit gets a seeded sculpture, and the user can make another (click/tap, or the "Otra escultura" button), labelled like a museum piece ("Escultura nº 0427 · Mármol, generada para ti"). FX default: 1/4 pixels, strong dither, static grain.
+- **The scene does not move:** no camera drift, no pointer lean, no breathing. The only motion is the short transition to a new sculpture (instant when motion is off).
 
 ### 5.4 Comfort panel (patient and therapist)
 
