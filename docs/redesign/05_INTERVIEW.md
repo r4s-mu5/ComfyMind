@@ -301,7 +301,7 @@ No recommendation: this is a fact question.
 | 1 | Q4 Metaphor | A sanctuary | |
 | 2 | Q1 Direction | A + artwork frames | A as the identity. B's mounted print and C's museum label for artworks. **Later addition from the owner:** a *liminal, soft-vaporwave sanctuary*: an empty museum atrium at dusk, a pastel sky, columns and classical statue fragments, with reactive 3D models on the landing and where it makes sense. Keep it gentle rather than unsettling. Prototype: L1. |
 | 2 | Q2 Light/dark | Dusk outside, dawn inside | Dark twilight on the landing, login and in-between moments; a light 'dawn' variant on working screens, in one palette. |
-| 2 | Q3 Typography | Open: avoid the 'obvious LLM' look | Owner: type must not read as an obvious Claude creation. Run a critique exercise ('review the first idea and why it could be wrong'). Fraunces is under suspicion. Exploration: T1. |
+| 2 | Q3 Typography | **3 Signage: Tenor Sans + Readex Pro** (chosen after the T1 exploration). Original note: avoid the 'obvious LLM' look | Owner: type must not read as an obvious Claude creation. Run a critique exercise ('review the first idea and why it could be wrong'). Fraunces is under suspicion. Exploration: T1. |
 | 2 | Q4 Decor/motion | Mist on dusk screens + mist everywhere, both behind user toggles | Goes into a Comfort panel: atmosphere level, motion on/off, 3D off, text size. |
 | 3 | Q1 Login | Email and password | Keep the standard login, made larger and clearer. The demo keeps the 'enter as patient/therapist' shortcut. Show password, no timeouts, paste allowed (WCAG 3.3.8). |
 | 3 | Q2 Reflection | Optional gentle pause | One open question after keeping a piece, with a clear 'Not now'. This is the future chatbot slot. |

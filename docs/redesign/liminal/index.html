@@ -1,0 +1,736 @@
+<title>Liminal Sanctuary</title>
+<style>
+:root{
+  color-scheme: dark;
+  /* dusk tokens: this page is single-theme on purpose */
+  --night:#12142A;          /* page fallback behind the scene */
+  --scrim:rgba(24,25,46,.88);/* text panel; worst case over the brightest sky gives >= 9.5:1 for --ink */
+  --scrim-solid:#1B1C33;
+  --scrim-line:rgba(244,243,247,.24);
+  --ink:#F4F3F7;            /* headline + body, AAA on scrim */
+  --ink-2:#D8DAE6;          /* secondary text, AAA on scrim */
+  --warm:#F0D5BF;           /* primary button fill ("distant light") */
+  --warm-hover:#F7E3D1;
+  --on-warm:#1A1B2E;        /* 12:1 on --warm */
+  --teal:#A9DCD6;           /* quiet link, 10:1 on scrim */
+  --lilac:#C9BFEA;
+  --focus:#FFE3A3;          /* outer focus ring */
+  --focus-gap:#12142A;      /* inner gap so the ring reads on light and dark */
+  --dock:rgba(14,15,30,.92);
+  --dock-line:rgba(201,191,234,.45);
+  --chip:#2A2B48;
+  --chip-on:#C9BFEA;
+  --on-chip-on:#16172B;
+  --gutter-l:max(16px, env(safe-area-inset-left, 0px));
+  --gutter-r:max(16px, env(safe-area-inset-right, 0px));
+  --dock-h:76px;
+  --font-body:'Atkinson Hyperlegible', system-ui, sans-serif;
+  --font-display:'Castoro', Georgia, serif;          /* temporary display face (T1 is choosing) */
+  --font-mark:'Castoro Titling', 'Castoro', Georgia, serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--night);color:var(--ink)}
+body{font:400 18px/1.6 var(--font-body);overflow-x:hidden;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px;box-shadow:0 0 0 2px var(--focus-gap)}
+
+/* ---------- stage: canvas + poster ---------- */
+.stage{position:fixed;inset:0;z-index:0;overflow:hidden;background:#3a3658}
+.stage canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity .2s linear;touch-action:manipulation}
+.stage canvas.ready{opacity:1}
+.stage picture,.stage img{position:absolute;inset:0;width:100%;height:100%}
+.stage img{object-fit:cover;object-position:62% 50%}
+.stage.three-on.rendered picture{visibility:hidden}
+@media (prefers-reduced-motion:reduce){.stage canvas{transition:none}}
+
+/* ---------- overlay ---------- */
+.overlay{position:relative;z-index:1;min-height:100vh;min-height:100dvh;display:grid;grid-template-rows:auto 1fr;
+  padding:16px var(--gutter-r) calc(var(--dock-h) + 20px) var(--gutter-l);pointer-events:none}
+.overlay > *{pointer-events:auto}
+.top{display:flex;justify-content:flex-end;align-items:flex-start}
+.lang{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--scrim);border:1.5px solid var(--scrim-line)}
+.lang button{min-width:52px;min-height:44px;padding:0 12px;border-radius:999px;border:0;background:transparent;color:var(--ink);font-weight:700;font-size:16px;letter-spacing:.04em;cursor:pointer;touch-action:manipulation}
+.lang button:hover{background:rgba(244,243,247,.12)}
+.lang button[aria-pressed="true"]{background:var(--ink);color:var(--on-warm)}
+
+.hero{align-self:center;width:100%;max-width:520px;margin:24px 0 0 clamp(0px, 4vw, 72px);
+  background:var(--scrim);border:1.5px solid var(--scrim-line);border-radius:28px;padding:32px 36px 30px}
+.mark{margin:0 0 18px;font:400 17px/1 var(--font-mark);letter-spacing:.24em;text-transform:uppercase;color:var(--warm)}
+h1{margin:0 0 14px;font:400 clamp(36px,4.4vw,54px)/1.1 var(--font-display);letter-spacing:-.005em;color:var(--ink);text-wrap:balance}
+.lede{margin:0 0 26px;color:var(--ink-2);max-width:36ch}
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
+.btn-primary{min-height:56px;min-width:180px;padding:0 32px;border-radius:999px;border:0;background:var(--warm);color:var(--on-warm);
+  font:700 19px/1 var(--font-body);letter-spacing:.01em;cursor:pointer;touch-action:manipulation;box-shadow:0 0 40px rgba(240,213,191,.18)}
+.btn-primary:hover{background:var(--warm-hover)}
+.link-quiet{display:inline-flex;align-items:center;min-height:48px;padding:0 4px;color:var(--teal);font-weight:700;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:1.5px;border-radius:6px}
+.link-quiet:hover{text-decoration-thickness:3px}
+.note{margin:14px 0 0;font-size:16px;color:var(--ink-2)}
+.note:empty{display:none}
+
+/* ---------- prototype dock (not part of the landing) ---------- */
+.dock{position:fixed;z-index:2;left:var(--gutter-l);right:var(--gutter-r);bottom:max(12px, env(safe-area-inset-bottom, 0px));
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;padding:8px 10px 8px 16px;margin:0 auto;max-width:1040px;
+  background:var(--dock);border:1.5px dashed var(--dock-line);border-radius:20px;color:var(--ink);font-size:15px;line-height:1.3}
+.dock-title{font-weight:700;color:var(--lilac);letter-spacing:.06em;text-transform:uppercase;font-size:13px;white-space:nowrap}
+.seg{display:flex;gap:4px;padding:3px;border-radius:14px;background:var(--chip)}
+.seg button,.tog{min-height:44px;padding:0 14px;border-radius:11px;border:0;background:transparent;color:var(--ink);font-weight:700;font-size:15px;cursor:pointer;touch-action:manipulation;white-space:nowrap}
+.seg button:hover,.tog:hover{background:rgba(244,243,247,.12)}
+.seg button[aria-pressed="true"]{background:var(--chip-on);color:var(--on-chip-on)}
+.seg button .n{opacity:.75;margin-right:6px;font-weight:400}
+.tog{background:var(--chip);border:1.5px solid rgba(244,243,247,.28)}
+.tog b{font-weight:700;color:var(--warm)}
+.desc{flex:1 1 220px;min-width:0;color:var(--ink-2);margin:0}
+.desc b{color:var(--ink)}
+.toggles{display:flex;gap:8px}
+
+/* ---------- fallback message ---------- */
+.fallback{display:none;margin:12px 0 0;padding:10px 14px;border-radius:12px;background:var(--scrim-solid);border:1.5px solid var(--scrim-line);color:var(--ink);font-size:16px}
+.no-webgl .fallback{display:block}
+
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* ---------- tablet / phone ---------- */
+@media (max-width:900px){
+  .hero{max-width:560px;margin-left:0}
+}
+@media (max-width:760px), (orientation:portrait) and (max-width:1100px){
+  :root{--dock-h:112px}
+  .overlay{grid-template-rows:auto 1fr auto}
+  .hero{grid-row:3;align-self:end;max-width:none;margin:0;padding:24px 22px 22px;border-radius:24px}
+  .stage img{object-position:50% 30%}
+  .dock{padding:8px;gap:8px;justify-content:space-between}
+  .dock-title,.desc{display:none}
+  .seg{flex:1 1 100%}
+  .seg button{flex:1;padding:0 6px}
+  .toggles{flex:1 1 100%}
+  .toggles .tog{flex:1}
+}
+@media (max-width:760px){
+  h1{font-size:clamp(32px,8.6vw,40px)}
+  .mark{margin-bottom:14px}
+  .lede{margin-bottom:20px;font-size:18px}
+  .actions{gap:8px 20px}
+  .btn-primary{flex:1 1 100%}
+  .seg button .n{display:none}
+}
+</style>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Castoro&family=Castoro+Titling&display=swap" rel="stylesheet">
+
+<div class="stage three-on" id="stage" aria-hidden="true">
+  <picture id="poster">
+    <source id="posterPortrait" media="(max-width:760px), (orientation:portrait) and (max-width:1100px)" srcset="posters/quiet-portrait.jpg">
+    <img id="posterImg" src="posters/quiet.jpg" alt="" decoding="async">
+  </picture>
+</div>
+
+<div class="overlay">
+  <header class="top">
+    <div class="lang" role="group" aria-label="Idioma" id="langGroup">
+      <button type="button" data-lang="es" lang="es" aria-label="Español" aria-pressed="true">ES</button>
+      <button type="button" data-lang="ca" lang="ca" aria-label="Català" aria-pressed="false">CA</button>
+      <button type="button" data-lang="en" lang="en" aria-label="English" aria-pressed="false">EN</button>
+    </div>
+  </header>
+
+  <main class="hero" id="hero" lang="es" aria-labelledby="h1">
+    <p class="mark">ComfyMind</p>
+    <h1 id="h1" data-t="h1">Un lugar tranquilo para crear</h1>
+    <p class="lede" data-t="lede">Tómate tu tiempo. Aquí no hay una forma correcta de hacerlo.</p>
+    <div class="actions">
+      <button type="button" class="btn-primary" id="begin" data-t="begin">Comenzar</button>
+      <a class="link-quiet" href="#terapeuta" id="therapist" data-t="therapist">Soy terapeuta</a>
+    </div>
+    <p class="note" id="note" role="status" aria-live="polite"></p>
+    <p class="fallback" id="fallback">3D isn’t available on this device, so a still image is shown instead.</p>
+  </main>
+</div>
+
+<aside class="dock" aria-label="Prototype controls" lang="en">
+  <span class="dock-title">Prototype</span>
+  <div class="seg" role="group" aria-label="Intensity">
+    <button type="button" data-preset="quiet" aria-pressed="true"><span class="n">1</span>Quiet</button>
+    <button type="button" data-preset="dreaming" aria-pressed="false"><span class="n">2</span>Dreaming</button>
+    <button type="button" data-preset="liminal" aria-pressed="false"><span class="n">3</span>Liminal</button>
+  </div>
+  <p class="desc" id="desc"></p>
+  <div class="toggles">
+    <button type="button" class="tog" id="motionBtn" aria-pressed="true">Motion: <b>on</b></button>
+    <button type="button" class="tog" id="threeBtn" aria-pressed="true">3D: <b>on</b></button>
+  </div>
+</aside>
+
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+
+<script type="module">
+/* ================= copy + UI state (works even if 3D never loads) ================= */
+const COPY = {
+  es:{h1:'Un lugar tranquilo para crear', lede:'Tómate tu tiempo. Aquí no hay una forma correcta de hacerlo.', begin:'Comenzar', therapist:'Soy terapeuta',
+      noteBegin:'Prototipo: aquí empezaría tu sesión.', noteTher:'Prototipo: aquí se abriría el acceso para terapeutas.', lang:'Idioma'},
+  ca:{h1:'Un lloc tranquil per crear', lede:'Pren-te el teu temps. Aquí no hi ha una manera correcta de fer-ho.', begin:'Començar', therapist:'Sóc terapeuta',
+      noteBegin:'Prototip: aquí començaria la teva sessió.', noteTher:'Prototip: aquí s’obriria l’accés per a terapeutes.', lang:'Idioma'},
+  en:{h1:'A quiet place to make something', lede:'Take your time. There is no right way to do this.', begin:'Begin', therapist:'I’m a therapist',
+      noteBegin:'Prototype: your session would start here.', noteTher:'Prototype: the therapist sign-in would open here.', lang:'Language'},
+};
+const PRESET_TEXT = {
+  quiet:'<b>Quiet.</b> Almost still. One marble head, a short colonnade, light fog. The sanctuary first.',
+  dreaming:'<b>Dreaming.</b> Soft vaporwave: banded sun, mirror floor, slow drift, floating fragments.',
+  liminal:'<b>Liminal.</b> Emptier: a long colonnade and arcade, deep fog, light from one side, one fragment.',
+};
+const store = {
+  get(k){ try{ return localStorage.getItem('liminal.'+k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem('liminal.'+k, v); }catch(e){} },
+};
+const qs = new URLSearchParams(location.search);
+const reduceMQ = matchMedia('(prefers-reduced-motion: reduce)');
+const state = {
+  lang: qs.get('lang') || store.get('lang') || 'es',
+  preset: qs.get('preset') || store.get('preset') || 'quiet',
+  motion: qs.has('motion') ? qs.get('motion') === '1' : (store.get('motion') ?? (reduceMQ.matches ? '0' : '1')) === '1',
+  three: qs.has('three') ? qs.get('three') === '1' : store.get('three') !== '0',
+};
+if (!COPY[state.lang]) state.lang = 'es';
+if (!PRESET_TEXT[state.preset]) state.preset = 'quiet';
+
+const $ = s => document.querySelector(s);
+const stage = $('#stage'), hero = $('#hero'), note = $('#note');
+
+function setLang(l){
+  state.lang = l; store.set('lang', l);
+  const c = COPY[l];
+  document.documentElement.lang = l; hero.lang = l;
+  hero.querySelectorAll('[data-t]').forEach(el => { el.textContent = c[el.dataset.t]; });
+  $('#langGroup').setAttribute('aria-label', c.lang);
+  document.querySelectorAll('[data-lang]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === l)));
+  note.textContent = '';
+}
+document.querySelectorAll('[data-lang]').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+$('#begin').addEventListener('click', () => { note.textContent = COPY[state.lang].noteBegin; });
+$('#therapist').addEventListener('click', e => { e.preventDefault(); note.textContent = COPY[state.lang].noteTher; });
+
+function setPoster(p){
+  $('#posterImg').src = `posters/${p}.jpg`;
+  $('#posterPortrait').srcset = `posters/${p}-portrait.jpg`;
+}
+function renderDock(){
+  document.querySelectorAll('[data-preset]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.preset === state.preset)));
+  $('#desc').innerHTML = PRESET_TEXT[state.preset];
+  $('#motionBtn').setAttribute('aria-pressed', String(state.motion));
+  $('#motionBtn').innerHTML = `Motion: <b>${state.motion ? 'on' : 'off'}</b>`;
+  $('#threeBtn').setAttribute('aria-pressed', String(state.three));
+  $('#threeBtn').innerHTML = `3D: <b>${state.three ? 'on' : 'off'}</b>`;
+  stage.classList.toggle('three-on', state.three);
+}
+setLang(state.lang);
+setPoster(state.preset);
+renderDock();
+
+// The scene module registers itself here once three.js has loaded.
+const api = { setPreset(){}, setMotion(){}, setThree(){} };
+window.__liminal = api;
+
+document.querySelectorAll('[data-preset]').forEach(b => b.addEventListener('click', () => {
+  state.preset = b.dataset.preset; store.set('preset', state.preset);
+  setPoster(state.preset); renderDock(); api.setPreset(state.preset);
+}));
+$('#motionBtn').addEventListener('click', () => {
+  state.motion = !state.motion; store.set('motion', state.motion ? '1' : '0');
+  renderDock(); api.setMotion(state.motion);
+});
+$('#threeBtn').addEventListener('click', () => {
+  state.three = !state.three; store.set('three', state.three ? '1' : '0');
+  renderDock(); api.setThree(state.three);
+});
+reduceMQ.addEventListener('change', () => {
+  if (store.get('motion') === null) { state.motion = !reduceMQ.matches; renderDock(); api.setMotion(state.motion); }
+});
+
+function noWebGL(){
+  document.body.classList.add('no-webgl');
+  stage.classList.remove('three-on', 'rendered');
+  $('#threeBtn').disabled = true;
+}
+function hasWebGL(){
+  try { const c = document.createElement('canvas'); return !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl'))); }
+  catch(e){ return false; }
+}
+
+/* ================= the scene ================= */
+if (!hasWebGL()) noWebGL();
+else import('three').then(THREE => Promise.all([
+  Promise.resolve(THREE),
+  import('three/addons/loaders/GLTFLoader.js'),
+  import('three/addons/libs/meshopt_decoder.module.js'),
+  import('three/addons/objects/Reflector.js'),
+  import('three/addons/utils/BufferGeometryUtils.js'),
+])).then(([THREE, {GLTFLoader}, {MeshoptDecoder}, {Reflector}, BGU]) => startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU))
+  .catch(err => { console.warn('3D unavailable:', err); noWebGL(); });
+
+function startScene(THREE, GLTFLoader, MeshoptDecoder, Reflector, BGU){
+  const DEG = Math.PI / 180;
+  const C = h => new THREE.Color(h);
+
+  /* ---------- presets ---------- */
+  const PRESETS = {
+    quiet:{
+      sky:{top:'#1D2142', mid:'#5E5A8A', low:'#B49AB4', horizon:'#D9B4AE'},
+      sun:{color:'#FFE6CC', color2:'#F7CDBE', size:5.0, dir:[0.05, 0.05], bands:0, glow:0.3, alpha:0.8},
+      fog:{color:'#D9B4AE', density:0.036},
+      floor:{color:'#6C6486', mirror:false},
+      hemi:['#B7B2E0', '#3A3150', 0.95], key:['#FFE1C6', 2.2, [-3, 4.5, 4]], back:['#C8B7FF', 1.4, [2, 3, -6]],
+      rim:['#D2C4FF', 0.38], stone:'#E7E0E2',
+      colonnade:{rows:'both', count:6, spacing:2.7, x:2.8, start:-1.8, arcade:false, beams:true},
+      drift:0.35, floaters:false, hero:'venus', shadows:false, doorway:false,
+    },
+    dreaming:{
+      sky:{top:'#2A2457', mid:'#8468B4', low:'#D7A0C6', horizon:'#F4BFB4'},
+      sun:{color:'#FFE3B8', color2:'#FF9FBF', size:9.0, dir:[0.0, 0.15], bands:1, glow:0.4, alpha:0.92},
+      fog:{color:'#F4BFB4', density:0.030},
+      floor:{color:'#8A6FAE', mirror:true},
+      hemi:['#D3B8FF', '#3D2C55', 1.0], key:['#FFD9C2', 2.4, [-3, 4.5, 4]], back:['#FFB0D8', 1.8, [2.5, 3, -6]],
+      rim:['#FFB9DC', 0.55], stone:'#EEE4E6',
+      colonnade:{rows:'both', count:7, spacing:2.7, x:3.0, start:-1.8, arcade:false, beams:true},
+      drift:1, floaters:true, hero:'venus', shadows:false, doorway:false,
+    },
+    liminal:{
+      sky:{top:'#171C30', mid:'#3E4766', low:'#77758C', horizon:'#A79A9C'},
+      sun:{color:'#F4D6B6', color2:'#EBC1B0', size:3.6, dir:[-0.42, 0.05], bands:0, glow:0.28, alpha:0.7},
+      fog:{color:'#A79A9C', density:0.05},
+      floor:{color:'#7A6E70', mirror:false},
+      hemi:['#A3A6C4', '#3A3440', 0.9], key:['#FFD6B0', 3.2, [-9, 3.2, -3]], back:['#B8C9D8', 0.7, [3, 3, -6]],
+      rim:['#A9E0D8', 0.28], stone:'#DCD5D2',
+      colonnade:{rows:'left', count:16, spacing:2.7, x:2.6, start:-1, arcade:true, beams:true},
+      drift:0.6, floaters:false, hero:'apollo', shadows:true, doorway:true,
+    },
+  };
+
+  /* ---------- renderer ---------- */
+  const canvas = document.createElement('canvas');
+  canvas.setAttribute('aria-hidden', 'true');
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({canvas, antialias:true, powerPreference:'low-power'});
+  } catch(e) { console.warn(e); noWebGL(); return; }
+  stage.appendChild(canvas);
+  let maxDpr = 1.5;
+  renderer.setPixelRatio(Math.min(devicePixelRatio || 1, maxDpr));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  canvas.addEventListener('webglcontextlost', e => { e.preventDefault(); noWebGL(); });
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 600);
+
+  /* ---------- sky dome (gradient + soft sun + optional bands) ---------- */
+  const skyU = {
+    top:{value:C('#000')}, mid:{value:C('#000')}, low:{value:C('#000')}, horizon:{value:C('#000')},
+    sunColor:{value:C('#fff')}, sunColor2:{value:C('#fff')}, sunDir:{value:new THREE.Vector3(0,0.05,-1).normalize()},
+    sunSize:{value:0.08}, bands:{value:0}, glow:{value:0.4}, sunAlpha:{value:0.8},
+  };
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(300, 32, 16), new THREE.ShaderMaterial({
+    side:THREE.BackSide, depthWrite:false, fog:false, uniforms:skyU,
+    vertexShader:`varying vec3 vDir; void main(){ vDir = normalize(position); vec4 p = modelViewMatrix*vec4(position,1.); gl_Position = projectionMatrix*p; gl_Position.z = gl_Position.w; }`,
+    fragmentShader:`
+      uniform vec3 top, mid, low, horizon, sunColor, sunColor2, sunDir; uniform float sunSize, bands, glow, sunAlpha;
+      varying vec3 vDir;
+      void main(){
+        vec3 d = normalize(vDir); float h = d.y;
+        vec3 col = mix(horizon, low, smoothstep(-0.02, 0.10, h));
+        col = mix(col, mid, smoothstep(0.08, 0.30, h));
+        col = mix(col, top, smoothstep(0.28, 0.85, h));
+        col = mix(col, horizon*0.92, smoothstep(0.0, -0.2, h));
+        float a = acos(clamp(dot(d, sunDir), -1., 1.));
+        float disc = 1. - smoothstep(sunSize*0.96, sunSize, a);
+        if (bands > 0.5) {
+          // a few soft horizontal gaps in the lower half of the sun, wider toward the bottom
+          float sy = (h - sunDir.y) / sunSize;               // -1 bottom .. 1 top
+          float k = clamp(-sy, 0., 1.);
+          float stripe = fract(k * 4.0 + 0.5);
+          float gapW = mix(0.12, 0.42, k);
+          float gap = smoothstep(gapW, gapW - 0.07, stripe) * smoothstep(0.02, 0.1, k);
+          disc *= 1. - gap;
+        }
+        // sun fades into the horizon haze rather than sitting on it
+        disc *= smoothstep(-0.01, 0.04, h);
+        vec3 sc = mix(sunColor2, sunColor, smoothstep(-1., 1., (h - sunDir.y) / sunSize));
+        col = mix(col, sc, disc * sunAlpha);
+        col += sunColor * glow * exp(-a * 7.0) * 0.4;
+        gl_FragColor = vec4(col, 1.);
+      }`,
+  }));
+  sky.renderOrder = -1;
+  scene.add(sky);
+
+  /* ---------- lights ---------- */
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x000000, 1);
+  const key = new THREE.DirectionalLight(0xffffff, 2);
+  const back = new THREE.DirectionalLight(0xffffff, 1);
+  key.shadow.mapSize.set(1024, 1024);
+  key.shadow.bias = -0.0008; key.shadow.normalBias = 0.05; key.shadow.radius = 4;
+  const sc = key.shadow.camera; sc.left = -14; sc.right = 14; sc.top = 14; sc.bottom = -14; sc.near = 0.5; sc.far = 60;
+  scene.add(hemi, key, back, key.target);
+
+  /* ---------- materials ---------- */
+  function withRim(mat){
+    mat.userData.rim = {color:{value:C('#fff')}, strength:{value:0.4}};
+    mat.onBeforeCompile = s => {
+      s.uniforms.rimColor = mat.userData.rim.color; s.uniforms.rimStrength = mat.userData.rim.strength;
+      s.fragmentShader = s.fragmentShader
+        .replace('#include <common>', '#include <common>\nuniform vec3 rimColor; uniform float rimStrength;')
+        .replace('#include <opaque_fragment>', 'float rimF = pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), 2.6);\noutgoingLight += rimColor * rimF * rimStrength;\n#include <opaque_fragment>');
+    };
+    return mat;
+  }
+  const marble = withRim(new THREE.MeshStandardMaterial({color:0xF1EBE6, roughness:0.5, metalness:0}));
+  const stone = new THREE.MeshStandardMaterial({color:0xE7E0E2, roughness:0.85});
+  const plinthMat = withRim(new THREE.MeshStandardMaterial({color:0xE4DCDB, roughness:0.75}));
+  const floorMat = new THREE.MeshStandardMaterial({color:0x6C6486, roughness:0.95});
+
+  /* ---------- procedural architecture ---------- */
+  const R = 0.3, SHAFT = 3.7;
+  function flute(geo, flutes, depth, taper){
+    const p = geo.attributes.position, v = new THREE.Vector3();
+    geo.computeBoundingBox(); const y0 = geo.boundingBox.min.y, y1 = geo.boundingBox.max.y;
+    for (let i = 0; i < p.count; i++){
+      v.fromBufferAttribute(p, i);
+      const r = Math.hypot(v.x, v.z); if (r < 1e-5) continue;
+      const th = Math.atan2(v.x, v.z);
+      const u = ((th / (2*Math.PI)) * flutes % 1 + 1) % 1;
+      const scoop = Math.sqrt(Math.max(0, 1 - (2*u - 1) ** 2));
+      const t = (v.y - y0) / (y1 - y0 || 1);
+      const k = (1 - depth * scoop) * (1 - taper * Math.pow(t, 1.4));
+      p.setXYZ(i, v.x * k, v.y, v.z * k);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+  function lathe(points, seg){ return new THREE.LatheGeometry(points.map(([x,y]) => new THREE.Vector2(x*R, y*R)), seg); }
+  function column(radial){
+    const base = lathe([[0,0],[1.34,0],[1.34,0.12],[1.26,0.16],[1.3,0.3],[1.2,0.42],[1.1,0.46],[1.14,0.56],[1.04,0.64],[1.0,0.7]], radial/2);
+    const plinth = new THREE.BoxGeometry(2.8*R, 0.3*R, 2.8*R).translate(0, -0.15*R, 0);
+    const shaft = flute(new THREE.CylinderGeometry(R, R, SHAFT, radial, 3, true), 16, 0.07, 0.14).translate(0, 0.7*R + SHAFT/2, 0);
+    const capY = 0.7*R + SHAFT;
+    const cap = lathe([[0.86,0],[0.92,0.05],[0.86,0.1],[0.9,0.16],[0.88,0.22],[1.0,0.34],[1.22,0.5],[1.34,0.62],[0,0.62]], radial/2).translate(0, capY, 0);
+    const abacus = new THREE.BoxGeometry(2.9*R, 0.32*R, 2.9*R).translate(0, capY + 0.62*R + 0.16*R, 0);
+    const parts = [plinth, base, shaft, cap, abacus].map(g => { g = g.index ? g.toNonIndexed() : g; g.deleteAttribute('uv'); return g; });
+    const merged = BGU.mergeGeometries(parts);
+    merged.userData.height = capY + 0.94*R;
+    return merged;
+  }
+  function brokenDrum(h, seed){
+    const g = flute(new THREE.CylinderGeometry(R, R, h, 48, 1, false), 16, 0.07, 0.0).translate(0, h/2, 0);
+    const p = g.attributes.position, v = new THREE.Vector3();
+    let s = seed; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+    const jag = Array.from({length:48}, () => rnd());
+    for (let i = 0; i < p.count; i++){
+      v.fromBufferAttribute(p, i);
+      if (v.y > h - 1e-3){
+        const th = Math.atan2(v.x, v.z); const idx = Math.round(((th / (2*Math.PI)) * 48 + 48)) % 48;
+        const r = Math.hypot(v.x, v.z) / R;
+        const drop = r < 1e-3 ? 0.06 : (0.04 + 0.22 * jag[idx] * (0.6 + 0.4*Math.sin(th*2 + seed)));
+        p.setY(i, v.y - drop * h);
+      }
+    }
+    g.computeVertexNormals();
+    return g;
+  }
+  const colGeoNear = column(64), colGeoFar = column(32);
+  const COL_H = colGeoNear.userData.height;
+
+  function instanced(geo, mat, matrices, castShadow){
+    const m = new THREE.InstancedMesh(geo, mat, matrices.length);
+    matrices.forEach((mx, i) => m.setMatrixAt(i, mx));
+    m.castShadow = !!castShadow; m.receiveShadow = false;
+    return m;
+  }
+  const M = (x, y, z, ry = 0, s = 1) => new THREE.Matrix4().compose(new THREE.Vector3(x, y, z), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), ry), new THREE.Vector3(s, s, s));
+
+  function buildColonnade(cfg, shadows){
+    const g = new THREE.Group();
+    const near = [], far = [];
+    const sides = cfg.rows === 'both' ? [-1, 1] : [-1];
+    for (const side of sides) for (let i = 0; i < cfg.count; i++){
+      const z = cfg.start - i * cfg.spacing;
+      (i < 4 ? near : far).push(M(side * cfg.x, 0, z));
+    }
+    if (near.length) g.add(instanced(colGeoNear, stone, near, shadows));
+    if (far.length) g.add(instanced(colGeoFar, stone, far, shadows));
+    if (cfg.beams){
+      const len = cfg.count * cfg.spacing + 1.2;
+      for (const side of sides){
+        const beam = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.62, len), stone);
+        beam.position.set(side * cfg.x, COL_H + 0.31, cfg.start - len/2 + 0.6);
+        beam.castShadow = shadows; g.add(beam);
+      }
+    }
+    if (cfg.arcade){
+      // a long wall of arched openings on the right (de Chirico arcade)
+      const n = cfg.count, sp = cfg.spacing, L = n * sp + 2, H = COL_H + 1.2, w = 1.7, hRect = 2.6;
+      const shape = new THREE.Shape(); shape.moveTo(0, 0); shape.lineTo(L, 0); shape.lineTo(L, H); shape.lineTo(0, H); shape.lineTo(0, 0);
+      for (let i = 0; i < n; i++){
+        const cx = 1 + i * sp + sp/2;
+        const hole = new THREE.Path();
+        hole.moveTo(cx - w/2, 0.01); hole.lineTo(cx + w/2, 0.01); hole.lineTo(cx + w/2, hRect);
+        hole.absarc(cx, hRect, w/2, 0, Math.PI, false); hole.lineTo(cx - w/2, 0.01);
+        shape.holes.push(hole);
+      }
+      const wall = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, {depth:0.55, bevelEnabled:false, curveSegments:12}), stone);
+      wall.rotation.y = Math.PI / 2; wall.position.set(cfg.x + 1.0, 0, cfg.start + 1.5);
+      wall.castShadow = shadows; g.add(wall);
+    }
+    return g;
+  }
+
+  /* ---------- floor ---------- */
+  const floorGeo = new THREE.PlaneGeometry(240, 240).rotateX(-Math.PI/2);
+  const floor = new THREE.Mesh(floorGeo, floorMat); floor.receiveShadow = true;
+  scene.add(floor);
+  let mirror = null, mirrorTint = null;
+  function ensureMirror(){
+    if (mirror) return;
+    mirror = new Reflector(new THREE.PlaneGeometry(240, 240), {textureWidth:512, textureHeight:512, color:0xB8A8C8, clipBias:0.003});
+    mirror.rotation.x = -Math.PI/2; mirror.position.y = -0.002;
+    mirrorTint = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({color:0x8A6FAE, roughness:1, transparent:true, opacity:0.58}));
+    mirrorTint.position.y = 0.001;
+    scene.add(mirror, mirrorTint);
+  }
+
+  /* ---------- fragment on a plinth ---------- */
+  const heroRig = new THREE.Group();   // position + layout
+  const heroTurn = new THREE.Group();  // pointer lean + tap turn
+  heroRig.add(heroTurn); scene.add(heroRig);
+  const PLINTH_H = 1.12;
+  const plinth = new THREE.Group();
+  const pl1 = new THREE.Mesh(new THREE.BoxGeometry(0.72, PLINTH_H - 0.12, 0.72), plinthMat); pl1.position.y = (PLINTH_H - 0.12)/2 + 0.06;
+  const pl2 = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.06, 0.86), plinthMat); pl2.position.y = PLINTH_H - 0.03;
+  const pl3 = new THREE.Mesh(new THREE.BoxGeometry(0.86, 0.06, 0.86), plinthMat); pl3.position.y = 0.03;
+  plinth.add(pl1, pl2, pl3); plinth.traverse(o => { o.castShadow = true; o.receiveShadow = true; });
+  heroRig.add(plinth);
+  heroTurn.position.y = PLINTH_H;
+
+  // scans: face direction (radians, +y) measured from the scan, used to "turn to face you"
+  const MODELS = {
+    venus:{url:'models/venus-de-milo-head.glb', scale:1.7, face:0.62, rest:0.0},
+    apollo:{url:'models/apollo-belvedere-head.glb', scale:1.6, face:0.85, rest:0.0},
+  };
+  const loaded = {};
+  const loader = new GLTFLoader(); loader.setMeshoptDecoder(MeshoptDecoder);
+  function prep(root, scale){
+    root.traverse(o => { if (o.isMesh){ o.material = marble; o.castShadow = true; o.receiveShadow = true; } });
+    root.scale.setScalar(scale);
+    return root;
+  }
+  const loadModel = name => loaded[name] || (loaded[name] = loader.loadAsync(MODELS[name].url).then(g => g.scene));
+
+  /* floating fragments for "Dreaming" */
+  const floaters = new THREE.Group();
+  let apolloFloat = null;
+  const drumA = new THREE.Mesh(brokenDrum(0.7, 7), marble); drumA.castShadow = true;
+  const drumB = new THREE.Mesh(brokenDrum(0.45, 19), marble);
+  drumA.position.set(-0.9, 3.55, -4.2); drumA.rotation.set(0.32, 0.4, -0.5); drumA.scale.setScalar(0.75);
+  drumB.position.set(2.0, 3.7, -8.5); drumB.rotation.set(-0.5, 0.2, 0.6); drumB.scale.setScalar(0.8);
+  floaters.add(drumA, drumB);
+  const floatBase = [drumA, drumB].map(o => ({o, y:o.position.y, rx:o.rotation.x, rz:o.rotation.z}));
+  scene.add(floaters);
+
+  /* fallen column + far doorway for "Liminal" */
+  const liminalExtras = new THREE.Group();
+  const fallen = new THREE.Mesh(brokenDrum(1.5, 3), stone);
+  fallen.rotation.set(0, 0.3, Math.PI/2); fallen.position.set(-1.2, R*0.93, -9.5); fallen.castShadow = true; fallen.receiveShadow = true;
+  const door = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 3.3), new THREE.MeshBasicMaterial({color:0xFFE6CC, fog:false, toneMapped:false, transparent:true, opacity:0.8}));
+  door.position.set(0.3, 1.65, -46);
+  const endWall = new THREE.Mesh(new THREE.BoxGeometry(14, 7, 0.5), stone); endWall.position.set(0.3, 3.5, -46.4);
+  const gc = document.createElement('canvas'); gc.width = gc.height = 128;
+  const gx = gc.getContext('2d'); const gr = gx.createRadialGradient(64, 64, 0, 64, 64, 64);
+  gr.addColorStop(0, 'rgba(255,230,204,0.55)'); gr.addColorStop(1, 'rgba(255,230,204,0)');
+  gx.fillStyle = gr; gx.fillRect(0, 0, 128, 128);
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(gc), fog:false, toneMapped:false, transparent:true, depthWrite:false, blending:THREE.AdditiveBlending}));
+  glow.scale.set(9, 9, 1); glow.position.set(0.3, 1.8, -45.5);
+  liminalExtras.add(fallen, endWall, door, glow);
+  scene.add(liminalExtras);
+
+  /* ---------- preset application ---------- */
+  let colonnade = null, current = null, heroName = null;
+  function applyPreset(name){
+    const P = PRESETS[name]; current = P;
+    // the sky shader writes display colours directly, so hand it sRGB numbers
+    const S = h => C(h).convertLinearToSRGB();
+    skyU.top.value.copy(S(P.sky.top)); skyU.mid.value.copy(S(P.sky.mid)); skyU.low.value.copy(S(P.sky.low)); skyU.horizon.value.copy(S(P.sky.horizon));
+    skyU.sunColor.value.copy(S(P.sun.color)); skyU.sunColor2.value.copy(S(P.sun.color2)); skyU.sunSize.value = P.sun.size * DEG; skyU.bands.value = P.sun.bands;
+    skyU.glow.value = P.sun.glow; skyU.sunAlpha.value = P.sun.alpha;
+    skyU.sunDir.value.set(P.sun.dir[0], P.sun.dir[1], -1).normalize();
+    scene.fog = new THREE.FogExp2(C(P.fog.color), P.fog.density);
+    hemi.color.set(P.hemi[0]); hemi.groundColor.set(P.hemi[1]); hemi.intensity = P.hemi[2];
+    key.color.set(P.key[0]); key.intensity = P.key[1]; key.position.set(...P.key[2]);
+    back.color.set(P.back[0]); back.intensity = P.back[1]; back.position.set(...P.back[2]);
+    key.castShadow = P.shadows; key.target.position.set(0, 0, -6);
+    for (const m of [marble, plinthMat]){ m.userData.rim.color.value.set(P.rim[0]); m.userData.rim.strength.value = P.rim[1]; }
+    stone.color.set(P.stone);
+    floorMat.color.set(P.floor.color);
+    if (P.floor.mirror){ ensureMirror(); mirrorTint.material.color.set(P.floor.color); }
+    if (mirror){ mirror.visible = P.floor.mirror; mirrorTint.visible = P.floor.mirror; }
+    floor.visible = !P.floor.mirror;
+    if (colonnade){ scene.remove(colonnade); colonnade.traverse(o => { if (o.isMesh && o.geometry !== colGeoNear && o.geometry !== colGeoFar) o.geometry.dispose(); }); }
+    colonnade = buildColonnade(P.colonnade, P.shadows); scene.add(colonnade);
+    floaters.visible = P.floaters;
+    liminalExtras.visible = P.doorway;
+    if (apolloFloat) apolloFloat.visible = P.floaters;
+    setHero(P.hero);
+    layout();
+    requestRender();
+  }
+  async function setHero(name){
+    heroName = name;
+    const root = await loadModel(name);
+    if (heroName !== name) return;
+    heroTurn.clear();
+    heroTurn.add(prep(root, MODELS[name].scale));
+    if (name === 'venus' && current.floaters) addApolloFloat();
+    turn.target = 0; turn.value = 0; turn.from = 0;
+    requestRender();
+    if (!firstFrame) markRendered();
+  }
+  async function addApolloFloat(){
+    if (apolloFloat){ apolloFloat.visible = true; return; }
+    const root = (await loadModel('apollo')).clone();
+    apolloFloat = prep(root, 1.05);
+    apolloFloat.position.set(1.5, 2.55, -5.5); apolloFloat.rotation.set(0.1, -0.2, 0.16);
+    floatBase.push({o:apolloFloat, y:2.55, rx:0.1, rz:0.16});
+    floaters.add(apolloFloat); requestRender();
+  }
+
+  /* ---------- layout: framing per aspect ---------- */
+  const view = {camBase:new THREE.Vector3(), look:new THREE.Vector3(), offsetX:0, offsetY:0};
+  function layout(){
+    const w = innerWidth, h = innerHeight, aspect = w / h;
+    renderer.setSize(w, h, false);
+    camera.aspect = aspect;
+    const portrait = aspect < 0.95;
+    const liminal = current === PRESETS.liminal;
+    if (portrait){
+      // phone / portrait tablet: fragment in the top band, panel low; a shifted lens keeps verticals straight
+      camera.fov = 50;
+      heroRig.position.set(liminal ? 0.12 : 0, 0, 0.3);
+      view.camBase.set(liminal ? -0.2 : 0, 1.75, 3.1);
+      view.look.set(liminal ? -0.1 : 0, 1.75, -6);
+      view.offsetX = 0; view.offsetY = 0.27;
+    } else {
+      // landscape: text panel on the left over calm sky, fragment at about two thirds
+      camera.fov = aspect > 2 ? 32 : 38;
+      heroRig.position.set(liminal ? 0.62 : 0.5, 0, 0.45);
+      view.camBase.set(liminal ? -0.25 : 0, 1.62, 3.3);
+      view.look.set(liminal ? -0.05 : 0, 1.62, -6);
+      view.offsetX = -0.08; view.offsetY = 0.03;
+    }
+    camera.setViewOffset(w, h, view.offsetX * w, view.offsetY * h, w, h);
+    camera.updateProjectionMatrix();
+    if (mirror){ const s = renderer.getPixelRatio(); mirror.getRenderTarget().setSize(Math.round(w*s*0.5), Math.round(h*s*0.5)); }
+    requestRender();
+  }
+
+  /* ---------- interaction ---------- */
+  const pointer = {x:0, y:0, tx:0, ty:0};
+  addEventListener('pointermove', e => {
+    if (e.pointerType === 'touch' || !state.motion) return;
+    pointer.tx = (e.clientX / innerWidth) * 2 - 1;
+    pointer.ty = (e.clientY / innerHeight) * 2 - 1;
+    wake();
+  }, {passive:true});
+  document.addEventListener('pointerleave', () => { pointer.tx = 0; pointer.ty = 0; wake(); });
+  const turn = {value:0, from:0, target:0, t0:0, dur:3600};
+  function faceYaw(){
+    const m = MODELS[heroName]; if (!m) return 0;
+    const hp = heroRig.position, cp = view.camBase;
+    return Math.atan2(cp.x - hp.x, cp.z - hp.z) - m.face;
+  }
+  // tap on the scene (not on the panel or controls): the fragment slowly turns to face you, tap again to let it rest
+  document.addEventListener('click', e => {
+    if (!state.motion || !state.three) return;
+    if (e.target.closest('button, a, .hero, .dock, .lang')) return;
+    turn.from = turn.value; turn.target = turn.target === 0 ? 1 : 0; turn.t0 = performance.now();
+    wake();
+  });
+
+  /* ---------- render loop (on demand when still; paused when hidden) ---------- */
+  let running = false, raf = 0, needsRender = false, firstFrame = false, t0 = performance.now();
+  let slowFrames = 0, lastT = 0;
+  function requestRender(){ needsRender = true; if (!running) raf ||= requestAnimationFrame(frame); }
+  function wake(){ if (state.motion && state.three && !document.hidden && !running){ running = true; lastT = 0; raf ||= requestAnimationFrame(frame); } }
+  function sleep(){ running = false; }
+  const ease = t => 0.5 - 0.5 * Math.cos(Math.PI * Math.min(1, Math.max(0, t)));
+  function markRendered(){ firstFrame = true; canvas.classList.add('ready'); stage.classList.add('rendered'); }
+
+  function update(now){
+    const P = current; const motion = state.motion;
+    const t = (now - t0) / 1000;
+    const drift = motion ? P.drift : 0;
+    // pointer easing (time based, ~1.2 s to settle)
+    const k = motion ? 1 - Math.pow(0.02, Math.min(0.05, (now - (lastT || now)) / 1000) / 1.2) : 1;
+    if (!motion){ pointer.tx = 0; pointer.ty = 0; }
+    pointer.x += (pointer.tx - pointer.x) * k; pointer.y += (pointer.ty - pointer.y) * k;
+    // camera: tiny idle drift + lean toward pointer (<= ~1.5 deg of view change)
+    const cx = view.camBase.x + pointer.x * 0.07 + Math.sin(t * 0.21) * 0.05 * drift;
+    const cy = view.camBase.y - pointer.y * 0.035 + Math.sin(t * 0.17 + 1.3) * 0.025 * drift;
+    camera.position.set(cx, cy, view.camBase.z);
+    camera.lookAt(view.look);
+    // turn-to-face
+    if (motion && turn.value !== turn.target){
+      turn.value = turn.from + (turn.target - turn.from) * ease((now - turn.t0) / turn.dur);
+      if (Math.abs(turn.value - turn.target) < 1e-4) turn.value = turn.target;
+    }
+    const rest = MODELS[heroName] ? MODELS[heroName].rest : 0;
+    const yaw = rest + (faceYaw() - rest) * turn.value;
+    // fragment leans <= 3 deg toward the pointer, breathes slowly
+    heroTurn.rotation.y = yaw + pointer.x * 3 * DEG + Math.sin(t * 0.13) * 1.5 * DEG * drift;
+    heroTurn.rotation.x = pointer.y * 2 * DEG;
+    // floaters bob a couple of centimetres
+    if (P.floaters) for (const f of floatBase){
+      f.o.position.y = f.y + Math.sin(t * 0.35 + f.y * 3) * 0.05 * drift;
+      f.o.rotation.z = f.rz + Math.sin(t * 0.2 + f.y) * 2 * DEG * drift;
+    }
+    return motion && (drift > 0 || Math.abs(pointer.x - pointer.tx) > 1e-3 || Math.abs(pointer.y - pointer.ty) > 1e-3 || turn.value !== turn.target);
+  }
+  function frame(now){
+    raf = 0;
+    if (document.hidden || !state.three){ running = false; return; }
+    const keepGoing = update(now);
+    renderer.render(scene, camera);
+    if (!firstFrame && loaded[heroName]) markRendered();
+    // adaptive quality: if frames are slow on a weaker tablet, drop to 1x pixels
+    if (lastT && now - lastT > 30){ if (++slowFrames > 45 && renderer.getPixelRatio() > 1){ maxDpr = 1; renderer.setPixelRatio(1); layout(); } } else slowFrames = Math.max(0, slowFrames - 1);
+    lastT = now; needsRender = false;
+    if (keepGoing && running) raf = requestAnimationFrame(frame);
+    else running = false;
+  }
+
+  document.addEventListener('visibilitychange', () => { if (document.hidden) sleep(); else { requestRender(); wake(); } });
+  addEventListener('resize', layout);
+
+  /* ---------- public hooks for the dock ---------- */
+  api.setPreset = p => { applyPreset(p); wake(); };
+  api.setMotion = on => { if (!on){ sleep(); pointer.tx = pointer.ty = 0; turn.value = turn.target; } requestRender(); wake(); };
+  api.setThree = on => { if (on){ layout(); requestRender(); wake(); } else { sleep(); } };
+  api.snapshot = (type = 'image/jpeg', q = 0.86) => { update(performance.now()); renderer.render(scene, camera); return canvas.toDataURL(type, q); };
+  api.triangles = () => {
+    let n = 0;
+    const shown = o => { for (let p = o; p; p = p.parent) if (!p.visible) return false; return true; };
+    scene.traverse(o => { if (o.isMesh && shown(o)){ const g = o.geometry; n += (g.index ? g.index.count : g.attributes.position.count) / 3 * (o.isInstancedMesh ? o.count : 1); } });
+    return Math.round(n);
+  };
+  api.ready = () => firstFrame;
+  api.info = () => renderer.info.render;
+
+  applyPreset(state.preset);
+  if (!state.three) sleep(); else wake();
+}
+</script>

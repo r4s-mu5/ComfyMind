@@ -1,0 +1,276 @@
+# ComfyMind Design Direction: "Liminal Sanctuary"
+
+**Status:** v1.0, 2026-11-24. Agreed with the project owner in the design interview (`05_INTERVIEW.md`).
+**Audience:** everyone who builds ComfyMind screens, including the redesign workers and the students
+whose final-degree projects (TFG) add parts of the app. If you are adding a feature, read
+§1–3 once, then use §4–8 as the reference.
+
+> **One sentence:** ComfyMind feels like an empty, timeless museum atrium at dusk:
+> a quiet, slightly dreamlike sanctuary where a person with MS can make something,
+> see it treated with respect, and talk about it. Nothing there is in a hurry.
+
+---
+
+## 1. Why this direction
+
+| Decision | Choice | Why |
+|---|---|---|
+| Metaphor | **Sanctuary** | Owner's choice. In art therapy the room is a "safe container" that holds the session. |
+| Feelings, in order | **Safe and unhurried** → capable and absorbed → respected and proud → gently curious | All four are kept. Safety leads. Capability comes from clear tools, pride from how artworks are framed, curiosity from small moments of discovery. |
+| Aesthetic | **Liminal soft vaporwave**: an atrium, a colonnade, a pastel dusk sky, classical statue fragments | Owner's taste. Liminal spaces are empty, timeless and between places, which suits a session that is "time apart". Classical fragments tie the app to art history. We take the *dreamlike* part and drop the *distressing* part: no neon glare, glitch, VHS or scan lines. |
+| Light and dark | **Dusk outside, dawn inside** | The dark sky is for *thresholds* (landing, login, waiting, session end). A light "dawn" version of the same palette is for *working screens*. Dark UIs glare on tablets and tire eyes with low contrast sensitivity, which is common in MS. |
+| Typography | **Tenor Sans** (display, tracked capitals) + **Readex Pro** (everything people read) | Owner picked "Signage": a quiet transit hall or an arcade at closing time. It avoids the fonts and looks AI tools reach for by default. Readex Pro has a large x-height and an open rhythm and comes from the Lexend family. See `06_TYPOGRAPHY.md`. |
+| Artwork | **Mounted, with a museum label** | Gives every piece dignity ("respected and proud"). The patient's artwork is the strongest colour on any screen. |
+| Atmosphere | Mist on dusk screens. Optional mist everywhere, motion and 3D, all as **user toggles** | Owner's choice, set in the Comfort panel (§5.4). |
+| Language | Spanish default, with Catalan and English one tap away. Informal *tú/tu*. | Owner's choice. Spanish is the code default. |
+| Vocabulary | **obra · obra · artwork** | Owner's choice. |
+
+### What we deliberately avoid
+- The generic SaaS look: stock shadcn cards, a teal hero slab, stock photos.
+- "AI design" clichés: Fraunces, Inter, DM Sans, Space Grotesk, purple-to-blue gradients, cream with a terracotta serif, emoji as icons.
+- Vaporwave clichés that hurt people with MS: saturated neon, glitch, chromatic aberration, scan lines, flashing, fast zooming grids, katakana as decoration, chrome text.
+- Clinical cues: hospital blue, red crosses, sterile white, "patient ID" language on patient screens.
+- Childish cues: cartoon mascots, confetti, gamified streaks and points.
+
+---
+
+## 2. Principles
+
+1. **One obvious next step.** Each patient screen has exactly one primary action. Everything else is visibly secondary.
+2. **Process over product.** There are no grades, no "best result" and no slot-machine "regenerate". We say "another version", never "try again".
+3. **The person keeps ownership.** Their obra, their choice to keep, set aside or share. The therapist sees what is shared, and the screen says so ("Marta can see this").
+4. **Reflection follows creation, and it is optional.** After keeping a piece we offer one open question and an obvious "Not now".
+5. **Nothing chases you.** No timers, no auto-dismissing messages, no session-expiry surprises, no motion you didn't ask for.
+6. **Big, forgiving targets.** These help with tremor and fatigue: 56 px primary targets, 12 px gaps, no drag-only interactions, and undo where possible.
+7. **Legible first, beautiful second, and both always.** Atmosphere never sits behind running text without a scrim.
+8. **Thresholds are dusk, work is dawn.** If a screen is about *arriving, waiting or leaving*, it is dusk. If it is about *doing*, it is dawn.
+
+---
+
+## 3. Users and context (summary)
+
+- **Patient:** an adult with MS during a guided session, usually on a laptop or tablet. Possible tremor, fatigue (sessions get harder over time), blurred or double vision, low contrast sensitivity, heat sensitivity and cognitive fatigue. Often not an "artist".
+- **Therapist:** runs the session, watches the patient's work as it appears, chats, takes private notes, ends the session. Needs moderate density, not a cockpit.
+- **Context:** a clinic room, or remote over video. Spanish and Catalan speakers, sometimes English.
+
+Research and sources are in `04_DESIGN_RESEARCH.md`.
+
+---
+
+## 4. Foundations (design tokens)
+
+Tokens live in `frontend/src/style.css` as CSS custom properties, exposed to Tailwind 4 with `@theme`.
+**Never hard-code a hex value in a component. Always use a token.**
+
+### 4.1 Colour: Dusk (thresholds)
+
+| Token | Hex | Use | Contrast |
+|---|---|---|---|
+| `--dusk-sky` | `#14202F` | page background | — |
+| `--dusk-sky-deep` | `#0F1826` | top of sky gradient | — |
+| `--dusk-surface` | `#1F3140` | panels, cards (≥ 92% opaque) | — |
+| `--dusk-text` | `#F4F3F7` | primary text | 14.9 : 1 |
+| `--dusk-text-soft` | `#C9CEDA` | secondary text | 10.4 : 1 (8.5 on surface) |
+| `--dusk-light` | `#F0D5BF` | **primary action fill** (warm distant light) | its text `#14202F` 11.7 : 1 |
+| `--dusk-teal` | `#7FC4C4` | links, selection | 8.3 : 1 |
+| `--dusk-lilac` | `#B9AFD6` | highlights, tags | 8.0 : 1 |
+| `--dusk-border` | `#8FA0B8` | input borders, outlines | 6.2 : 1 |
+| `--dusk-focus` | `#FFE3A3` | focus ring | 13.1 : 1 |
+| Sky gradient | `#0F1826 → #14202F → #2A3148 → #413F59`, with a peach horizon glow `rgba(240,213,191,.35)` | landing and waiting backgrounds | — |
+
+### 4.2 Colour: Dawn (working screens)
+
+| Token | Hex | Use | Contrast |
+|---|---|---|---|
+| `--dawn-bg` | `#F2F0F5` | page background (lilac-grey, the sky at first light) | — |
+| `--dawn-bg-warm` | `#F6F1EE` | top glow of page / hero bands | — |
+| `--dawn-surface` | `#FFFFFF` | cards, mats, inputs | — |
+| `--dawn-surface-2` | `#E7E3EE` | selected and soft fills | ink 13.0 : 1 |
+| `--dawn-ink` | `#14202F` | primary text, **primary button fill** | 14.5 : 1 |
+| `--dawn-ink-soft` | `#3D4A5F` | secondary text | 7.9 : 1 (9.0 on white) |
+| `--dawn-teal` | `#1E5E61` | links, active nav, progress | 6.6 : 1 |
+| `--dawn-violet` | `#5B4E86` | wordmark, focus ring, accents | 6.5 : 1 (7.3 on white) |
+| `--dawn-border` | `#6B7488` | input and control borders | 4.7 : 1 on white |
+| `--dawn-hairline` | `rgba(20,32,47,.14)` | decorative dividers only (never the only boundary of a control) | — |
+| `--dawn-sun` | `#F0D5BF` | the sun-disc motif, warm highlights (decorative only) | — |
+
+### 4.3 Semantic colours (both modes, always with an icon and text)
+
+| Token | Dawn | Dusk |
+|---|---|---|
+| `--success` | `#1D6B47` (6.5 : 1 on white) | `#7FD1A6` |
+| `--warning` | `#8A5A00` (5.9 : 1) | `#F2C46D` |
+| `--danger` | `#A3302A` (7.0 : 1) | `#FF9C92` |
+
+Destructive actions (end session, delete) use `--danger` for **both** the trigger and the confirm button.
+
+### 4.4 Typography
+
+| Role | Font | Size and line height | Notes |
+|---|---|---|---|
+| Wordmark | Tenor Sans 400, caps, +0.28 em tracking | 15–18 px | "COMFYMIND" |
+| Display (landing line, screen titles at dusk) | Tenor Sans 400, caps, +0.10 em | clamp(28 px, 4 vw, 44 px) / 1.1 | ≤ 8 words. Never running text: Tenor's I and l are identical. |
+| Heading 1 (dawn screen title, greeting) | Tenor Sans 400, mixed case, +0.01 em | 32–36 px / 1.15 | |
+| Heading 2 | Readex Pro 600 | 24 px / 1.25 | |
+| Heading 3 / label title | Tenor Sans caps +0.14 em, or Readex 600 | 17–18 px | museum labels use Tenor caps |
+| Body | Readex Pro 400 | **18 px** / 1.6, max 60 ch | patient minimum; therapist 17 px |
+| Small | Readex Pro 400 | 15 px / 1.45 | never below 15 px |
+| Button | Readex Pro 600 | 18 px | sentence case |
+
+- Self-host the fonts with `@fontsource/tenor-sans` and `@fontsource-variable/readex-pro` (latin + latin-ext). No Google CDN, for patient privacy.
+- Fallbacks: Tenor → `Optima, Candara, "Segoe UI", sans-serif`. Readex → `"Lexend", Verdana, "Segoe UI", system-ui, sans-serif`.
+- Catalan check string: `Col·legi, paral·lel, ŀl · ¿Qué? ¡Sí! «obra»`. All glyphs are verified in the font files.
+- The Comfort panel can scale all type to 100 / 125 / 150 %. Use `rem`, never `px`, for font sizes in components.
+
+### 4.5 Space, size, shape
+
+- **Spacing scale (px):** 4, 8, 12, 16, 24, 32, 48, 64, 96. Use `gap` on flex and grid containers.
+- **Targets:** patient primary controls are **56 px** tall, with 48 px as the floor for any patient target. Therapist targets are at least 44 px. Leave at least 12 px between adjacent targets.
+- **Radius:** controls 12 px. Cards 16 px. Pill buttons 999 px (primary actions only). The arch top (`border-radius: 999px 999px 12px 12px`) is the **niche** motif for featured artwork and the atrium.
+- **Borders:** controls 2 px solid (`--dawn-border` / `--dusk-border`). Cards 1.5 px hairline plus surface colour.
+- **Elevation:** at dawn, one soft lift `0 1px 0 rgba(20,32,47,.06), 0 10px 26px rgba(20,32,47,.07)`. At dusk, no shadows; depth comes from translucency and a soft warm glow `0 0 40px rgba(240,213,191,.16)`.
+- **Focus:** a 3 px ring in `--dawn-violet` / `--dusk-focus`, with a 3 px offset, on every interactive element. Never remove it.
+- **Content width:** 1120 px max for app pages. Text columns at most 60 ch.
+
+### 4.6 Motion
+
+| Context | Allowed |
+|---|---|
+| Working screens (dawn) | 150 ms opacity and colour fades only |
+| Dusk screens | slow mist drift (≥ 20 s loops, ≤ 2% movement); landing scene pointer response ≤ 3°, eased; on touch, nothing follows the finger |
+| Waiting | a breathing sun or mist (opacity ±8% over 6 s) **plus** an honest progress bar |
+| Never | flashing, parallax on scroll, autoplaying carousels, bouncing, shaking for errors, confetti |
+| `prefers-reduced-motion` or Comfort → Motion off | everything still; the 3D scene becomes its poster image |
+
+---
+
+## 5. Atmosphere system
+
+### 5.1 Layers (dusk screens)
+
+1. **Sky:** the vertical gradient in §4.1.
+2. **Sun disc:** a large, low, soft peach disc near the horizon (CSS radial gradient), the "warm distant light". The primary button uses the same colour, so the eye connects them.
+3. **Mist:** 2–3 blurred radial gradients in teal, lilac and peach, at no more than 35% alpha.
+4. **Grain:** SVG `feTurbulence` noise at 4–6% opacity, `mix-blend-mode: screen`.
+5. **Architecture (optional):** the 3D colonnade and statue fragment scene (§5.3), or a static poster of it.
+6. **Content scrim:** text sits on `--dusk-surface` at ≥ 92% opacity, or directly on the sky only where the measured contrast passes.
+
+### 5.2 Dawn echoes (no 3D)
+
+Working screens quote the sanctuary lightly:
+- the warm dawn glow at the top of the page (`--dawn-bg-warm` radial)
+- the **niche** arch for featured artwork
+- a thin column-flute rule (3 parallel hairlines) as a section divider
+- marble-white mats for artworks
+- Tenor Sans caps for labels
+
+### 5.3 The Sanctuary scene (3D)
+
+- **Component:** `<SanctuaryScene preset="quiet|dreaming|liminal" />`, lazy-loaded. It always renders its **poster** first and upgrades to WebGL only if allowed.
+- **Contents:** a colonnade or atrium in fog, a low sun disc, a pastel sky, a calm floor, and one classical fragment (bust, hand, capital) in pale marble with a pastel rim light.
+- **Reaction:** the fragment and camera ease ≤ 3° toward the pointer; a click turns the fragment slowly to face you; idle drift is slow. Nothing on touch.
+- **Used on:** landing (full), login (background), the waiting state (small, calm), session end, and the empty gallery.
+- **Never on:** the workspace, the canvas, the therapist console, or behind running text.
+- **Assets:** only public-domain or CC0 museum scans, each listed in `docs/redesign/liminal/ASSETS.md`. Budget: < 60k triangles, ≤ 1.5 MB per model, DPR capped at 1.5, paused when the tab is hidden.
+- The prototype and intensity presets are in `docs/redesign/liminal/`. The demo uses **Quiet** by default.
+
+### 5.4 Comfort panel (patient and therapist)
+
+The header button is "Comodidad / Comoditat / Comfort", with a sun icon and a text label. It persists per device.
+
+| Setting | Options | Default |
+|---|---|---|
+| Text size | 100 / 125 / 150 % | 100 % |
+| Motion | On / Off | follows `prefers-reduced-motion` |
+| Atmosphere | Thresholds only / Everywhere (faint mist behind working screens, never behind text) / Plain | Thresholds only |
+| 3D scene | On / Off (poster) | On, desktop only |
+| Language | ES / CA / EN | ES |
+
+---
+
+## 6. Components
+
+All components are built on the existing Reka UI / shadcn-vue primitives, restyled with tokens. Patient sizes are given; the therapist uses the `density="comfortable"` variant (44 px).
+
+| Component | Spec |
+|---|---|
+| **Button** | `primary` (dusk: peach fill, sky text; dawn: ink fill, white text), `secondary` (surface fill, 2 px border), `quiet` (text with an underline on hover), `danger`. 56 px, 18 px label, an icon only together with text. Disabled = surface-2 fill + ink-soft text (≥ 4.5 : 1), never 50% opacity. |
+| **Field** | Visible label above (never placeholder-only), 56 px input, 2 px border, help text below, error below with an icon. Password fields get a "Show" toggle, and paste is allowed. |
+| **Card** | 16 px radius, surface fill, hairline. One card = one thing. |
+| **ArtworkMount** | White mat (16–32 px) around the image, optional niche arch, and a **MuseumLabel** below: title (Tenor caps; "Sin título / Sense títol / Untitled" if empty), a technique line ("A partir de un boceto"), date, "Hecha por Alex". |
+| **SessionCard** | A date "leaf" (month + day), time, therapist name, status chip (Ahora / Hoy / Próxima), and one action ("Entrar a la sesión"). |
+| **WayIn picker** | Three large tiles with an icon and a one-line description: **Palabras** (describe it), **Dibujo** (draw it), **Imagen** (start from an image). Combine sits inside "Imagen". Tiles are real `<button>`s. |
+| **CalmProgress** | The dusk sun or mist visual + a thin progress bar + a single status line ("Tu obra está en camino", ES / "La teva obra és en camí", CA / "Your artwork is on its way", EN), with `aria-live="polite"`. |
+| **ReflectionPrompt** | One open question ("¿Qué te llama la atención?"), a textarea, "Guardar nota" and an equally visible "Ahora no". This is the future chatbot slot. |
+| **VersionsStrip** | Small thumbnails of the versions in this sitting; the current one is outlined. No ranking. |
+| **Notice** | Inline, persistent, dismissed by the user. Toasts last ≥ 10 s and can be paused; errors never auto-dismiss. |
+| **Dialog** | Title, plain-language body, two buttons; the destructive one is on the right and styled `danger`. Esc and the close button always work. |
+| **AppShell** | Header: wordmark, nav (patient: Inicio · Mis obras · Ayuda; therapist: Hoy · Calendario · Pacientes), Comfort, language, profile. In a session, a right side panel (chat, and later the chatbot) is collapsible. |
+| **DemoTag** | A small persistent "Demo" chip in the header when demo mode is on. No banners. |
+
+---
+
+## 7. Screens (meeting scope)
+
+| Screen | Mode | Contents | Primary action |
+|---|---|---|---|
+| **Landing** | Dusk + full Sanctuary scene | Wordmark, display line "UN LUGAR TRANQUILO PARA CREAR", one sentence, language switch | **Comenzar** (plus a quiet "Soy terapeuta" link) |
+| **Login** | Dusk, scene as poster or quiet | Email + password (large, Show toggle), "¿Has olvidado la contraseña?". In demo: "Entrar como Alex (paciente)" / "Entrar como Marta (terapeuta)". | **Entrar** |
+| **Patient home** | Dawn | Greeting ("Buenas tardes, Alex"), SessionCard for the live or next session, a secondary "Crear por mi cuenta" card, the latest obra in its mount | **Entrar a la sesión** (or **Crear** when there is no session) |
+| **Creation workspace** | Dawn | WayIn picker → the input for that way (prompt with gentle suggestions / canvas with large tools / image picker) → **Crear**. A side panel with chat and "Marta puede ver lo que compartes". | **Crear** |
+| **Waiting** | Dusk overlay inside the workspace | CalmProgress, with "Puedes cancelar" | (none; cancel is secondary) |
+| **Result** | Dawn | The ArtworkMount, then **Guardar en mis obras** · "Otra versión" · "Anotar un pensamiento"; VersionsStrip; "Compartir con Marta" (in session) | **Guardar** |
+| **Reflection** | Dawn | ReflectionPrompt after saving | Guardar nota / Ahora no |
+| **Gallery (Mis obras)** | Dawn | A grid of mounted obras with labels, filter "En sesiones / Por mi cuenta"; detail view with the reflection note. Empty state: the poster scene + "Aquí aparecerán tus obras". | open an obra |
+| **Therapist live session** | Dawn, denser | Patient's current piece (large mount) + VersionsStrip as it updates live; chat; private notes (concept, marked "solo tú"); session timer; **Finalizar sesión** (danger) | — |
+| **Session end** | Dusk | "Gracias por la sesión de hoy", the obras made today, and back to home | **Volver al inicio** |
+
+Screens outside the meeting scope (calendar, signup, canvas page, free generation, past sessions) inherit the tokens and shell, and get redesigned later using this document.
+
+---
+
+## 8. Voice and words
+
+- **Register:** informal *tú* (ES) / *tu* (CA), singular, calm, short sentences. Never infantilising.
+- **Use:** crear, obra, otra versión, guardar, apartar, compartir, sesión, terapeuta, boceto, dibujo, palabras.
+- **Never on patient screens:** generar, resultado, volver a intentar, prompt, calidad, error del servidor, paciente (as a label). See the terminology file `docs/UI_TERMINOLOGY_ES_CA_EN_DRAFT.md`.
+- **Errors:** say what happened and what to do, without blame: "No hemos podido crear la obra esta vez. Puedes probar de nuevo cuando quieras." Never raw codes.
+- **Waiting:** "Tu obra está en camino." Don't promise times you can't keep; the progress bar carries the honesty.
+- **Translations:** every string lives in `usePrototypeLocale.ts` (ES / CA / EN). No hard-coded text in components.
+
+---
+
+## 9. Accessibility checklist (definition of done for every screen)
+
+- [ ] Body ≥ 18 px (patient), small text ≥ 15 px, using rem units.
+- [ ] Text contrast ≥ 7 : 1 for body where possible, ≥ 4.5 : 1 minimum. Control borders and icons ≥ 3 : 1 (we target 4.5).
+- [ ] Patient targets ≥ 56 px primary, ≥ 48 px others; ≥ 12 px spacing.
+- [ ] Everything works by keyboard. The focus ring is visible. Real `<button>` and `<a>` elements are used.
+- [ ] No drag-only interaction; the canvas works with mouse, touch and stylus (Pointer Events).
+- [ ] Nothing auto-dismisses or times out without a warning and an extension.
+- [ ] `prefers-reduced-motion` and the Comfort settings are honoured; the 3D scene has a poster fallback.
+- [ ] State is never shown by colour alone (icon + text).
+- [ ] Images have alt text. Patient artworks get "Obra de Alex: <title or description>".
+- [ ] `lang` is set per language; ES, CA and EN strings exist; Catalan glyphs render.
+- [ ] It works at 1280 and 1440 px (meeting), 1024 px (tablet) and 390 px (phone, basic).
+
+---
+
+## 10. How to build with this (for students)
+
+1. **Tokens first.** Use the CSS variables and the Tailwind theme names (`bg-dawn-bg`, `text-dawn-ink`, `font-display`, …) defined in `frontend/src/style.css`. If you need a colour that doesn't exist, add a token and document it here; don't inline hex.
+2. **Pick the mode.** A threshold screen wraps in `<DuskLayout>`; a working screen wraps in `<AppShell>` (dawn).
+3. **Reuse components** from `frontend/src/components/sanctuary/` (Button, Field, ArtworkMount, MuseumLabel, SessionCard, CalmProgress, ReflectionPrompt, …) before making new ones.
+4. **Words go in the locale file**, in all three languages, using the vocabulary in §8.
+5. **Check §9** before you open a PR, and add screenshots of your screen at 1440 and 1024 px.
+6. **Demo mode:** `npm run build:demo` / `VITE_DEMO=true npm run dev` runs everything without the backend or ComfyUI (see `DEMO_MODE.md`). New features should add their fake responses to `src/lib/demo/store.js`, so they can be demoed too.
+
+---
+
+## 11. Open questions for the meeting (not design decisions)
+
+1. **Emotional filtering in the image engine.** Every workflow appends "calm mood" and negative prompts such as "anxiety, horror, creepy". In art therapy a dark image is valid material. This is a clinical decision for the therapists.
+2. **Therapist notes and session history** are shown as concepts; the backend doesn't store them yet.
+3. **Chatbot role:** proposed stance "asks, never interprets, therapist-controlled", using the Reflection slot and the session side panel.
+4. **Prompt translation** assumes Spanish input, so Catalan and English prompts are mistranslated today.
+5. **Security and robustness backlog** before any real patient use (`01_APP_INVENTORY.md` §9).

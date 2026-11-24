@@ -21,6 +21,9 @@ the stakeholder meeting.
 | D4 | A **clean repo** to share in the meeting: history = upstream `main` + clean commits, no `node_modules`, `__pycache__`, `.db`, `.env`. | User |
 | D5 | Base = `main` + content of `feature/welcome-screen` (which contains `redesign/foundation`) + PR #1 mock services, junk removed. Branch: `claude/art-therapy-gui-redesign-8c2ik9`. | Orchestrator |
 | D6 | Keep the stack: Vue 3, Vite, Tailwind 4, Reka UI / shadcn-vue, Lucide, Pinia, Axios. No new component framework. | `AGENTS.md` |
+| D7 | Audience: research director + academic reviewers. Several TFG students will build on the design, so **the design system and handbook are first-class deliverables**. | User (interview) |
+| D8 | Direction: **Liminal Sanctuary** (A + artwork mounts and labels + soft-vaporwave liminal atrium with reactive classical 3D on dusk screens). Dusk outside, dawn inside. Tenor Sans + Readex Pro. Comfort panel toggles. Full spec: `DESIGN.md`. | User (interview) |
+| D9 | Demo: Spanish default; reviewers view it over a video call and on their own computers, so desktop QA comes first; curated template images. | User (interview) |
 
 ## Known facts / constraints
 
