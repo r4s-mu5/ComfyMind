@@ -74,8 +74,8 @@ the stakeholder meeting.
 | W2 | done | Wrote `02_PROJECT_HISTORY.md`: origin, epic timeline e0–e8, fork redesign branches, docs list, hygiene findings (tracked node_modules/.pyc, .env/.db in e0007e2 history, duplicate welcome sha), glossary. |
 | W3 | done | `03_CURRENT_UI_AUDIT.md` + 63 screenshots in `screens/current/`. Demo: `?demo=1` = patient (home/workspace/gallery only); dev-preview = therapist only. |
 | W4 | done | 04_DESIGN_RESEARCH.md: 3 directions (Atmospheric Sanctuary / Paper Studio / Gallery Wall); w3.org fetch blocked, some links unverified |
-| I1 | in_progress | Writing 05_INTERVIEW.md |
-| V1 | pending | |
+| I1 | done | 05_INTERVIEW.md: 4 rounds / 16 questions, R1 re-ranks R2; 11 contradictions; 14 open Qs triaged a/b/c; 17 defaults not asked |
+| V1 | done | board/index.html + board/img/art1-6.jpg |
 | B0 | pending | |
 | B1 | pending | |
 | B2 | pending | |
@@ -89,3 +89,5 @@ the stakeholder meeting.
 - 2026-11-24 — W4: design research written to `docs/redesign/04_DESIGN_RESEARCH.md`. Status done.
 - 2026-11-24 — W1: app inventory written to `docs/redesign/01_APP_INVENTORY.md` (roles, flows, routes, API/WS/data model, workflows, both demo modes, i18n, tech debt, open questions). Status done.
 - 2026-11-24 — W3: current UI audit written to `docs/redesign/03_CURRENT_UI_AUDIT.md`, 63 screenshots in `screens/current/`. Status done.
+- 2026-11-24 — I1: interview written to `docs/redesign/05_INTERVIEW.md` (facts, contradictions, triage, 4 rounds x 4 questions, defaults, empty answers table). Status done.
+- 2026-11-24 — V1: visual direction board built at `docs/redesign/board/index.html` (+ `img/art1..6.jpg`, 204 KB). Checked at 1440/390/375, no horizontal scroll. Status done.
