@@ -1,4 +1,29 @@
-# ComfyMind — Manual d'Instal·lació i Execució
+# ComfyMind
+
+ComfyMind supports art-therapy sessions for people with multiple sclerosis. A therapist guides a session while the user creates images with AI (from words, a sketch, or other images) through ComfyUI, then reflects on them. The interface is in Spanish, Catalan and English.
+
+## Quick start: demo mode (no backend, no ComfyUI)
+
+```bash
+cd frontend
+npm install
+npm run dev -- --mode demo      # or: npm run build:demo  (static build in dist/)
+```
+
+Log in with the demo buttons as **Alex** (user) or **Marta** (therapist). Open two tabs to see a live session between them. Details: [`docs/redesign/DEMO_MODE.md`](docs/redesign/DEMO_MODE.md).
+
+## Design system and contributing
+
+- [`docs/redesign/DESIGN.md`](docs/redesign/DESIGN.md): the "Liminal Sanctuary" design direction, tokens, components, screens, vocabulary and accessibility checklist.
+- [`docs/redesign/VIBECHECK.md`](docs/redesign/VIBECHECK.md): mandatory review against the generic "AI-made" look.
+- [`frontend/src/components/sanctuary/README.md`](frontend/src/components/sanctuary/README.md): components; the living style guide is at `/design` in the running app.
+- [`docs/redesign/PLAN.md`](docs/redesign/PLAN.md) and `docs/redesign/0*_*.md`: the redesign plan, app inventory, history, UI audit and research.
+
+The full installation manual (Catalan) for running with the real backend and ComfyUI follows.
+
+---
+
+# Manual d'Instal·lació i Execució
 
 Aquest manual explica com instal·lar i executar tots els serveis: ComfyUI, backend (FastAPI) i frontend (Vue), en Windows amb PowerShell.
 
