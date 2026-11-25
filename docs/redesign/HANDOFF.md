@@ -6,7 +6,7 @@ Read in this order: this file → `PLAN.md` (decisions D1–D16, status, log) �
 
 ## Status 2026-11-25 (before the meeting)
 
-- **Done:** A, the turntable (D14): about 75 s per turn, frame-rate independent, stops with Motion off or reduced motion, and has an "Detener el giro" text control by the label; the scene module was re-copied to `liminal/scene/`. **D16, chosen by the owner: option 3 "Colonnade"** (a cool lilac-grey stone tint, a fluted course under the header and between sections, faint grain, off with Atmosphere → Plain), applied as a block at the end of `frontend/src/style.css`. The hosted demo was republished as v4 at the same URL. Both builds pass.
+- **Done:** A, the turntable (D14): about 75 s per turn, frame-rate independent, stops with Motion off or reduced motion, and has an "Parar el giro" text control by the label; the scene module was re-copied to `liminal/scene/`. **D16, chosen by the owner: option 3 "Colonnade"** (a cool lilac-grey stone tint, a fluted course under the header and between sections, faint grain, off with Atmosphere → Plain), applied as a block at the end of `frontend/src/style.css`. The hosted demo was republished as v4 at the same URL. Both builds pass.
 - **Review written, not applied yet:** `reviews/VC4_REVIEW.md` (B, the rounded-card review and the replacement shape language). Next: apply its token and component fixes, then its screen fixes (D items), fold the Colonnade block into the real dawn tokens (add a `shell` class instead of `div:has(> .shell-header)`; `ArtworkMount` → `bg-dawn-mat`), set the final radius values in DESIGN.md §4.5, and run VC5.
 - The D16 options and their CSS were in the session scratchpad (not kept). The applied CSS is in style.css.
 
