@@ -176,21 +176,23 @@ function rng(seed) {
 export const SEED_MAX = 9999;
 export const randomSeed = () => Math.floor(Math.random() * (SEED_MAX + 1));
 
-// The parameters of one sculpture. The ranges are deliberately narrow: every seed must read as an abstract
-// carved stone, never as a figure. So: one opening at most (never a pair), always in the lower body and away
-// from the horn tips; the outline is always wider than a head and never narrows into a neck above shoulders;
-// the bite that opens the form is always off the vertical axis, so nothing is left-right symmetric.
+// Five families of carved stone, picked by seed. None has a drilled hole: openings read as eyes.
+// Rules that keep every seed abstract: forms are wider than they are tall, nothing is left-right symmetric,
+// no small mass sits centred on a larger one (head on shoulders), and hollows are shallow and off-centre.
+export const FAMILIES = ['arc', 'pair', 'ribbon', 'split', 'slab'];
+
 export function sculptureParams(seed) {
   const r = rng(seed * 2654435761 + 12345);
   const R = (a, b) => a + (b - a) * r();
   const sign = () => (r() < 0.5 ? -1 : 1);
-  const P = {};
-  // hewn block (bottom at y = -0.86)
-  P.bx = R(0.52, 0.66); P.by = R(0.15, 0.22); P.bz = R(0.36, 0.46);
+  const P = { family: FAMILIES[Math.floor(rng(seed * 7919 + 3)() * FAMILIES.length)] };
+  // base: a hewn box, a low drum, or two stepped slabs (bottom always at y = -0.86)
+  P.base = ['box', 'drum', 'step'][Math.floor(r() * 3)];
+  P.bx = R(0.5, 0.66); P.by = P.base === 'step' ? R(0.09, 0.12) : R(0.12, 0.21); P.bz = R(0.36, 0.46);
   P.byc = -0.86 + P.by;
-  P.blockTop = -0.86 + 2 * P.by;
+  P.blockTop = -0.86 + 2 * P.by * (P.base === 'step' ? 2 : 1);
   P.chamfers = [];
-  const nCh = 1 + Math.floor(r() * 3);
+  const nCh = P.base === 'box' ? 1 + Math.floor(r() * 3) : 0;
   for (let i = 0; i < nCh; i++) {
     const a = r() * Math.PI * 2, tilt = R(0.5, 1.1);
     const n = [Math.cos(a), tilt, Math.sin(a)], l = Math.hypot(n[0], n[1], n[2]);
@@ -198,54 +200,127 @@ export function sculptureParams(seed) {
     const support = Math.abs(nn[0]) * P.bx + Math.abs(nn[1]) * P.by + Math.abs(nn[2]) * P.bz;
     P.chamfers.push([nn[0], nn[1], nn[2], support * R(0.6, 0.82)]);
   }
-  // carved form: a broad leaning ellipse, opened by one off-axis bite
-  P.rx = R(0.52, 0.7);
-  P.ry = Math.min(P.rx * R(0.8, 1.0), (0.88 - P.blockTop + 0.08) / 1.96);
-  P.cx = R(-0.08, 0.08);
-  P.cy = P.blockTop - 0.08 + P.ry * 0.96;
-  P.lean = R(-0.22, 0.22);
+  const top = P.blockTop, room = 0.88 - top; // vertical room above the base
+  P.twist = sign() * R(0.1, 0.45);
+  P.yaw = (-22 + R(-14, 14)) * DEG;
   const side = sign();
-  P.biteA = side * R(0.34, 0.78);                  // off the vertical, so the two horns are never even
-  const bk = R(0.62, 0.86);                         // the bite always cuts well into the body
-  P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk;
-  P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
-  P.brx = R(0.26, 0.4) * P.rx / 0.6; P.bry = R(0.34, 0.55);
-  P.twist = sign() * R(0.18, 0.5);                 // gentle: a strong twist turns the top edge-on (a 'flame')
-  P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
-  P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
-  // at most one drilled opening, in the lower body, on the side away from the bite
-  P.hole = r() < 0.65;
-  P.hr = R(0.08, 0.14);
-  P.hx = P.cx - side * R(0.05, 0.2);
-  P.hy = P.cy - P.ry * R(0.28, 0.5);
-  P.yaw = (-22 + R(-12, 12)) * DEG;
+  if (P.family === 'arc') {
+    // an open crescent: a broad ellipse with a deep off-axis bite
+    P.rx = R(0.52, 0.7); P.ry = Math.min(P.rx * R(0.8, 1.0), (room + 0.08) / 1.96);
+    P.cx = R(-0.08, 0.08); P.cy = top - 0.08 + P.ry * 0.96; P.lean = R(-0.22, 0.22);
+    P.biteA = side * R(0.34, 0.78);
+    const bk = R(0.62, 0.86);
+    P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk; P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
+    P.brx = R(0.26, 0.4) * P.rx / 0.6; P.bry = R(0.34, 0.55);
+    P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
+    P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
+  } else if (P.family === 'pair') {
+    // two soft blocks: a narrow lower one and a longer upper one cantilevered well off to one side
+    P.a = [R(0.24, 0.34), R(0.14, 0.22), R(0.22, 0.32)];
+    P.ac = [side * R(0.05, 0.2), top + P.a[1] - 0.05, R(-0.05, 0.05)];
+    P.b = [R(0.5, 0.66), R(0.1, 0.16), R(0.2, 0.3)];
+    P.bc = [P.ac[0] - side * R(0.26, 0.4), P.ac[1] + P.a[1] + P.b[1] - 0.04, R(-0.08, 0.08)];
+    P.bRotY = R(-0.6, 0.6); P.bRotZ = side * R(0.04, 0.16);
+    P.round = R(0.05, 0.09);
+  } else if (P.family === 'ribbon') {
+    // a thick band curling round most of a vertical loop, left open on one upper side
+    P.rr = Math.min(R(0.4, 0.52), (room + 0.04) / 2.1);
+    P.cy = top - 0.04 + P.rr; P.cx = R(-0.06, 0.06);
+    const gap = R(1.1, 2.0), gapAt = Math.PI / 2 + side * R(0.35, 0.9);
+    P.a0 = gapAt + gap / 2; P.a1 = gapAt - gap / 2 + Math.PI * 2;
+    P.t1 = R(0.07, 0.11); P.t2 = R(0.18, 0.3); P.bandTwist = side * R(0.25, 0.7);
+  } else if (P.family === 'split') {
+    // a low, wide stone with one carved channel running diagonally across its top
+    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.34, 0.46), room * 0.55); P.ez = R(0.36, 0.46);
+    P.cx = R(-0.06, 0.06); P.cy = top - 0.06 + P.ey * 0.9; P.tilt = side * R(0.06, 0.2);
+    P.gA = side * R(0.5, 1.1); P.gOff = side * R(0.12, 0.26); P.gR = R(0.1, 0.16); P.gH = P.cy + P.ey * R(0.72, 0.92);
+  } else {
+    // a wide slab leaning back and tipped sideways, with one shallow hollow off centre (never through)
+    P.hx = R(0.5, 0.66); P.hy = Math.min(R(0.34, 0.46), room * 0.48); P.ht = R(0.09, 0.13);
+    P.cy = top - 0.05 + P.hy; P.cx = R(-0.05, 0.05);
+    P.roll = side * R(0.14, 0.36); P.pitch = R(0.1, 0.28);
+    P.dr = R(0.22, 0.34); P.dx = -side * R(0.14, 0.3); P.dy = R(-0.05, 0.12); P.dd = R(0.05, 0.08);
+  }
   return P;
 }
+export const sculptureFamily = seed => sculptureParams(seed).family;
 
 export function sculptureSdf(x, y, z, P) {
   const smin = (a, b, k) => { const h = Math.max(k - Math.abs(a - b), 0) / k; return Math.min(a, b) - h * h * k * 0.25; };
   const smax = (a, b, k) => -smin(-a, -b, k);
-  // hewn block with chamfered top edges
+  const rbox = (px, py, pz, bx, by, bz, rr) => {
+    const qx = Math.abs(px) - bx + rr, qy = Math.abs(py) - by + rr, qz = Math.abs(pz) - bz + rr;
+    return Math.hypot(Math.max(qx, 0), Math.max(qy, 0), Math.max(qz, 0)) + Math.min(Math.max(qx, qy, qz), 0) - rr;
+  };
+  // base
   const yb = y - P.byc;
-  let block = Math.max(Math.abs(x) - P.bx, Math.abs(yb) - P.by, Math.abs(z) - P.bz);
-  for (const c of P.chamfers) block = Math.max(block, c[0] * x + c[1] * yb + c[2] * z - c[3]);
-  // carved part: twisted about the vertical as it rises
+  let block;
+  if (P.base === 'drum') {
+    block = Math.max(Math.hypot(x / P.bx, z / P.bz) * Math.min(P.bx, P.bz) - Math.min(P.bx, P.bz), Math.abs(yb) - P.by);
+  } else if (P.base === 'step') {
+    const lower = Math.max(Math.abs(x) - P.bx, Math.abs(yb) - P.by, Math.abs(z) - P.bz);
+    const upper = Math.max(Math.abs(x - 0.06) - P.bx * 0.78, Math.abs(yb - 2 * P.by) - P.by, Math.abs(z + 0.03) - P.bz * 0.8);
+    block = Math.min(lower, upper);
+  } else {
+    block = Math.max(Math.abs(x) - P.bx, Math.abs(yb) - P.by, Math.abs(z) - P.bz);
+    for (const c of P.chamfers) block = Math.max(block, c[0] * x + c[1] * yb + c[2] * z - c[3]);
+  }
+  // a gentle twist about the vertical as the form rises
   const tw = P.twist * (y - P.blockTop), c = Math.cos(tw), s = Math.sin(tw);
   const px = c * x - s * z, pz = s * x + c * z;
-  const cl = Math.cos(P.lean), sl = Math.sin(P.lean);
-  const lx = cl * (px - P.cx) - sl * (y - P.cy), ly = sl * (px - P.cx) + cl * (y - P.cy);
-  const outer = (Math.hypot(lx / P.rx, ly / P.ry) - 1) * Math.min(P.rx, P.ry);
-  const bite = (Math.hypot((px - P.bix) / P.brx, (y - P.biy) / P.bry) - 1) * Math.min(P.brx, P.bry);
-  let form = smax(outer, -bite, 0.12);
-  const th = P.th0 - P.taper * Math.max(0, y - P.cy) * 2 + 0.03 * Math.cos(px * 2.2);
-  const bow = P.bowA * Math.cos(px * P.bowF + P.bowP) - P.bowA * 0.5;
-  form = smax(form, Math.abs(pz - bow) - th, 0.12);
+  let form;
+  if (P.family === 'arc') {
+    const cl = Math.cos(P.lean), sl = Math.sin(P.lean);
+    const lx = cl * (px - P.cx) - sl * (y - P.cy), ly = sl * (px - P.cx) + cl * (y - P.cy);
+    const outer = (Math.hypot(lx / P.rx, ly / P.ry) - 1) * Math.min(P.rx, P.ry);
+    const bite = (Math.hypot((px - P.bix) / P.brx, (y - P.biy) / P.bry) - 1) * Math.min(P.brx, P.bry);
+    form = smax(outer, -bite, 0.12);
+    const th = P.th0 - P.taper * Math.max(0, y - P.cy) * 2 + 0.03 * Math.cos(px * 2.2);
+    const bow = P.bowA * Math.cos(px * P.bowF + P.bowP) - P.bowA * 0.5;
+    form = smax(form, Math.abs(pz - bow) - th, 0.12);
+  } else if (P.family === 'pair') {
+    const A = rbox(x - P.ac[0], y - P.ac[1], z - P.ac[2], P.a[0], P.a[1], P.a[2], P.round);
+    let bx = x - P.bc[0], by = y - P.bc[1], bz = z - P.bc[2];
+    const cy = Math.cos(P.bRotY), sy = Math.sin(P.bRotY);
+    [bx, bz] = [cy * bx - sy * bz, sy * bx + cy * bz];
+    const cz = Math.cos(P.bRotZ), sz = Math.sin(P.bRotZ);
+    [bx, by] = [cz * bx - sz * by, sz * bx + cz * by];
+    form = smin(A, rbox(bx, by, bz, P.b[0], P.b[1], P.b[2], P.round), 0.05);
+  } else if (P.family === 'ribbon') {
+    const dx = px - P.cx, dy = y - P.cy;
+    let ang = Math.atan2(dy, dx);
+    while (ang < P.a0) ang += Math.PI * 2;
+    while (ang > P.a0 + Math.PI * 2) ang -= Math.PI * 2;
+    const ac = Math.min(ang, P.a1);
+    const nx = Math.cos(ac), ny = Math.sin(ac);
+    const ex = dx - nx * P.rr, ey = dy - ny * P.rr;
+    let u = ex * nx + ey * ny, w = -ex * ny + ey * nx, v = pz;
+    const k = P.bandTwist * (ac - P.a0), ck = Math.cos(k), sk = Math.sin(k);
+    [u, v] = [ck * u - sk * v, sk * u + ck * v];
+    form = rbox(u, v, w, P.t1, P.t2, 0.001, 0.06);
+  } else if (P.family === 'split') {
+    const ct = Math.cos(P.tilt), st = Math.sin(P.tilt);
+    const lx = ct * (px - P.cx) - st * (y - P.cy), ly = st * (px - P.cx) + ct * (y - P.cy);
+    form = (Math.hypot(lx / P.ex, ly / P.ey, pz / P.ez) - 1) * Math.min(P.ex, P.ey, P.ez);
+    // the channel: a cylinder along a horizontal, diagonal axis, laid across the top
+    const gx = Math.cos(P.gA), gz = Math.sin(P.gA);
+    const across = -gz * (px - P.cx) + gx * pz - P.gOff;
+    form = smax(form, -(Math.hypot(across, y - P.gH) - P.gR), 0.06);
+  } else {
+    let lx = px - P.cx, ly = y - P.cy, lz = pz;
+    const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);
+    [ly, lz] = [cp * ly - sp * lz, sp * ly + cp * lz];
+    const cr = Math.cos(P.roll), sr = Math.sin(P.roll);
+    [lx, ly] = [cr * lx - sr * ly, sr * lx + cr * ly];
+    form = rbox(lx, ly, lz, P.hx, P.hy, P.ht, 0.05);
+    const hollow = Math.hypot(lx - P.dx, ly - P.dy, lz - (P.ht + P.dr - P.dd)) - P.dr;
+    form = smax(form, -hollow, 0.05);
+  }
   form = smax(form, -(y - P.blockTop + 0.1), 0.02);
-  if (P.hole) form = smax(form, -(Math.hypot(px - P.hx, y - P.hy) - P.hr), 0.07);
-  return smin(block, form, 0.1);
+  return smin(block, form, 0.08);
 }
 
-// Meshes one sculpture. About 35-60 ms in V8 at res 60 (measured in Node); 12-20k triangles.
+// Meshes one sculpture. About 35-70 ms in V8 at res 60 (measured in Node); under 16k triangles.
 export function buildSculptureGeometry(seed, res = 60) {
   const P = sculptureParams(seed);
   const mc = new MarchingCubes(res, new MeshBasicMaterial(), false, false, 40000);
@@ -638,7 +713,11 @@ export async function createSanctuaryScene(canvas, {
   function regenerate(next) {
     if (disposed) return opts.seed;
     let s = next === undefined || next === null ? randomSeed() : clampSeed(next);
-    if (next === undefined || next === null) while (s === opts.seed) s = randomSeed();
+    if (next === undefined || next === null) {
+      // a new family every time, so consecutive sculptures look clearly different
+      const was = sculptureFamily(opts.seed);
+      for (let i = 0; i < 40 && (s === opts.seed || sculptureFamily(s) === was); i++) s = randomSeed();
+    }
     opts.seed = s;
     if (opts.object !== 'escultura') return s;
     const animate = !!opts.motion && ready && !lost && !document.hidden;
