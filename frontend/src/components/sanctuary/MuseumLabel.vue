@@ -35,10 +35,10 @@ const byline = computed(() => (props.madeBy ? t('art.madeBy', { name: props.made
   <div :class="['flex flex-col gap-1', align === 'center' ? 'items-center text-center' : 'items-start text-left']">
     <p class="type-label text-foreground">{{ heading }}</p>
     <p v-if="technique" class="type-small text-muted-foreground">{{ technique }}</p>
-    <p v-if="dateText || byline" class="type-small text-muted-foreground">
-      <time v-if="dateText" :datetime="parsed?.toISOString()">{{ dateText }}</time>
-      <span v-if="dateText && byline" aria-hidden="true"> · </span>
-      <span v-if="byline">{{ byline }}</span>
+    <!-- Date and maker on their own lines, as on a museum label: nothing dangles when the mount is narrow. -->
+    <p v-if="dateText" class="type-small text-muted-foreground">
+      <time :datetime="parsed?.toISOString()">{{ dateText }}</time>
     </p>
+    <p v-if="byline" class="type-small text-muted-foreground">{{ byline }}</p>
   </div>
 </template>
