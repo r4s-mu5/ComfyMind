@@ -111,7 +111,7 @@ onBeforeUnmount(() => {
       :aria-label="t('landing.sculptureLabel') + ' ' + pad(labelSeed)"
     >
       <MuseumLabel :title="`${t('landing.sculptureLabel')} ${pad(labelSeed)}`" :technique="t('landing.sculptureTechnique')" />
-      <SButton v-if="live" variant="quiet" size="compact" class="mt-1 px-0 text-link underline" @click="another">
+      <SButton v-if="live" variant="quiet" size="compact" class="mt-1 !px-0 text-link underline" @click="another">
         {{ t('landing.another') }}
       </SButton>
     </aside>

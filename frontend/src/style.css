@@ -759,5 +759,6 @@ html.theme-dark .dawn-glow {
 html.theme-dark:not(.atmo-plain) .shell > .atmo-layer { opacity: 0.45; }
 /* Dialog overlays: ink at 55% would not dim a page that is already ink. */
 html.theme-dark .bg-dawn-ink\/55 { background-color: rgb(5 9 16 / 0.72); }
-/* FullCalendar's live event writes --dawn-surface on --success; at night that needs the sky colour. */
-html.theme-dark .fc-sanctuary .active-event { color: var(--dusk-sky); }
+/* FullCalendar's live event is text on a --success fill; at night the fill is light, so the text is the sky. */
+html.theme-dark .fc-sanctuary .active-event,
+html.theme-dark .fc-sanctuary .active-event * { color: var(--dusk-sky); }

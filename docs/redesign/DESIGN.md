@@ -100,6 +100,30 @@ D16 "Colonnade" (owner choice, 2026-11-25): dawn is the atrium in the morning. C
 | `--flute-dark` / `--flute-lit` / `--flute-mid` | `#CAC6D6` / `#F1EFF5` / `#DCD9E5` | the flute shading in `.flute-rule` | — |
 | `--dawn-grain` | SVG noise | the stone grain behind AppShell (`.shell > .atmo-layer`) | — |
 
+### 4.2b Night (app dark mode)
+
+Comfort → **Pantalla / Pantalla / Screen**: Clara (default) / Oscura / Como el dispositivo (follows `prefers-color-scheme` live). It sets `html.theme-dark` (`useComfort`). Night is **the same atrium after dark**: it is derived from the dusk tokens, not a neutral grey, and it is not near-black with one neon accent. It changes the working screens (AppShell, dialogs, popovers, menus, toasts, FullCalendar); threshold screens are already dusk and look the same. Defined in `style.css` §6.
+
+| Role | Value | Contrast |
+|---|---|---|
+| Page (`--background`, `--dawn-bg`) | `--dusk-sky` `#14202F` | — |
+| Cards, dialogs, popovers (`--card`) | `--dusk-surface` `#1F3140` | — |
+| Selected and soft fills (`--secondary`) | `#2B3D52` | text 10.0 : 1 |
+| Text / secondary text | `--dusk-text` / `--dusk-text-soft` | 14.9 / 10.4 : 1 on page (12.1 / 8.5 on card, 10.0 / 7.0 on fill) |
+| Primary button | `--dusk-light` fill, sky text | 11.7 : 1; fill vs page 11.7 : 1 |
+| Control borders (`--input`) | `--dusk-border` `#8FA0B8` | 6.2 : 1 on page, 5.0 on card, 4.2 on fill |
+| Links (`--link`) | `--dusk-teal` `#7FC4C4` | 8.3 : 1 on page, 6.7 on card |
+| Wordmark, accents (`--mark`, `--dawn-violet`) | `--dusk-lilac` `#B9AFD6` | 8.0 : 1 |
+| Focus ring | `--dusk-focus` `#FFE3A3`, 3 px | 13.1 : 1 on page, 10.7 on card |
+| Success / warning / danger | `#7FD1A6` / `#F2C46D` / `#FF9C92` | 9.1 / 10.1 / 8.2 : 1 on page (7.4 / 8.2 / 6.6 on card); danger fill with sky text 8.2 : 1 |
+| Hairline | `rgba(244,243,247,.18)` | decorative only |
+| Artwork mat (`--dawn-mat`) and fixed light things (`--dawn-surface`: paper samples, image tiles) | `#E4DFD6`, a dimmed warm off-white | ink on it 12.4 : 1; the artwork stays the brightest thing |
+| Flutes | `--dusk-sky-deep` / `--dusk-sky-mid` / `#1B2738` | — |
+| Grain / top light | grain at 45 % opacity; a faint lilac moonlight instead of the morning light | — |
+| Overlay behind dialogs | `rgb(5 9 16 / .72)` | — |
+
+`--dawn-ink` and `--dawn-sun` do not change (ink on the peach "now" leaf, ink on paper). Overlays have no shadow at night (`--overlay-shadow: none`); the 1.5 px `--dusk-border` is their edge. shadcn `dark:` variants apply at night too.
+
 ### 4.3 Semantic colours (both modes, always with an icon and text)
 
 | Token | Dawn | Dusk |
@@ -198,11 +222,12 @@ Working screens quote the sanctuary lightly:
 
 ### 5.4 Comfort panel (patient and therapist)
 
-The header button is "Comodidad / Comoditat / Comfort", with a sun icon and a text label. It persists per device.
+The header button is "Comodidad / Comoditat / Comfort", a quiet text button with a sun icon. It persists per device. Each row is a group of `.chip` segments (underline, ✓ and bold when selected).
 
 | Setting | Options | Default |
 |---|---|---|
 | Text size | 100 / 125 / 150 % | 100 % |
+| Screen (Pantalla) | Clara / Oscura / Como el dispositivo (night, §4.2b; the device option follows `prefers-color-scheme` live) | Clara |
 | Motion | On / Off | follows `prefers-reduced-motion` |
 | Atmosphere | Thresholds only / Everywhere (faint mist behind working screens, never behind text) / Plain | Thresholds only |
 | 3D scene | On / Off (poster) | On, desktop only |
