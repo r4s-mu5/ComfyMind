@@ -5,11 +5,12 @@
  * swatch hex values and contrast ratios are computed from the CSS custom properties.
  * (Copy on this page is English: it is a developer tool. App screens must use the locale file.)
  */
-import { onMounted, reactive, ref } from 'vue'
+import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { ArrowRight, Check } from 'lucide-vue-next'
 import { resolveDemoImage } from '@/lib/demo/images'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+import { DEFAULT_PALETTE_ID, PALETTES, activePaletteId, applyPaletteClass } from '@/theme/palettes'
 import {
   AppShell, ArtworkMount, CalmProgress, DemoTag, MuseumLabel, ReflectionPrompt, SButton, SCard,
   SField, SNotice, SessionCard, VersionsStrip, WayInPicker,
@@ -19,12 +20,11 @@ const { t } = usePrototypeLocale()
 
 // ---- token swatches -------------------------------------------------------------------------
 interface Swatch { token: string; use: string; on?: string }
-interface Group { title: string; scope?: 'dawn' | 'dusk'; items: Swatch[] }
+interface Group { title: string; items: Swatch[] }
 
 const groups: Group[] = [
   {
     title: 'Dusk (thresholds)',
-    scope: 'dusk',
     items: [
       { token: '--dusk-sky', use: 'page background', on: '--dusk-text' },
       { token: '--dusk-sky-deep', use: 'top of sky gradient', on: '--dusk-text' },
@@ -41,25 +41,40 @@ const groups: Group[] = [
     ],
   },
   {
-    title: 'Dawn (working screens)',
-    scope: 'dawn',
+    title: 'Light interior (working screens; at night these follow the night tokens)',
     items: [
-      { token: '--dawn-bg', use: 'page background', on: '--dawn-ink' },
-      { token: '--dawn-bg-warm', use: 'top glow, hero bands', on: '--dawn-ink' },
-      { token: '--dawn-surface', use: 'cards, mats, inputs', on: '--dawn-ink' },
+      { token: '--dawn-bg', use: 'page: lit marble in morning haze', on: '--dawn-ink' },
+      { token: '--dawn-bg-warm', use: 'top light: the horizon haze', on: '--dawn-ink' },
+      { token: '--dawn-surface', use: 'mats for forms, inputs, overlays', on: '--dawn-ink' },
+      { token: '--dawn-mat', use: 'the artwork mat: the brightest surface', on: '--dawn-ink' },
       { token: '--dawn-surface-2', use: 'selected and soft fills', on: '--dawn-ink' },
       { token: '--dawn-ink', use: 'primary text, primary button', on: '--dawn-surface' },
       { token: '--dawn-ink-soft', use: 'secondary text (on bg)', on: '--dawn-bg' },
       { token: '--dawn-teal', use: 'links, active nav, progress (on bg)', on: '--dawn-bg' },
       { token: '--dawn-violet', use: 'wordmark, focus ring (on bg)', on: '--dawn-bg' },
-      { token: '--dawn-border', use: 'control borders (on white)', on: '--dawn-surface' },
+      { token: '--dawn-border', use: 'control borders (on surface)', on: '--dawn-surface' },
       { token: '--dawn-hairline', use: 'decorative dividers only' },
       { token: '--dawn-sun', use: 'sun motif, decorative only' },
     ],
   },
   {
-    title: 'Semantic (dawn values)',
-    scope: 'dawn',
+    title: 'Night (Comfort → Pantalla → Oscura)',
+    items: [
+      { token: '--night-bg', use: 'page: the column shadow side', on: '--night-text' },
+      { token: '--night-surface', use: 'cards, dialogs, popovers', on: '--night-text' },
+      { token: '--night-fill', use: 'selected and soft fills', on: '--night-text' },
+      { token: '--night-mat', use: 'artwork mat, fixed light things', on: '--dawn-ink' },
+      { token: '--night-text', use: 'text: lit marble', on: '--night-bg' },
+      { token: '--night-text-soft', use: 'secondary text', on: '--night-bg' },
+      { token: '--night-primary', use: 'primary action fill: the sun', on: '--night-bg' },
+      { token: '--night-link', use: 'links', on: '--night-bg' },
+      { token: '--night-mark', use: 'wordmark, accents', on: '--night-bg' },
+      { token: '--night-border', use: 'control borders', on: '--night-bg' },
+      { token: '--night-focus', use: 'focus ring', on: '--night-bg' },
+    ],
+  },
+  {
+    title: 'Semantic (light values)',
     items: [
       { token: '--success-dawn', use: 'success (always with icon + text)', on: '--dawn-surface' },
       { token: '--warning-dawn', use: 'warning', on: '--dawn-surface' },
@@ -68,11 +83,18 @@ const groups: Group[] = [
   },
   {
     title: 'Semantic (dusk values)',
-    scope: 'dusk',
     items: [
       { token: '--success-dusk', use: 'success on dusk', on: '--dusk-sky' },
       { token: '--warning-dusk', use: 'warning on dusk', on: '--dusk-sky' },
       { token: '--danger-dusk', use: 'danger on dusk', on: '--dusk-sky' },
+    ],
+  },
+  {
+    title: 'Semantic (night values)',
+    items: [
+      { token: '--success-night', use: 'success at night', on: '--night-bg' },
+      { token: '--warning-night', use: 'warning at night', on: '--night-bg' },
+      { token: '--danger-night', use: 'danger at night', on: '--night-bg' },
     ],
   },
 ]
@@ -99,10 +121,27 @@ const ratioOf = (a: string, b?: string) => {
 }
 const grade = (r: number | null) => (r === null ? '' : r >= 7 ? 'AAA' : r >= 4.5 ? 'AA' : r >= 3 ? 'AA large' : 'Fail')
 
-onMounted(() => {
+const readValues = () => {
   const cs = getComputedStyle(document.documentElement)
   for (const g of groups) for (const s of g.items) values[s.token] = cs.getPropertyValue(s.token).trim()
+}
+
+// ---- palette presets: preview one on this page. The dev palette selector does the same app-wide
+// and also recolours the 3D scene.
+const palette = ref(DEFAULT_PALETTE_ID)
+let paletteOnEntry = DEFAULT_PALETTE_ID
+const setPalette = (id: string) => {
+  applyPaletteClass(id)
+  palette.value = id
+  readValues()
+}
+
+onMounted(() => {
+  paletteOnEntry = activePaletteId()
+  palette.value = paletteOnEntry
+  readValues()
 })
+onBeforeUnmount(() => setPalette(paletteOnEntry))
 
 // ---- type, space, shape ----------------------------------------------------------------------
 const typeRoles = [
@@ -138,12 +177,12 @@ const reflectionLog = ref('')
       <header class="flex flex-col gap-4">
         <h1 class="type-h1">Liminal Sanctuary: style guide</h1>
         <p class="type-body measure text-muted-foreground">
-          Dusk outside, dawn inside. Tokens live in <code class="rounded-sm bg-secondary px-1.5">src/style.css</code>, components in
+          Dusk outside, the same atrium inside: lit marble by day, the shadow side of the columns at night. Tokens live in <code class="rounded-sm bg-secondary px-1.5">src/style.css</code>, components in
           <code class="rounded-sm bg-secondary px-1.5">src/components/sanctuary/</code>. Spec: <code class="rounded-sm bg-secondary px-1.5">docs/redesign/DESIGN.md</code>.
           Use the Comfort button above to try 125% / 150% text, motion off and the other modes: everything here must still work.
         </p>
         <nav aria-label="Sections" class="flex flex-wrap gap-2">
-          <a v-for="s in ['colour', 'type', 'shape', 'atmosphere', 'components', 'modes']" :key="s" :href="`#${s}`"
+          <a v-for="s in ['colour', 'palettes', 'type', 'shape', 'atmosphere', 'components', 'modes']" :key="s" :href="`#${s}`"
              class="type-small inline-flex min-h-11 items-center rounded-control border-2 border-input bg-card px-4 font-semibold hover:bg-secondary">{{ s }}</a>
         </nav>
       </header>
@@ -154,7 +193,7 @@ const reflectionLog = ref('')
         <p class="type-body measure text-muted-foreground">
           Never hard-code a hex value. Tailwind classes: <code>bg-dawn-bg</code>, <code>text-dusk-text</code>, <code>border-dawn-border</code>.
           Mode-aware classes (<code>bg-background</code>, <code>text-foreground</code>, <code>bg-primary</code>, <code>text-link</code>, <code>text-danger</code>) follow
-          the nearest <code>.dusk</code> container. Ratio shows the listed text/background pair.
+          the nearest <code>.dusk</code> container and night (<code>html.theme-dark</code>). Ratio shows the listed text/background pair, for the palette chosen below.
         </p>
         <div v-for="g in groups" :key="g.title" class="flex flex-col gap-3">
           <h3 class="type-h3">{{ g.title }}</h3>
@@ -178,6 +217,35 @@ const reflectionLog = ref('')
             </li>
           </ul>
         </div>
+      </section>
+
+      <!-- PALETTES -->
+      <section id="palettes" class="flex flex-col gap-6">
+        <h2 class="type-h2">Palettes</h2>
+        <p class="type-body measure text-muted-foreground">
+          Each palette is one scene and its interior: the 3D scene colours (<code>src/theme/palettes.ts</code>) and the light, night and dusk tokens
+          (<code>html.palette-&lt;id&gt;</code> in <code>style.css</code>). Atrio is the default. Choosing one here previews it on this page; the swatches above update.
+        </p>
+        <div role="group" aria-label="Preview a palette" class="flex flex-wrap gap-x-6 gap-y-2">
+          <button v-for="p in PALETTES" :key="p.id" type="button" class="chip" :aria-pressed="palette === p.id" @click="setPalette(p.id)">
+            <Check v-if="palette === p.id" aria-hidden="true" class="size-4" />{{ p.name }}
+          </button>
+        </div>
+        <ul class="flex flex-col">
+          <li v-for="p in PALETTES" :key="p.id" class="grid gap-3 border-t border-border py-5 md:grid-cols-[14rem_1fr] md:gap-6">
+            <div>
+              <p class="type-label">{{ p.name }}</p>
+              <p class="type-small text-muted-foreground">{{ p.description }}</p>
+            </div>
+            <ul class="grid grid-cols-4 gap-2 sm:grid-cols-8" :aria-label="`${p.name}: scene colours`">
+              <li v-for="(hex, key) in p.scene" :key="key" class="flex flex-col gap-1">
+                <span class="block h-12 border border-border" :style="{ background: hex }" aria-hidden="true" />
+                <span class="type-small">{{ key }}</span>
+                <span class="type-small text-muted-foreground">{{ hex }}</span>
+              </li>
+            </ul>
+          </li>
+        </ul>
       </section>
 
       <!-- TYPE -->
@@ -217,23 +285,22 @@ const reflectionLog = ref('')
             </li>
           </ul>
         </div>
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div class="flex flex-col gap-2"><div class="h-24 rounded-control border-2 border-input bg-card" /><p class="type-small"><code>rounded-control</code> 12px: inputs, buttons</p></div>
-          <div class="flex flex-col gap-2"><div class="h-24 rounded-card border-[1.5px] border-border bg-card" /><p class="type-small"><code>rounded-card</code> 16px: cards</p></div>
-          <div class="flex flex-col gap-2"><div class="h-24 rounded-pill border-2 border-transparent bg-primary" /><p class="type-small"><code>rounded-pill</code>: primary actions only</p></div>
-          <div class="flex flex-col gap-2"><div class="niche h-24 border-2 border-input bg-card" /><p class="type-small"><code>.niche</code>: arch for featured art</p></div>
+        <div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="flex flex-col gap-2"><div class="h-24 rounded-control border-2 border-input bg-card" /><p class="type-small"><code>rounded-control</code> 2 px: buttons, inputs, segments. Square-cut, like a placard.</p></div>
+          <div class="flex flex-col gap-2"><div class="panel h-24" /><p class="type-small"><code>.panel</code> (radius 0): no fill, no box; a rule above and space. The default container.</p></div>
+          <div class="flex flex-col gap-2"><div class="mat h-24" /><p class="type-small"><code>.mat</code> (radius 0): an opt-in surface for a form, the paper, the reflection.</p></div>
+          <div class="flex flex-col gap-2"><div class="niche h-24 border-2 border-input bg-card" /><p class="type-small"><code>.niche</code>: the only curve. Featured artwork, empty poster, the atrium.</p></div>
         </div>
-        <div class="grid gap-4 sm:grid-cols-2">
-          <div class="flex flex-col gap-2"><div class="elev h-24 rounded-card bg-card" /><p class="type-small"><code>.elev</code> (dawn lift) / <code>shadow-lift</code>: floating panels only. Cards have no shadow.</p></div>
-          <div class="flex flex-col gap-2"><div class="h-24 rounded-[2px] bg-dawn-surface shadow-hung" /><p class="type-small"><code>shadow-hung</code>: a frame on a wall. Artwork mats only.</p></div>
-          <div class="dusk sky relative flex flex-col gap-2 overflow-hidden rounded-card p-4"><div class="elev h-16 rounded-card bg-card" /><p class="type-small"><code>.elev</code> inside <code>.dusk</code>: warm glow, no shadow</p></div>
+        <div class="grid gap-6 sm:grid-cols-2">
+          <div class="flex flex-col gap-2"><div class="h-24 bg-dawn-mat shadow-hung" /><p class="type-small"><code>shadow-hung</code>: a frame on a wall. Artwork mats only. Surfaces have no elevation and nothing lifts on hover.</p></div>
+          <div class="flex flex-col gap-2"><div class="h-24 border-[1.5px] border-input bg-popover shadow-[var(--overlay-shadow)]" /><p class="type-small"><code>--overlay-shadow</code>: true overlays only (dialog, popover, menu, toast); at night and at dusk, none, just the 1.5 px border.</p></div>
         </div>
         <div class="flex flex-col gap-3">
           <h3 class="type-h3">Focus ring (tab to these)</h3>
           <div class="flex flex-wrap gap-3">
             <SButton variant="secondary">Focus me</SButton>
             <a href="#shape" class="type-body inline-flex min-h-11 items-center rounded-control px-3 font-semibold text-link underline underline-offset-4">A link</a>
-            <p class="type-small text-muted-foreground">3 px ring, 3 px offset: violet at dawn, warm yellow at dusk. Never remove it.</p>
+            <p class="type-small text-muted-foreground">3 px ring, 3 px offset: the column-shadow plum by day, the sun's core at night and at dusk. Never remove it.</p>
           </div>
         </div>
         <div class="flex flex-col gap-3">
@@ -259,9 +326,9 @@ const reflectionLog = ref('')
         <div class="relative overflow-hidden rounded-card border-[1.5px] border-border bg-background p-8">
           <div class="dawn-glow absolute inset-x-0 top-0 h-48" aria-hidden="true" />
           <p class="type-h3 relative">.dawn-glow</p>
-          <p class="type-small relative mb-4 text-muted-foreground">Warm glow at the top of working screens, then a flute rule:</p>
+          <p class="type-small relative mb-4 text-muted-foreground">The horizon haze at the top of working screens, then a flute rule:</p>
           <hr class="flute-rule relative" />
-          <p class="type-small relative mt-4 text-muted-foreground"><code>.flute-rule</code> is three hairlines. Use it between sections.</p>
+          <p class="type-small relative mt-4 text-muted-foreground"><code>.flute-rule</code>: a fluted course between two fillets. Use it between sections.</p>
         </div>
       </section>
 
@@ -310,16 +377,16 @@ const reflectionLog = ref('')
 
         <div class="flex flex-col gap-4">
           <h3 class="type-h3">SCard</h3>
-          <div class="grid gap-4 md:grid-cols-3">
-            <SCard><p class="type-h2">Normal</p><p class="type-small mt-2 text-muted-foreground">One card, one thing. No shadow.</p></SCard>
-            <SCard selected><p class="type-h2">Selected</p><p class="type-small mt-2 text-muted-foreground">2px ring outline.</p></SCard>
-            <SCard raised padding="lg"><p class="type-h2">Raised, lg</p><p class="type-small mt-2 text-muted-foreground">Optional soft lift (<code>raised</code>).</p></SCard>
+          <div class="grid gap-8 md:grid-cols-3">
+            <SCard><p class="type-h2">Panel</p><p class="type-small mt-2 text-muted-foreground">The default: a rule above and space. No box, no shadow.</p></SCard>
+            <SCard variant="mat"><p class="type-h2">Mat</p><p class="type-small mt-2 text-muted-foreground">Opt-in surface for a form or the paper.</p></SCard>
+            <SCard variant="mat" selected padding="lg"><p class="type-h2">Selected, lg</p><p class="type-small mt-2 text-muted-foreground">2 px outline, always with a label.</p></SCard>
           </div>
         </div>
 
         <div class="flex flex-col gap-4">
           <h3 class="type-h3">ArtworkMount + MuseumLabel</h3>
-          <p class="type-small measure text-muted-foreground">A square-cornered white museum mat with a hung shadow, not a card. <code>niche</code> adds the arch.</p>
+          <p class="type-small measure text-muted-foreground">A square-cornered museum mat (<code>--dawn-mat</code>, the brightest surface) with a hung shadow, not a card. <code>niche</code> adds the arch.</p>
           <div class="grid items-start gap-8 md:grid-cols-3">
             <ArtworkMount :src="art" title="Bosque al amanecer" :technique="t('art.technique.words')" :date="sessionDate" made-by="Alex" niche mat="lg" ratio="4 / 5" />
             <ArtworkMount :src="art2" :technique="t('art.technique.sketch')" :date="sessionDate" made-by="Alex" mat="md" ratio="4 / 3" />
@@ -375,14 +442,14 @@ const reflectionLog = ref('')
 
       <!-- MODES -->
       <section id="modes" class="flex flex-col gap-6">
-        <h2 class="type-h2">Dusk and dawn, side by side</h2>
+        <h2 class="type-h2">Dusk and the interior, side by side</h2>
         <p class="type-body measure text-muted-foreground">
           <code>&lt;DuskLayout&gt;</code> is a full-screen threshold layout:
           <RouterLink to="/design/dusk" class="font-semibold text-link underline underline-offset-4">see it live</RouterLink>.
         </p>
         <div class="grid gap-6 lg:grid-cols-2">
           <div class="bg-background flex flex-col gap-4 rounded-card border-[1.5px] border-border p-6 text-foreground">
-            <p class="type-h3">Dawn</p>
+            <p class="type-h3">Interior (light or night)</p>
             <p class="type-h1">Buenas tardes, Alex</p>
             <p class="type-body">Tu sesión con Marta ya está lista.</p>
             <div class="flex flex-wrap gap-3"><SButton><template #icon><Check aria-hidden="true" /></template>Entrar</SButton><SButton variant="secondary">Más tarde</SButton></div>

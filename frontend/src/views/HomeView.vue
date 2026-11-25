@@ -7,7 +7,7 @@ import { sessionsService } from '../api/sessionsService'
 import { comfyService } from '../api/comfyService'
 import { urlFor } from '@/components/create/images'
 import { useNavLink } from '@/components/create/useNavLink'
-import { ArtworkMount, SButton, SessionCard, SNotice } from '@/components/sanctuary'
+import { ArtworkMount, SButton, SessionCard, SNotice, frameFor } from '@/components/sanctuary'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
@@ -246,7 +246,7 @@ onBeforeUnmount(disconnectHomeWs)
 
         <section class="flex flex-col gap-5" aria-labelledby="home-latest">
           <h2 id="home-latest" class="type-h2">{{ t('home.latest') }}</h2>
-          <ArtworkMount v-if="latest" :src="latest.src" :made-by="displayName" niche mat="md" ratio="4 / 5" />
+          <ArtworkMount v-if="latest" :src="latest.src" :made-by="displayName" :frame="frameFor(latest.fileName, 'arch')" mat="md" ratio="4 / 5" />
           <div
             v-else
             class="niche flex aspect-[4/5] items-end justify-center border-[1.5px] border-dashed border-input bg-card p-8 text-center"

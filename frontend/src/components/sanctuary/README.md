@@ -71,7 +71,8 @@ Need a colour that does not exist? Add a token in `style.css`, show it in `Desig
 | `SField` | any labelled input | `v-model`, `label`, `type` (text, email, password, textarea...), `help`, `error`, `optional`; default slot for a custom control |
 | `SCard` | a room: default `panel` (rule above, no fill or box); `variant="mat"` for a form or the reflection | `variant` panel/mat, `padding`, `selected`, `as` |
 | `SNotice` | persistent message | `tone` info/success/warning/danger, `title`, `dismissible`, event `dismiss` |
-| `ArtworkMount` | showing an artwork on a square museum mat (`--dawn-mat`, the brightest surface) with a hung shadow (not a card) | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `niche`, `mat`, `ratio`, `label` |
+| `ArtworkMount` | showing an artwork on a square museum mat (`--dawn-mat`, the brightest surface) with a hung shadow (not a card) | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `frame` arch/square/pediment/oculus/columns/none (`niche` = old shorthand for arch; default square), `mat`, `ratio`, `label` |
+| `FramePicker` | "Marco": the person picks the frame of an obra (after it is made); a radio group of small line drawings + names, arrow keys, chip selection | `v-model` frame. Persist with `frameFor(fileName, fallback)` / `setFrameFor(fileName, shape)` from `frames.ts` |
 | `MuseumLabel` | caption under artwork | `title` (falls back to "Sin título"), `technique`, `date`, `madeBy` |
 | `SessionCard` | a session as a ledger row between hairlines (no card); the status is a word on the date leaf ("Ahora" puts it on a square of sun colour) | `date`, `time`, `therapist`, `status` now/today/next; slot `action` |
 | `WayInPicker` | Palabras / Dibujo / Imagen | `v-model` `'words' \| 'draw' \| 'image'` |
@@ -105,6 +106,8 @@ Need a colour that does not exist? Add a token in `style.css`, show it in `Desig
 ```
 
 The header nav in `AppShell` (root class `shell`) is text-only on a solid background with the fluted entablature below; nav targets are 48px; the current page is bold with a 3px underline plus `aria-current="page"`. The profile menu is a quiet text button with the first name. Dialogs (`ui/dialog`, `ui/alert-dialog`) close with a text "Cerrar" button (`dialog.close`); toasts (`ui/sonner`) are bottom-left mats with a tone border, and `toast.error` never auto-closes.
+
+Frames (`frames.ts`): the chosen frame is kept per file name in `localStorage` (`comfymind.frame.<fileName>`), in demo mode and with the real backend alike. Result, Mis obras (wall and detail) and Home's "Tu última obra" read it; without a choice the featured piece is `arch` and the wall `square`. **Backend TODO:** store the frame with the image (e.g. a `frame` field on the image record) so it follows the person across devices, and read it here.
 
 Rules of thumb: one primary `SButton` per screen; icons only together with text; state is never colour alone; errors never auto-dismiss; no "generate / result / try again" words on user screens, and never "paciente / pacient / patient" in visible text (see DESIGN.md §8).
 

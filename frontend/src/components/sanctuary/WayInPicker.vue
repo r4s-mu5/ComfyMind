@@ -11,6 +11,8 @@ import imageSample from '@/lib/demo/images/simple_test_00160_.jpg'
  * Once a way is chosen the same buttons collapse into a row of underline tabs (focus stays put).
  * `collapse=false` keeps the doorways and marks the chosen one (underline, ✓, "Elegida").
  * "Combine images" lives inside "Image", not here.
+ * The 3px rule means "chosen" and nothing else: hovering a doorway only washes it with light, so a pointer
+ * resting over Palabras when the page opens does not make it read as already chosen. Focus keeps its ring.
  */
 export type WayIn = 'words' | 'draw' | 'image'
 const props = withDefaults(defineProps<{ disabled?: boolean; collapse?: boolean }>(), { collapse: true })
@@ -56,7 +58,7 @@ const compact = computed(() => props.collapse && !!model.value)
             ? 'border-b-foreground font-bold text-foreground'
             : compact
               ? 'border-b-transparent font-medium text-muted-foreground hover:border-b-input hover:text-foreground'
-              : 'border-b-transparent text-foreground hover:border-b-input',
+              : 'border-b-transparent text-foreground hover:bg-secondary/60',
         ]"
         @click="model = o.value"
       >

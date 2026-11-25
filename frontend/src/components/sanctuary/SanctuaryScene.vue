@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, defineAsyncComponent, nextTick, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
 import { useComfort } from '@/composables/useComfort'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import SButton from './SButton.vue'
@@ -32,6 +32,11 @@ import SButton from './SButton.vue'
  * Emits `sculpture(seed)` whenever a sculpture is shown and `layout` when the scene is resized or reframed.
  * Exposes `regenerate(seed?)`, `live`, `seed` and `anchor()`: the plinth's front-right top corner in viewport
  * px, so the host can pin a museum label (and its "Otra escultura" button) beside the sculpture.
+ *
+ * Dev builds only (VITE_DEV_PANEL=true, `--mode demodev`): every scene follows the dev panel's tuning
+ * (src/dev/sceneBridge.ts), and the landing can carry the nameplate and buttons on the plinth
+ * (src/dev/DevPlinthControls.vue). Both are behind `import.meta.env.VITE_DEV_PANEL === 'true'` with dynamic
+ * imports, so normal builds contain none of it.
  */
 interface Props {
   object?: 'escultura' | 'ruina' | 'estudio'
@@ -98,7 +103,16 @@ interface SceneHandle {
   dispose: () => void
   regenerate: (seed?: number) => number
   anchor: (which?: 'plinth' | 'beside') => { x: number; y: number } | null
+  setTuning?: (o: Record<string, unknown>) => void
+  setPlinthControls?: (o: Record<string, unknown>) => void
 }
+
+// Dev builds: the plinth controls layer (never in normal builds; see the note above).
+const DevPlinthControls = import.meta.env.VITE_DEV_PANEL === 'true'
+  ? defineAsyncComponent(() => import('@/dev/DevPlinthControls.vue'))
+  : null
+const devHandle = shallowRef<SceneHandle | null>(null)
+let unbindDev: (() => void) | null = null
 
 const root = ref<HTMLElement | null>(null)
 const canvas = ref<HTMLCanvasElement | null>(null)
@@ -118,6 +132,9 @@ const onDesktopChange = (e: MediaQueryListEvent) => { desktop.value = e.matches 
 const allowed = computed(() => state.scene3d && desktop.value)
 
 const stop = () => {
+  unbindDev?.()
+  unbindDev = null
+  devHandle.value = null
   resizeObserver?.disconnect()
   resizeObserver = null
   try { handle?.dispose() } catch { /* nothing to clean up */ }
@@ -145,10 +162,18 @@ const start = async () => {
       interactive: props.interactive,
       turn: turnWanted.value && !stopped.value,
       onSculpture,
+      onControl: (name: string) => { if (name === 'regenerate') regenerate(); else if (name === 'pause') toggleTurn() },
       onReady: () => { ready.value = true; void nextTick(() => { findControls(); emit('layout') }) },
     })
     if (gone || !allowed.value) { created.dispose(); return }
     handle = created
+    if (import.meta.env.VITE_DEV_PANEL === 'true') {
+      const bridge = await import('@/dev/sceneBridge')
+      if (handle === created) {
+        unbindDev = bridge.bindScene(created, { framing: props.framing, canvas: canvas.value })
+        devHandle.value = created
+      }
+    }
     if (typeof ResizeObserver !== 'undefined' && root.value) {
       resizeObserver = new ResizeObserver(() => { handle?.resize(); emit('layout') })
       resizeObserver.observe(root.value)
@@ -193,6 +218,7 @@ function regenerate(next?: number): number | null {
   return handle.regenerate(next)
 }
 defineExpose({ regenerate, live, seed, anchor, turning, toggleTurn })
+const showDevPlinth = computed(() => Boolean(DevPlinthControls) && live.value && props.framing === 'landing' && devHandle.value !== null)
 
 // Pause when the tab is hidden (a still frame costs nothing), resume afterwards.
 const onVisibility = () => handle?.setOptions({ motion: !document.hidden && !motionOff.value })
@@ -233,6 +259,16 @@ onBeforeUnmount(() => {
       </SButton>
     </div>
   </Teleport>
+  <component
+    :is="DevPlinthControls"
+    v-if="DevPlinthControls && showDevPlinth"
+    :scene="devHandle"
+    :canvas="canvas"
+    :turning="turning"
+    :can-turn="showTurnControl"
+    @regenerate="regenerate()"
+    @toggle-turn="toggleTurn"
+  />
 </template>
 
 <style scoped>

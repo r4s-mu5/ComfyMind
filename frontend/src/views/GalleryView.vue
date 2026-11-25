@@ -8,7 +8,7 @@ import { sessionsService } from '@/api/sessionsService'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { getReflectionNote } from '@/lib/reflection'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import { ArtworkMount, SButton, SCard, SNotice } from '@/components/sanctuary'
+import { ArtworkMount, SButton, SCard, SNotice, frameFor, savedFrame } from '@/components/sanctuary'
 import SanctuaryScene from '@/components/sanctuary/SanctuaryScene.vue'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 
@@ -16,7 +16,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
  * "Mis obras": the patient's gallery (all, in sessions, on their own), one session's obras
  * (route /session/:sessionId, shared by patient and therapist) and the obra detail dialog.
  */
-interface Obra { id: string | number; fileName: string; src: string; kind: 'session' | 'own'; date?: string; sessionId?: number }
+interface Obra { id: string | number; fileName: string; src: string; kind: 'session' | 'own'; date?: string; sessionId?: number; frameOf?: string }
 
 const route = useRoute()
 const router = useRouter()
@@ -79,23 +79,21 @@ const load = async () => {
       )
       // One file per picture on the wall: demo data reuses a few images across sessions, and the same
       // picture hung twice reads as a mistake. Real files always have their own URL, so nothing is lost there.
-      const seen = new Set<string>()
+      // A copy that was given a frame lends it to the one on the wall (frameOf).
+      const seen = new Map<string, Obra>()
       const pictureOf = (i: any) => toObra(i, 'own').src.split('#')[0]
       const out: Obra[] = []
+      const hang = (i: any, make: () => Obra) => {
+        const hung = seen.get(pictureOf(i))
+        if (hung) { if (savedFrame(i.fileName)) hung.frameOf = i.fileName; return }
+        const o = make()
+        seen.set(pictureOf(i), o)
+        out.push(o)
+      }
       perSession
         .sort((a, b) => +new Date(ensureUTCString(b.s.start_date)) - +new Date(ensureUTCString(a.s.start_date)))
-        .forEach(({ s, imgs }) =>
-          imgs.filter(GENERATED).forEach((i: any) => {
-            if (seen.has(pictureOf(i))) return
-            seen.add(pictureOf(i))
-            out.push(toObra(i, 'session', s.start_date, s.id))
-          }),
-        )
-      listOf(free).filter(GENERATED).forEach((i: any) => {
-        if (seen.has(pictureOf(i))) return
-        seen.add(pictureOf(i))
-        out.push(toObra(i, 'own'))
-      })
+        .forEach(({ s, imgs }) => imgs.filter(GENERATED).forEach((i: any) => hang(i, () => toObra(i, 'session', s.start_date, s.id))))
+      listOf(free).filter(GENERATED).forEach((i: any) => hang(i, () => toObra(i, 'own')))
       obras.value = out
     }
   } catch (e) {
@@ -124,6 +122,7 @@ const filters = computed(() => [
   { id: 'session' as const, label: t('gallery.filterSession') },
   { id: 'own' as const, label: t('gallery.filterOwn') },
 ])
+const frameOf = (o: Obra) => frameFor(o.frameOf ?? o.fileName, 'square')
 const technique = (o: Obra) => (o.kind === 'session' ? t('gallery.techSession') : t('gallery.techOwn'))
 const countText = computed(() => (shown.value.length === 1 ? t('gallery.countOne') : t('gallery.count', { n: shown.value.length })))
 const sessionDate = computed(() =>
@@ -255,6 +254,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
                 :date="o.date ? ensureUTCString(o.date) : undefined"
                 :made-by="madeBy"
                 :ratio="ratios[i % ratios.length]"
+                :frame="frameOf(o)"
                 mat="sm"
               />
             </button>
@@ -273,6 +273,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
             :technique="technique(selected)"
             :date="selected.date ? ensureUTCString(selected.date) : undefined"
             :made-by="madeBy"
+            :frame="frameOf(selected)"
             mat="md"
             loading="eager"
           />

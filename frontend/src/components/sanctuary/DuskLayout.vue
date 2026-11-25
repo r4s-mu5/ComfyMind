@@ -11,6 +11,9 @@ import ComfortPanel from './ComfortPanel.vue'
  *   scene   optional full-bleed scene (e.g. <SanctuaryScene />), rendered above the sky, below the content
  *   top     extra controls in the top-right corner (next to the Comfort button)
  *   default content column. Add `scrim` (or class="scrim") behind forms so they sit on a 97% surface.
+ *
+ * `fit` (landing, login): from 768px wide the corner controls float over the sky instead of taking a row, and the
+ * content column is centred in the full height, so a one-screen threshold never needs a scroll.
  */
 interface Props {
   scrim?: boolean
@@ -19,8 +22,10 @@ interface Props {
   showComfort?: boolean
   /** max width of the content column, any CSS length */
   width?: string
+  /** one screen, no scroll: controls float in the corner and the column is centred in the full height (md and up) */
+  fit?: boolean
 }
-withDefaults(defineProps<Props>(), { align: 'start', showComfort: true, width: '40rem' })
+withDefaults(defineProps<Props>(), { align: 'start', showComfort: true, width: '40rem', fit: false })
 </script>
 
 <template>
@@ -33,7 +38,10 @@ withDefaults(defineProps<Props>(), { align: 'start', showComfort: true, width: '
     </div>
     <div v-if="$slots.scene" class="scene-3d absolute inset-0 -z-[5]"><slot name="scene" /></div>
 
-    <div v-if="showComfort || $slots.top" class="relative z-10 flex flex-wrap items-center justify-end gap-3 px-4 py-4 sm:px-6">
+    <div
+      v-if="showComfort || $slots.top"
+      :class="['relative z-10 flex flex-wrap items-center justify-end gap-3 px-4 py-4 sm:px-6', fit && 'md:absolute md:inset-x-0 md:top-0']"
+    >
       <slot name="top" />
       <ComfortPanel v-if="showComfort" variant="quiet" />
     </div>
@@ -42,7 +50,8 @@ withDefaults(defineProps<Props>(), { align: 'start', showComfort: true, width: '
       id="main"
       :class="[
         'relative z-10 flex flex-1 flex-col px-4 pb-16 sm:px-6',
-        align === 'center' ? 'items-center justify-center' : 'items-start justify-start pt-8 md:pl-[clamp(1.5rem,12vw,10rem)] md:pt-[8vh]',
+        align === 'center' ? 'items-center justify-center' : 'items-start justify-start pt-8 md:pl-[clamp(1.5rem,12vw,10rem)]',
+        align !== 'center' && (fit ? 'md:min-h-screen md:justify-center md:py-12' : 'md:pt-[8vh]'),
       ]"
     >
       <div :class="['w-full', scrim && 'scrim p-6 sm:p-10']" :style="{ maxWidth: width }">

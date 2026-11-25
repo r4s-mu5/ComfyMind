@@ -2,7 +2,7 @@
 import { computed, ref } from 'vue'
 import { Check } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import { ArtworkMount, ReflectionPrompt, SButton, VersionsStrip } from '@/components/sanctuary'
+import { ArtworkMount, FramePicker, ReflectionPrompt, SButton, VersionsStrip, frameFor, setFrameFor } from '@/components/sanctuary'
 
 /**
  * The obra just made: a large mounted piece in its niche and, beside it, the choices.
@@ -11,6 +11,7 @@ import { ArtworkMount, ReflectionPrompt, SButton, VersionsStrip } from '@/compon
  * phase 'done'     what happened, then Crear otra obra / Ver mis obras
  * No ranking and no "regenerate": versions are only listed, the current one outlined.
  * Each stack of choices has one fill, at most one outline, and the rest are quiet text buttons.
+ * After the choices, a quiet "Marco" row changes the mount live; the choice is remembered per obra (frames.ts).
  */
 export interface ResultVersion { id: number; fileName: string; src: string; technique: string; date: string }
 
@@ -45,6 +46,11 @@ const current = computed({
   get: () => props.version.id as string | number | null,
   set: (id) => id != null && emit('select', Number(id)),
 })
+// A new obra is the featured piece: it opens in its niche (arch) until the person picks another frame.
+const frame = computed({
+  get: () => frameFor(props.version.fileName, 'arch'),
+  set: (shape) => setFrameFor(props.version.fileName, shape),
+})
 const strip = computed(() => props.versions.map((v) => ({ id: v.id, src: v.src, alt: '' })))
 
 defineExpose({ focus: () => heading.value?.focus() })
@@ -60,7 +66,7 @@ defineExpose({ focus: () => heading.value?.focus() })
         :technique="version.technique"
         :date="version.date"
         :made-by="madeBy"
-        niche
+        :frame="frame"
         mat="lg"
         loading="eager"
       />
@@ -112,6 +118,9 @@ defineExpose({ focus: () => heading.value?.focus() })
         </div>
         <p v-if="inSession" class="type-small text-muted-foreground">{{ t('session.canSee', { name: therapistName }) }}</p>
       </div>
+
+      <!-- A quiet row after the choices (chips, no fill): it never competes with Guardar. -->
+      <FramePicker v-if="phase !== 'reflect'" v-model="frame" />
 
       <template v-if="versions.length > 1">
         <hr class="flute-rule" />

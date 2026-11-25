@@ -7,8 +7,10 @@ import { useComfort } from '@/composables/useComfort'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 
 // Landing (DESIGN.md §7): wordmark, one line, one sentence, one primary action.
-// The text is wall text on the sky (like the session end), with a soft local shade behind the text column only:
-// the columns of the atrium are pale, so bare text on them would measure well under 7:1.
+// The text sits on a wall plaque: a flat, square-cut dusk panel (the same surface, edge and left line as the login
+// panel, so "Comenzar" opens the door in the same place). The pale columns behind it would put bare text well
+// under 7:1, and a blurred shade read as a smudge; the plaque is opaque enough that no shape ghosts through.
+// It stays in the left ~45% of the screen so the sculpture (about 60% across) is always clear.
 // The scene shows a generated marble sculpture. Its museum label is pinned beside the plinth and carries
 // the quiet "Otra escultura" button (keyboard and screen readers use it; the text keeps one primary action).
 // With the poster (3D off, phones, no WebGL) the label stays, with the poster's number, but without the button:
@@ -45,7 +47,9 @@ const gaveUp = ref(false)
 const posterMode = computed(() => !live.value && (!(comfort.scene3d && desktop) || gaveUp.value))
 const labelSeed = computed(() => (live.value ? seed.value : posterMode.value ? POSTER_SEED : null))
 
-// Pin the label card just right of the plinth's top corner, kept inside the viewport.
+// Pin the label card beside the plinth's top corner, like a label on the wall next to a plinth: its top-left
+// just right of the corner, hanging down along the plinth's side. Never over the plinth: if the corner is too close
+// to the right edge for the card, the card goes ABOVE the corner instead (right-aligned), still clear of the plinth.
 const card = ref<HTMLElement | null>(null)
 const cardPos = ref<{ left: string; top: string } | null>(null)
 function posterAnchor(): { x: number; y: number } {
@@ -55,12 +59,16 @@ function posterAnchor(): { x: number; y: number } {
   const s = Math.max(W / p.w, H / p.h)
   return { x: (W - p.w * s) * 0.62 + p.x * s, y: (H - p.h * s) * 0.5 + p.y * s }
 }
+const EDGE = 16, GAP = 16, TOP = 80 // TOP: below the language and Comfort controls
 function placeCard() {
   const a = live.value ? scene.value?.anchor() : posterMode.value ? posterAnchor() : null
   if (!a) { cardPos.value = null; return }
+  const W = window.innerWidth, H = window.innerHeight
   const w = card.value?.offsetWidth ?? 260, h = card.value?.offsetHeight ?? 120
-  const x = Math.min(window.innerWidth - w - 16, Math.max(16, a.x + 14))
-  const y = Math.min(window.innerHeight - h - 16, Math.max(80, a.y + 6))
+  let x = a.x + GAP, y = a.y + 4
+  if (x + w > W - EDGE) { x = W - w - EDGE; y = a.y - h - GAP }
+  x = Math.max(EDGE, x)
+  y = Math.min(H - h - EDGE, Math.max(TOP, y))
   cardPos.value = { left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }
 }
 const onLayout = () => { void nextTick(placeCard) }
@@ -79,39 +87,40 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <DuskLayout width="76rem">
+  <DuskLayout width="76rem" fit>
     <template #scene>
       <SanctuaryScene ref="scene" object="escultura" framing="landing" interactive @sculpture="onSculpture" @layout="onLayout" />
     </template>
     <template #top><LanguageSelector /></template>
 
-    <!-- Phone: the text sits at the bottom so the scene stays visible above it. -->
-    <div class="flex min-h-[calc(100dvh-9rem)] items-end sm:items-center">
-      <section class="wall-text relative w-full max-w-[34rem] py-6 xl:ml-8 lg:max-w-[28rem] xl:max-w-[34rem]" aria-labelledby="landing-title">
+    <!-- Phone: the plaque sits at the bottom so the scene stays visible above it. From md it is centred in the
+         full height (DuskLayout fit) on the same left line as the login panel. -->
+    <div class="flex min-h-[calc(100dvh-9rem)] items-end md:block md:min-h-0">
+      <section class="plaque scrim w-full px-6 py-8 sm:px-10 sm:py-10" aria-labelledby="landing-title">
         <p class="type-wordmark text-mark">ComfyMind</p>
-        <hr class="flute-rule mt-5 max-w-[8rem]" />
-        <h1 id="landing-title" class="type-display mt-8 text-balance">{{ t('landing.display') }}</h1>
-        <p class="type-body measure mt-4 text-muted-foreground">{{ t('landing.lede') }}</p>
-        <div class="mt-8 flex flex-wrap items-center gap-x-6 gap-y-3">
+        <hr class="flute-rule mt-4 max-w-[8rem]" />
+        <h1 id="landing-title" class="type-display plaque-display mt-8 text-balance">{{ t('landing.display') }}</h1>
+        <p class="type-body mt-4 text-muted-foreground">{{ t('landing.lede') }}</p>
+        <div class="mt-8 flex flex-wrap items-center gap-x-8 gap-y-3">
           <SButton to="/login">{{ t('landing.begin') }}</SButton>
-          <SButton to="/login?role=therapist" variant="quiet" class="px-1 text-link underline">{{ t('landing.therapist') }}</SButton>
+          <SButton to="/login?role=therapist" variant="quiet" class="!px-0 text-link underline">{{ t('landing.therapist') }}</SButton>
         </div>
         <p class="sr-only" aria-live="polite">{{ announcement }}</p>
       </section>
     </div>
 
     <!-- The sculpture's museum label, beside the plinth. Live: with the quiet way to ask for another piece
-         (SanctuaryScene also places its "Parar el giro" control in this card). Poster: the label alone. -->
+         (SanctuaryScene also places its "Parar el giro" control in this card, on the same row). Poster: the label alone. -->
     <aside
       v-if="labelSeed !== null"
       ref="card"
-      class="sculpture-card scrim rounded-none px-4 pb-2 pt-3"
-      :class="!live && 'pb-3'"
+      class="sculpture-card scrim flex flex-wrap items-center gap-x-6 px-4 pt-3"
+      :class="live ? 'pb-1' : 'pb-3'"
       :style="cardPos ?? { visibility: 'hidden' }"
       :aria-label="t('landing.sculptureLabel') + ' ' + pad(labelSeed)"
     >
-      <MuseumLabel :title="`${t('landing.sculptureLabel')} ${pad(labelSeed)}`" :technique="t('landing.sculptureTechnique')" />
-      <SButton v-if="live" variant="quiet" size="compact" class="mt-1 !px-0 text-link underline" @click="another">
+      <MuseumLabel class="basis-full" :title="`${t('landing.sculptureLabel')} ${pad(labelSeed)}`" :technique="t('landing.sculptureTechnique')" />
+      <SButton v-if="live" variant="quiet" size="compact" class="!min-h-14 !px-0 text-link underline" @click="another">
         {{ t('landing.another') }}
       </SButton>
     </aside>
@@ -119,35 +128,13 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped>
-.sculpture-card { position: fixed; z-index: 20; width: max-content; max-width: 19rem; }
+.sculpture-card { position: fixed; z-index: 20; width: max-content; max-width: 20rem; }
 
-/* A soft shade of the night sky behind the text column only (measured: text 7:1 or more over the pale columns).
-   Solid under the text, then an eased fade past its right edge, above and below; open to the left edge of the
-   screen, like dusk falling on the near wall. No box, no edge, no radius. --fade is shorter at 1024 so the
-   sculpture on the right stays clear. */
-.wall-text { --fade: 7rem; --shade: color-mix(in srgb, var(--dusk-sky-deep) 93%, transparent); }
-@media (min-width: 1280px) { .wall-text { --fade: 13rem; } }
-.wall-text::before {
-  content: '';
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  top: -9rem;
-  bottom: -9rem;
-  left: -100vw;
-  right: calc(-0.5rem - var(--fade));
-  background: linear-gradient(90deg,
-    var(--shade) 0,
-    var(--shade) calc(100% - var(--fade)),
-    color-mix(in srgb, var(--dusk-sky-deep) 62%, transparent) calc(100% - var(--fade) * 0.6),
-    color-mix(in srgb, var(--dusk-sky-deep) 24%, transparent) calc(100% - var(--fade) * 0.25),
-    transparent 100%);
-  -webkit-mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.45) 4rem, #000 9rem, #000 calc(100% - 9rem), rgba(0,0,0,.45) calc(100% - 4rem), transparent 100%);
-  mask-image: linear-gradient(to bottom, transparent 0, rgba(0,0,0,.45) 4rem, #000 9rem, #000 calc(100% - 9rem), rgba(0,0,0,.45) calc(100% - 4rem), transparent 100%);
-}
-@media (max-width: 639px) {
-  /* Phone: the text spans the width; shade the bottom band instead, fading upwards. */
-  .wall-text::before { left: -1rem; right: -1rem; bottom: -4rem; background: color-mix(in srgb, var(--dusk-sky-deep) 90%, transparent);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 5rem); mask-image: linear-gradient(to bottom, transparent 0, #000 5rem); }
+/* The wall plaque: from md it keeps to the left ~45% of the screen (its right edge lands at 44-46% from 1024 to
+   1440 with DuskLayout's left line), so the sculpture, about 60% across, stays clear. */
+@media (min-width: 768px) {
+  .plaque { width: clamp(22rem, 33vw, 30rem); }
+  /* the display line scales with the plaque, so TRANQUILO never breaks out of it */
+  .plaque-display { font-size: clamp(1.75rem, 2.9vw, 2.625rem); }
 }
 </style>

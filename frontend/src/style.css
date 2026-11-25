@@ -2,12 +2,14 @@
  * ComfyMind design tokens: "Liminal Sanctuary" (docs/redesign/DESIGN.md §4-5).
  *
  * How this file is organised
- *   1. Raw tokens          :root          --dusk-*, --dawn-*, semantic colours, radii, elevation, motion
+ *   1. Raw tokens          :root          --dusk-*, --dawn-*, --night-*, semantic colours, radii, motion
  *   2. Tailwind theme      @theme         bg-dawn-bg, text-dusk-text, font-display, rounded-card, ...
  *   3. Mode variables      :root / .dusk  the shadcn variables (--background, --primary, ...) mapped to
  *                                         dawn (default) or dusk (add class "dusk" to a container)
  *   4. Base                focus ring, body, comfort classes on <html>
  *   5. Components layer    type roles, atmosphere utilities (.sky, .mist, .grain, .niche, ...)
+ *   6. Palette presets     html.palette-<id>  raw-token overrides for the dev palette selector
+ *   7. Night               html.theme-dark    the mode variables mapped to the --night-* tokens
  *
  * Rule: never write a hex value outside this file. If you need a new colour, add a token here
  * and document it in DESIGN.md.
@@ -37,33 +39,60 @@
   --dusk-border: #8FA0B8;
   --dusk-focus: #FFE3A3;
 
-  /* Dawn: working screens. D16 "Colonnade": the atrium in the morning, cool lilac-grey stone,
-     fluted courses under the header and between sections, a faint grain (off with Comfort > Plain). */
-  --dawn-bg: #E7E5ED;          /* lilac-grey stone */
-  --dawn-bg-warm: #EEEBF2;     /* the top light is cool, not peach */
-  --dawn-surface: #F5F4F7;     /* cool marble: inputs, mats for forms, popovers */
-  --dawn-surface-2: #DDDAE6;   /* selected and soft fills */
+  /* Dawn: working screens. v6 "Atrio": the same atrium in the morning. The page is lit marble
+     (sampled from the columns' lit side, #C0ADAB) lifted towards the horizon haze (#D4BFB9); the top
+     light is the haze itself. Rose-grey stone, not cream and not white. Ink is the column shadow at
+     its deepest. Samples: src/theme/palettes.ts. */
+  --dawn-bg: #E9E2E3;          /* lit marble in morning haze */
+  --dawn-bg-warm: #F3E9E5;     /* the horizon haze, as the top light */
+  --dawn-surface: #F7F3F2;     /* honed marble: inputs, mats for forms, popovers */
+  --dawn-surface-2: #DFD5D8;   /* selected and soft fills */
   --dawn-mat: #FFFFFF;         /* the artwork mat: the brightest thing on the page */
-  --dawn-ink: #14202F;
-  --dawn-ink-soft: #3D4A5F;
-  --dawn-teal: #1E5E61;
-  --dawn-violet: #5B4E86;
-  --dawn-border: #6B7488;
-  --dawn-hairline: rgba(42, 49, 72, 0.22);  /* from --dusk-sky-mid */
+  --dawn-ink: #261F2B;         /* the column shadow side (#5D4E62) at its deepest */
+  --dawn-ink-soft: #54485B;
+  --dawn-teal: #245A5C;        /* links: verdigris, the cool note the dusk mist carries */
+  --dawn-violet: #5E4868;      /* wordmark, focus ring: the shadow side of the columns */
+  --dawn-border: #76697B;
+  --dawn-hairline: rgba(38, 31, 43, 0.22);  /* --dawn-ink at 22 % */
   --dawn-sun: #F0D5BF;
   /* Flute shading, one concave channel per period: arris (dark) -> lit wall -> shadowed wall -> arris */
-  --flute-dark: #CAC6D6;
-  --flute-lit: #F1EFF5;
-  --flute-mid: #DCD9E5;
+  --flute-dark: #CFC3C7;
+  --flute-lit: #F6F0EF;
+  --flute-mid: #DED4D7;
   --dawn-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 
-  /* Semantic colours: always shown with an icon and text. Both modes are explicit tokens. */
+  /* Night: the app's dark mode (section 6). v6 "scene stone": the atrium after dark, sampled from the
+     SHADOW side of the columns (#5D4E62) and the dusk sky's mauve-grey, deepened. Warm ash-mauve,
+     no navy, no blue-black, no neon. Text is lit marble, the primary is the peach sun. */
+  --night-bg: #261F27;         /* page: column shadow, deepened */
+  --night-bg-warm: #2F262C;    /* top light: a trace of the horizon rose */
+  --night-surface: #31292F;    /* cards, dialogs, popovers */
+  --night-fill: #3E343C;       /* selected and soft fills */
+  --night-mat: #E3DAD6;        /* artwork mat and fixed light things: lit marble, dimmed */
+  --night-text: #F0E8E5;       /* lit marble */
+  --night-text-soft: #D0C3C3;
+  --night-primary: #F0D5BF;    /* the sun */
+  --night-link: #D2BEDD;       /* the sky above the columns, lifted; teal read as a lone neon note on mauve */
+  --night-mark: #E0BFB6;       /* horizon haze */
+  --night-border: #9F8E98;     /* the plinth in shade */
+  --night-focus: #FFE3A3;      /* the sun's core */
+  --night-hairline: rgba(240, 232, 229, 0.18);
+  --night-flute-dark: #1B161C;
+  --night-flute-lit: #3E343C;
+  --night-flute-mid: #2D252B;
+  --night-deep: #120F14;       /* dialog overlay */
+  --night-glow: rgba(224, 191, 182, 0.1);   /* horizon haze, very faint, at the top of the page */
+
+  /* Semantic colours: always shown with an icon and text. Each mode has explicit tokens. */
   --success-dawn: #1D6B47;
-  --warning-dawn: #7F5300;   /* 4.9:1 on surface-2, 5.4:1 on the page */
+  --warning-dawn: #7A5000;   /* 4.6:1 on surface-2, 5.6:1 on the page */
   --danger-dawn: #A3302A;
   --success-dusk: #7FD1A6;
   --warning-dusk: #F2C46D;
   --danger-dusk: #FF9C92;
+  --success-night: #93D0A9;
+  --warning-night: #ECC57C;
+  --danger-night: #F5A39A;
 
   /* Shape: square-cut, like placards and wall labels. The niche (arch top, square foot) is the only
      curve, and only on artwork and the atrium. Rooms are separated by rules and space, not boxes. */
@@ -199,9 +228,9 @@
 
   /* Elevation: surfaces have none. Hung = artwork. Float = true overlays only (dialog, popover, menu, toast). */
   --shadow-lift: none;     /* RETIRED: .elev resolves to nothing */
-  --shadow-float: 0 1px 0 rgba(20, 32, 47, 0.10), 0 24px 48px -28px rgba(20, 32, 47, 0.35);
+  --shadow-float: 0 1px 0 rgba(38, 31, 43, 0.10), 0 24px 48px -28px rgba(38, 31, 43, 0.35);
   /* Hung: a frame on a wall. A short drop plus a long soft shadow below. Artwork mats only. */
-  --shadow-hung: 0 2px 0 rgba(20, 32, 47, 0.06), 0 14px 22px -10px rgba(20, 32, 47, 0.18);
+  --shadow-hung: 0 2px 0 rgba(38, 31, 43, 0.06), 0 14px 22px -10px rgba(38, 31, 43, 0.18);
 
   --ease-calm: cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -304,7 +333,7 @@
   --danger-foreground: var(--dusk-sky);
   --link: var(--dusk-teal);
   --mark: var(--dusk-lilac);
-  --hairline: rgba(244, 243, 247, 0.18);
+  --hairline: color-mix(in srgb, var(--dusk-text) 18%, transparent);
   --focus-ring: var(--dusk-focus);
   --elevation: none;
   --overlay-shadow: none;   /* dusk overlays use a 1.5px --dusk-border instead of a shadow */
@@ -487,9 +516,9 @@ html.no-3d .scene-3d canvas { display: none; }
     pointer-events: none;
     filter: blur(10px);
     background:
-      radial-gradient(70% 3.5% at 30% calc(100% - var(--horizon) - 2%), rgba(185, 175, 214, 0.34) 0%, transparent 100%),
-      radial-gradient(80% 3% at 72% calc(100% - var(--horizon) - 6%), rgba(127, 196, 196, 0.22) 0%, transparent 100%),
-      radial-gradient(90% 2.5% at 45% calc(100% - var(--horizon) - 11%), rgba(240, 213, 191, 0.20) 0%, transparent 100%);
+      radial-gradient(70% 3.5% at 30% calc(100% - var(--horizon) - 2%), color-mix(in srgb, var(--dusk-lilac) 34%, transparent) 0%, transparent 100%),
+      radial-gradient(80% 3% at 72% calc(100% - var(--horizon) - 6%), color-mix(in srgb, var(--dusk-teal) 22%, transparent) 0%, transparent 100%),
+      radial-gradient(90% 2.5% at 45% calc(100% - var(--horizon) - 11%), color-mix(in srgb, var(--dusk-light) 20%, transparent) 0%, transparent 100%);
     animation: mist-drift var(--dur-drift) ease-in-out infinite alternate;
   }
 
@@ -523,10 +552,10 @@ html.no-3d .scene-3d canvas { display: none; }
     border-radius: 0;
   }
 
-  /* Cool morning light at the top of working screens (D16: no peach at dawn). */
+  /* Morning light at the top of working screens: the horizon haze (--dawn-bg-warm). */
   .dawn-glow {
     pointer-events: none;
-    background: radial-gradient(ellipse 90% 300px at 50% 0%, rgba(244, 243, 247, 0.9) 0%, transparent 100%);
+    background: radial-gradient(ellipse 90% 300px at 50% 0%, color-mix(in srgb, var(--dawn-bg-warm) 90%, transparent) 0%, transparent 100%);
   }
 
   /* Arch top for featured artwork. */
@@ -684,81 +713,334 @@ html:not(.atmo-plain) .shell > .atmo-layer {
 }
 
 /* ------------------------------------------------------------------ */
-/* 6. Night: the same atrium after dark (Comfort > Pantalla > Oscura)  */
+/* 6. Palette presets (dev palette selector, src/theme/palettes.ts)     */
+/* ------------------------------------------------------------------ */
+/* The selector sets html.palette-<id> and gives the 3D scene the preset's scene colours. Each block
+   overrides the RAW tokens only (dusk, dawn and night), so the mode mappings in section 3 and the
+   night mapping in section 7 follow without further rules; one block covers light, night and the
+   dusk login / landing. "atrio" is the default and has no class (the :root values above).
+   These blocks must stay BEFORE section 7: html.theme-dark there re-points --dawn-* at --night-*,
+   and the later rule wins at equal specificity. Values and contrast: DESIGN.md §4.7. */
+/* Alba: Dawn: a pale pearl sky turning rose-gold at the horizon. Cooler and lighter than Atrio. */
+html.palette-alba {
+  /* dusk: login, landing, waiting */
+  --dusk-sky: #2E3445;
+  --dusk-sky-deep: #232835;
+  --dusk-sky-mid: #4D515D;
+  --dusk-sky-low: #5A504F;
+  --dusk-surface: #313540;
+  --dusk-text: #F0EEEC;
+  --dusk-text-soft: #CBCAD0;
+  --dusk-light: #F3D3BF;
+  --dusk-teal: #A9C8D3;
+  --dusk-lilac: #E3BBA9;
+  --dusk-border: #8E909E;
+  --dusk-focus: #FFE3A3;
+  --success-dusk: #93D0A9;
+  --warning-dusk: #ECC57C;
+  --danger-dusk: #F5A39A;
+  --dusk-horizon: rgba(243, 211, 191, 0.35);
+  /* light interior */
+  --dawn-bg: #E8E8EB;
+  --dawn-bg-warm: #F4ECE6;
+  --dawn-surface: #F7F6F5;
+  --dawn-surface-2: #DCDCE2;
+  --dawn-mat: #FFFFFF;
+  --dawn-ink: #25272F;
+  --dawn-ink-soft: #4D505D;
+  --dawn-teal: #2A5A69;
+  --dawn-violet: #7A4E43;
+  --dawn-border: #6F7180;
+  --dawn-sun: #F3D6C3;
+  --flute-dark: #C9CAD3;
+  --flute-lit: #F6F5F4;
+  --flute-mid: #DCDCE2;
+  --success-dawn: #1D6B47;
+  --warning-dawn: #7A5000;
+  --danger-dawn: #A3302A;
+  --dawn-hairline: rgba(37, 39, 47, 0.22);
+  /* night (html.theme-dark) */
+  --night-bg: #212328;
+  --night-bg-warm: #2A2A2F;
+  --night-surface: #2A2C32;
+  --night-fill: #363841;
+  --night-mat: #E4E0DC;
+  --night-text: #F0EEEC;
+  --night-text-soft: #CBCAD0;
+  --night-primary: #F3D3BF;
+  --night-link: #A9C8D3;
+  --night-mark: #E3BBA9;
+  --night-border: #8E909E;
+  --night-focus: #FFE3A3;
+  --night-flute-dark: #18191D;
+  --night-flute-lit: #363841;
+  --night-flute-mid: #27282E;
+  --success-night: #93D0A9;
+  --warning-night: #ECC57C;
+  --danger-night: #F5A39A;
+  --night-deep: #121317;
+  --night-hairline: rgba(240, 238, 236, 0.18);
+  --night-glow: rgba(243, 211, 191, 0.1);
+}
+/* Piedra: Warm limestone and ochre, low saturation: the atrium as quarried stone. No terracotta. */
+html.palette-piedra {
+  /* dusk: login, landing, waiting */
+  --dusk-sky: #262422;
+  --dusk-sky-deep: #1E1C1A;
+  --dusk-sky-mid: #45403B;
+  --dusk-sky-low: #504A42;
+  --dusk-surface: #302C29;
+  --dusk-text: #EFEAE2;
+  --dusk-text-soft: #CFC7BA;
+  --dusk-light: #EBD7B7;
+  --dusk-teal: #D3C08F;
+  --dusk-lilac: #C9BBA6;
+  --dusk-border: #9A9080;
+  --dusk-focus: #FFE3A3;
+  --success-dusk: #9CCFA0;
+  --warning-dusk: #ECC57C;
+  --danger-dusk: #F2A496;
+  --dusk-horizon: rgba(235, 215, 183, 0.35);
+  /* light interior */
+  --dawn-bg: #E6E2DC;
+  --dawn-bg-warm: #EFE9E0;
+  --dawn-surface: #F6F3EF;
+  --dawn-surface-2: #DAD4CB;
+  --dawn-mat: #FFFFFF;
+  --dawn-ink: #29251F;
+  --dawn-ink-soft: #534C42;
+  --dawn-teal: #3F5A50;
+  --dawn-violet: #6B5530;
+  --dawn-border: #7A7163;
+  --dawn-sun: #EBD7B7;
+  --flute-dark: #CCC4B8;
+  --flute-lit: #F4F0EA;
+  --flute-mid: #DDD7CE;
+  --success-dawn: #25633B;
+  --warning-dawn: #7A5000;
+  --danger-dawn: #9E352B;
+  --dawn-hairline: rgba(41, 37, 31, 0.22);
+  /* night (html.theme-dark) */
+  --night-bg: #22201D;
+  --night-bg-warm: #2A2723;
+  --night-surface: #2C2925;
+  --night-fill: #38342F;
+  --night-mat: #E2DCD2;
+  --night-text: #EFEAE2;
+  --night-text-soft: #CFC7BA;
+  --night-primary: #EBD7B7;
+  --night-link: #D3C08F;
+  --night-mark: #C9BBA6;
+  --night-border: #9A9080;
+  --night-focus: #FFE3A3;
+  --night-flute-dark: #171513;
+  --night-flute-lit: #38342F;
+  --night-flute-mid: #28251F;
+  --success-night: #9CCFA0;
+  --warning-night: #ECC57C;
+  --danger-night: #F2A496;
+  --night-deep: #121110;
+  --night-hairline: rgba(239, 234, 226, 0.18);
+  --night-glow: rgba(235, 215, 183, 0.1);
+}
+/* Jardín: A sage and olive dusk over a cloister garden, with verdigris accents. */
+html.palette-jardin {
+  /* dusk: login, landing, waiting */
+  --dusk-sky: #1D2320;
+  --dusk-sky-deep: #161B18;
+  --dusk-sky-mid: #383E34;
+  --dusk-sky-low: #494A3E;
+  --dusk-surface: #28302B;
+  --dusk-text: #EAEEE6;
+  --dusk-text-soft: #C4CDC0;
+  --dusk-light: #E8DBB2;
+  --dusk-teal: #98C9B9;
+  --dusk-lilac: #C7CFA0;
+  --dusk-border: #8C9A8B;
+  --dusk-focus: #F7E6A0;
+  --success-dusk: #9CD2A9;
+  --warning-dusk: #E9C67E;
+  --danger-dusk: #F3A498;
+  --dusk-horizon: rgba(232, 219, 178, 0.35);
+  /* light interior */
+  --dawn-bg: #E2E5DE;
+  --dawn-bg-warm: #ECEDE3;
+  --dawn-surface: #F4F5F0;
+  --dawn-surface-2: #D5DACF;
+  --dawn-mat: #FFFFFF;
+  --dawn-ink: #1F2A24;
+  --dawn-ink-soft: #46534A;
+  --dawn-teal: #245E55;
+  --dawn-violet: #55623A;
+  --dawn-border: #6C7768;
+  --dawn-sun: #E8DBB2;
+  --flute-dark: #C5CCC0;
+  --flute-lit: #F3F4EE;
+  --flute-mid: #D7DCD1;
+  --success-dawn: #24683F;
+  --warning-dawn: #755000;
+  --danger-dawn: #A0332B;
+  --dawn-hairline: rgba(31, 42, 36, 0.22);
+  /* night (html.theme-dark) */
+  --night-bg: #1D2320;
+  --night-bg-warm: #242B26;
+  --night-surface: #262E29;
+  --night-fill: #323C35;
+  --night-mat: #E2E3D8;
+  --night-text: #EAEEE6;
+  --night-text-soft: #C4CDC0;
+  --night-primary: #E8DBB2;
+  --night-link: #98C9B9;
+  --night-mark: #C7CFA0;
+  --night-border: #8C9A8B;
+  --night-focus: #F7E6A0;
+  --night-flute-dark: #141916;
+  --night-flute-lit: #323C35;
+  --night-flute-mid: #222924;
+  --success-night: #9CD2A9;
+  --warning-night: #E9C67E;
+  --danger-night: #F3A498;
+  --night-deep: #0F1311;
+  --night-hairline: rgba(234, 238, 230, 0.18);
+  --night-glow: rgba(199, 207, 160, 0.1);
+}
+/* Noche clara: Moonlit atrium: blue-grey stone under a clear night, a pale moon instead of the sun. Low saturation, never navy. */
+html.palette-noche-clara {
+  /* dusk: login, landing, waiting */
+  --dusk-sky: #1D222A;
+  --dusk-sky-deep: #161A20;
+  --dusk-sky-mid: #363A42;
+  --dusk-sky-low: #43464A;
+  --dusk-surface: #282D34;
+  --dusk-text: #ECEEEF;
+  --dusk-text-soft: #C4C9CE;
+  --dusk-light: #E6E2D2;
+  --dusk-teal: #A9C5D6;
+  --dusk-lilac: #CBCFD6;
+  --dusk-border: #8A939D;
+  --dusk-focus: #F5E6A3;
+  --success-dusk: #96D0AA;
+  --warning-dusk: #E9C47C;
+  --danger-dusk: #F2A39A;
+  --dusk-horizon: rgba(230, 226, 210, 0.35);
+  /* light interior */
+  --dawn-bg: #E3E5E7;
+  --dawn-bg-warm: #EDEFF0;
+  --dawn-surface: #F5F6F7;
+  --dawn-surface-2: #D7DBDF;
+  --dawn-mat: #FFFFFF;
+  --dawn-ink: #1F242B;
+  --dawn-ink-soft: #47505B;
+  --dawn-teal: #2B5A6B;
+  --dawn-violet: #4D5566;
+  --dawn-border: #6C7480;
+  --dawn-sun: #E7E3D3;
+  --flute-dark: #C6CBD0;
+  --flute-lit: #F4F5F6;
+  --flute-mid: #D7DBDF;
+  --success-dawn: #1F6A47;
+  --warning-dawn: #765000;
+  --danger-dawn: #A0322C;
+  --dawn-hairline: rgba(31, 36, 43, 0.22);
+  /* night (html.theme-dark) */
+  --night-bg: #1D2125;
+  --night-bg-warm: #24282D;
+  --night-surface: #262B30;
+  --night-fill: #31373D;
+  --night-mat: #E1E2DE;
+  --night-text: #ECEEEF;
+  --night-text-soft: #C4C9CE;
+  --night-primary: #E6E2D2;
+  --night-link: #A9C5D6;
+  --night-mark: #CBCFD6;
+  --night-border: #8A939D;
+  --night-focus: #F5E6A3;
+  --night-flute-dark: #14171A;
+  --night-flute-lit: #31373D;
+  --night-flute-mid: #22262A;
+  --success-night: #96D0AA;
+  --warning-night: #E9C47C;
+  --danger-night: #F2A39A;
+  --night-deep: #0F1214;
+  --night-hairline: rgba(236, 238, 239, 0.18);
+  --night-glow: rgba(203, 207, 214, 0.1);
+}
+
+/* ------------------------------------------------------------------ */
+/* 7. Night: the same atrium after dark (Comfort > Pantalla > Oscura)  */
 /* ------------------------------------------------------------------ */
 /* Set by useComfort as html.theme-dark ("Como el dispositivo" follows prefers-color-scheme live).
-   Derived from the dusk tokens, not a neutral grey: the sky is the page, the surfaces are dusk stone,
-   the primary is the warm distant light. Threshold screens are already .dusk and look the same.
-   The fixed --dawn-ink and --dawn-sun stay as they are (ink text on peach, ink on paper). */
+   Built from the --night-* tokens: the stone on the shadow side of the columns, lit-marble text, the
+   sun as the primary. Threshold screens stay .dusk. --dawn-ink and --dawn-sun are fixed (ink text on
+   the peach "now" leaf, ink on paper). */
 html.theme-dark {
   color-scheme: dark;
 
   /* Raw dawn tokens at night (they also drive the flutes, the grain and FullCalendar's grid). */
-  --dawn-bg: var(--dusk-sky);              /* #14202F */
-  --dawn-bg-warm: #1A2638;
-  --dawn-surface: #E4DFD6;                 /* fixed light things (paper samples, image tiles): dimmed, warm */
-  --dawn-surface-2: #2B3D52;
-  --dawn-mat: #E4DFD6;                     /* the artwork mat: a dimmed warm off-white, still the brightest surface */
-  --dawn-teal: var(--dusk-teal);
-  --dawn-violet: var(--dusk-lilac);
-  --dawn-border: var(--dusk-border);
-  --dawn-hairline: rgba(244, 243, 247, 0.18);
-  --flute-dark: var(--dusk-sky-deep);
-  --flute-lit: var(--dusk-sky-mid);
-  --flute-mid: #1B2738;
+  --dawn-bg: var(--night-bg);
+  --dawn-bg-warm: var(--night-bg-warm);
+  --dawn-surface: var(--night-mat);        /* fixed light things (paper samples, image tiles): dimmed marble */
+  --dawn-surface-2: var(--night-fill);
+  --dawn-mat: var(--night-mat);            /* the artwork mat: still the brightest surface */
+  --dawn-teal: var(--night-link);
+  --dawn-violet: var(--night-mark);
+  --dawn-border: var(--night-border);
+  --dawn-hairline: var(--night-hairline);
+  --flute-dark: var(--night-flute-dark);
+  --flute-lit: var(--night-flute-lit);
+  --flute-mid: var(--night-flute-mid);
 
-  /* Mode variables: the .dusk mapping, with a dusk-stone card and a deeper selected fill. */
-  --background: var(--dusk-sky);
-  --foreground: var(--dusk-text);
-  --card: var(--dusk-surface);
-  --card-foreground: var(--dusk-text);
-  --popover: var(--dusk-surface);
-  --popover-foreground: var(--dusk-text);
-  --primary: var(--dusk-light);
-  --primary-foreground: var(--dusk-sky);
-  --primary-hover: color-mix(in srgb, var(--dusk-light) 88%, white);
-  --secondary: #2B3D52;
-  --secondary-foreground: var(--dusk-text);
-  --muted: #2B3D52;
-  --muted-foreground: var(--dusk-text-soft);
-  --accent: #2B3D52;
-  --accent-foreground: var(--dusk-text);
-  --destructive: var(--danger-dusk);
-  --border: rgba(244, 243, 247, 0.18);
-  --input: var(--dusk-border);
-  --ring: var(--dusk-focus);
-  --chart-1: var(--dusk-teal);
-  --chart-2: var(--dusk-lilac);
-  --chart-3: var(--warning-dusk);
-  --chart-4: var(--success-dusk);
-  --chart-5: var(--dusk-text-soft);
-  --sidebar: var(--dusk-surface);
-  --sidebar-foreground: var(--dusk-text);
-  --sidebar-primary: var(--dusk-light);
-  --sidebar-primary-foreground: var(--dusk-sky);
-  --sidebar-accent: #2B3D52;
-  --sidebar-accent-foreground: var(--dusk-text);
-  --sidebar-border: var(--dusk-border);
-  --sidebar-ring: var(--dusk-focus);
+  --background: var(--night-bg);
+  --foreground: var(--night-text);
+  --card: var(--night-surface);
+  --card-foreground: var(--night-text);
+  --popover: var(--night-surface);
+  --popover-foreground: var(--night-text);
+  --primary: var(--night-primary);
+  --primary-foreground: var(--night-bg);
+  --primary-hover: color-mix(in srgb, var(--night-primary) 88%, white);
+  --secondary: var(--night-fill);
+  --secondary-foreground: var(--night-text);
+  --muted: var(--night-fill);
+  --muted-foreground: var(--night-text-soft);
+  --accent: var(--night-fill);
+  --accent-foreground: var(--night-text);
+  --destructive: var(--danger-night);
+  --border: var(--night-hairline);
+  --input: var(--night-border);
+  --ring: var(--night-focus);
+  --chart-1: var(--night-link);
+  --chart-2: var(--night-mark);
+  --chart-3: var(--warning-night);
+  --chart-4: var(--success-night);
+  --chart-5: var(--night-text-soft);
+  --sidebar: var(--night-surface);
+  --sidebar-foreground: var(--night-text);
+  --sidebar-primary: var(--night-primary);
+  --sidebar-primary-foreground: var(--night-bg);
+  --sidebar-accent: var(--night-fill);
+  --sidebar-accent-foreground: var(--night-text);
+  --sidebar-border: var(--night-border);
+  --sidebar-ring: var(--night-focus);
 
-  --success: var(--success-dusk);
-  --warning: var(--warning-dusk);
-  --danger: var(--danger-dusk);
-  --danger-foreground: var(--dusk-sky);
-  --link: var(--dusk-teal);
-  --mark: var(--dusk-lilac);
-  --hairline: rgba(244, 243, 247, 0.18);
-  --focus-ring: var(--dusk-focus);
-  --overlay-shadow: none;   /* overlays keep their 1.5px --dusk-border */
-  --rule-strong: 2px solid var(--dusk-light);
+  --success: var(--success-night);
+  --warning: var(--warning-night);
+  --danger: var(--danger-night);
+  --danger-foreground: var(--night-bg);
+  --link: var(--night-link);
+  --mark: var(--night-mark);
+  --hairline: var(--night-hairline);
+  --focus-ring: var(--night-focus);
+  --overlay-shadow: none;   /* overlays keep their 1.5px --input border */
+  --rule-strong: 2px solid var(--night-primary);
 }
-/* Faint moonlight at the top instead of the morning light; the grain is a little quieter on the dark stone. */
+/* A faint horizon haze at the top instead of the morning light; the grain is quieter on dark stone. */
 html.theme-dark .dawn-glow {
-  background: radial-gradient(ellipse 90% 300px at 50% 0%, rgba(185, 175, 214, 0.10) 0%, transparent 100%);
+  background: radial-gradient(ellipse 90% 300px at 50% 0%, var(--night-glow) 0%, transparent 100%);
 }
 html.theme-dark:not(.atmo-plain) .shell > .atmo-layer { opacity: 0.45; }
-/* Dialog overlays: ink at 55% would not dim a page that is already ink. */
-html.theme-dark .bg-dawn-ink\/55 { background-color: rgb(5 9 16 / 0.72); }
-/* FullCalendar's live event is text on a --success fill; at night the fill is light, so the text is the sky. */
+/* Dialog overlays: ink at 55% would not dim a page that is already dark. */
+html.theme-dark .bg-dawn-ink\/55 { background-color: color-mix(in srgb, var(--night-deep) 72%, transparent); }
+/* FullCalendar's live event is text on a --success fill; at night the fill is light, so the text is the page. */
 html.theme-dark .fc-sanctuary .active-event,
-html.theme-dark .fc-sanctuary .active-event * { color: var(--dusk-sky); }
+html.theme-dark .fc-sanctuary .active-event * { color: var(--night-bg); }
