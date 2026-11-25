@@ -3,10 +3,12 @@
 //
 //   const scene = await createSanctuaryScene(canvas, { object: 'escultura', seed: 427, onSculpture: s => {} })
 //   scene.regenerate()          // another sculpture (returns its seed); a click on the scene does the same
-//   scene.setOptions({ fx: false }); scene.resize(); scene.snapshot(); scene.anchor('plinth'); scene.dispose()
+//   scene.setOptions({ fx: false, turn: false }); scene.resize(); scene.snapshot(); scene.anchor('plinth'); scene.dispose()
 //
-// The scene is fully still: no camera drift, no pointer lean, no breathing. The only motion is an 800 ms
-// dissolve (in Bayer order) when a new sculpture appears, and none at all with motion: false.
+// The camera and the room never move: no drift, no pointer lean, no breathing. Two things move, and neither
+// does with motion: false: the sculpture turns on its plinth (D14: one turn every TURN_MS, linear, driven by
+// elapsed time, at about 30 fps; turn: false holds it at its current angle), and an 800 ms dissolve (in Bayer
+// order) brings in a new sculpture. When nothing moves, frames are drawn only on change.
 // 'escultura' is generative: a seeded signed-distance field, meshed with marching cubes, always abstract.
 // Everything is procedural geometry: no models, no textures, no figurative shapes.
 import {
@@ -28,7 +30,8 @@ export function hasWebGL() {
 
 const DEG = Math.PI / 180;
 const MAX_DPR = 1.5;
-const FRAME_MS = 32; // about 30 fps during a dissolve
+const FRAME_MS = 1000 / 30; // frame cap while anything moves (turntable, dissolve)
+const TURN_MS = 75000; // one full turn of the sculpture, linear (D14: 60-90 s)
 
 // The approved "Quiet" mood: pastel dusk, light fog, short colonnade, fully still.
 const MOOD = {
@@ -435,13 +438,14 @@ export async function createSanctuaryScene(canvas, {
   seed = undefined,        // escultura: which sculpture (0..9999); random when omitted
   onSculpture = null,      // called with the seed whenever a sculpture is shown
   interactive = true,      // a click or tap on the scene calls regenerate()
+  turn = true,             // escultura: the sculpture turns on its plinth (only while motion is also true)
   dither = 0.8,            // 0 = no quantising, 1 = strongest
   grain = 0.5,             // 0 = none, 1 = most (still low amplitude); static, never refreshed
   vignette = 0,            // 0..1, soft
   onError = null,          // lost WebGL context; without it the handler throws
 } = {}) {
   if (!canvas) throw new Error('createSanctuaryScene: canvas is required');
-  const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette, interactive,
+  const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette, interactive, turn,
     seed: Number.isFinite(Number(seed)) && seed !== null ? clampSeed(seed) : randomSeed() };
   const host = canvas.parentElement || canvas;
 
@@ -549,7 +553,14 @@ export async function createSanctuaryScene(canvas, {
   let kit = null;
   const mesh = (geo, mat) => new Mesh(geo, mat);
 
+  // The turntable: only the sculpture turns; the plinth (and the label pinned to its corner) stays put.
+  // The angle lives here, not on the mesh, so a new sculpture carries on from the same angle.
+  const spin = { angle: 0, last: 0 };
+  let turner = null;
+  const spinning = () => !!(opts.motion && opts.turn && turner && opts.object === 'escultura');
+
   function buildKit(name, sculptureSeed) {
+    turner = null;
     const g = new Group(), own = [];
     const G = geo => { own.push(geo); return geo; };
     let focusY = 1.45, extent = 0.6, plinth = { w: 0.72, h: 1.04 };
@@ -574,8 +585,10 @@ export async function createSanctuaryScene(canvas, {
       const sc = mesh(geo, marble);
       sc.scale.setScalar(s);
       sc.position.y = PH - geo.boundingBox.min.y * s;
-      sc.rotation.y = geo.userData.params.yaw;
+      sc.rotation.y = geo.userData.params.yaw + spin.angle;
+      sc.userData.yaw = geo.userData.params.yaw;
       g.add(sc);
+      turner = sc;
       focusY = 1.5; extent = 0.55;
     } else {
       // the sculptor's study: three solids on plinths of different heights
@@ -752,7 +765,7 @@ export async function createSanctuaryScene(canvas, {
   };
   host.addEventListener('click', onClick);
 
-  /* render loop: frames only on change, about 30 fps during a dissolve, nothing while hidden */
+  /* render loop: frames only on change, about 30 fps while turning or dissolving, nothing while hidden */
   let raf = 0, needs = false, sceneDirty = true, lastRender = 0, ready = false, disposed = false, lost = false;
   function schedule() { if (!raf && !disposed && !lost && !document.hidden) raf = requestAnimationFrame(tick); }
   function requestRender() { needs = true; schedule(); }
@@ -768,21 +781,40 @@ export async function createSanctuaryScene(canvas, {
   function tick(now) {
     raf = 0;
     if (disposed || lost || document.hidden) return;
-    if (dissolve.active) {
-      if (now - lastRender < FRAME_MS && !needs) { schedule(); return; }
-      const k = Math.min(1, (now - dissolve.t0) / DISSOLVE_MS);
-      postU.progress.value = k;
-      if (k >= 1) endDissolve();
+    const moving = dissolve.active || spinning();
+    if (moving) {
+      // 2 ms of slack, so a 60 Hz display draws every second frame instead of every third
+      if (now - lastRender < FRAME_MS - 2 && !needs) { schedule(); return; }
+      if (dissolve.active) {
+        const k = Math.min(1, (now - dissolve.t0) / DISSOLVE_MS);
+        postU.progress.value = k;
+        if (k >= 1) endDissolve();
+      }
+      update(now);
     } else if (!needs) return;
     if (sceneDirty) renderScene();
     renderPost();
     lastRender = now; needs = false;
     if (!ready) { ready = true; try { onReady(); } catch (e) { console.error(e); } }
-    if (dissolve.active) schedule();
+    if (dissolve.active || spinning()) schedule();
+    else spin.last = 0;
+  }
+
+  // Advances the turntable by the time that really passed (frame-rate independent). A long gap (the
+  // first frame, a stall, a pause) never jumps: the step is capped and the turn simply resumes.
+  function update(now) {
+    if (!spinning()) { spin.last = 0; return; }
+    const dt = spin.last ? Math.min(now - spin.last, 100) : 0;
+    spin.last = now;
+    if (dt > 0) {
+      spin.angle = (spin.angle + (dt / TURN_MS) * Math.PI * 2) % (Math.PI * 2);
+      turner.rotation.y = turner.userData.yaw + spin.angle;
+      sceneDirty = true;
+    }
   }
 
   const onVis = () => {
-    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; endDissolve(); }
+    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; endDissolve(); spin.last = 0; }
     else requestRender();
   };
   document.addEventListener('visibilitychange', onVis);
@@ -818,6 +850,10 @@ export async function createSanctuaryScene(canvas, {
     resize,
     regenerate,
     get seed() { return opts.seed; },
+    /** True while the sculpture is actually turning (motion on, turn on, escultura). */
+    get turning() { return spinning(); },
+    /** The turntable angle in radians (0..2π); it holds while paused. */
+    get angle() { return spin.angle; },
     snapshot(type = 'image/jpeg', q = 0.86) {
       if (disposed || lost) return '';
       endDissolve(); renderScene(); renderPost();
