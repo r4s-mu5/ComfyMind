@@ -41,7 +41,7 @@ function onSculpture(seed: number) {
           <SButton to="/login">{{ t('landing.begin') }}</SButton>
           <SButton to="/login?role=therapist" variant="quiet" class="px-2 text-link underline">{{ t('landing.therapist') }}</SButton>
         </div>
-        <SButton v-if="scene?.live" variant="quiet" size="compact" class="mt-3 px-2 text-link underline" @click="another">
+        <SButton v-if="scene?.live" variant="quiet" class="mt-2 px-2 text-link underline" @click="another">
           {{ t('landing.another') }}
         </SButton>
         <p class="sr-only" aria-live="polite">{{ announcement }}</p>
