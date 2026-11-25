@@ -174,10 +174,8 @@ const submit = () => {
   canvas.value.toBlob((blob) => blob && emit('create', blob), 'image/png')
 }
 
-const toolBtn = (active: boolean) => [
-  'type-small inline-flex min-h-14 items-center gap-2 rounded-control border-2 px-4 font-semibold transition-colors',
-  active ? 'border-ring bg-secondary text-foreground' : 'border-input bg-card text-foreground hover:bg-secondary',
-]
+// Tools and sizes are underline chips (style.css .chip): selection = 3px rule + ✓ + bold, via aria-pressed.
+const toolBtn = (active: boolean) => ['chip type-small inline-flex min-h-14 items-center gap-2 text-foreground', active ? 'font-bold' : 'font-medium']
 </script>
 
 <template>
@@ -187,8 +185,8 @@ const toolBtn = (active: boolean) => [
       <p class="type-small text-muted-foreground">{{ t('create.drawHelp') }}</p>
     </div>
 
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-      <div role="group" :aria-label="t('create.toolGroup')" class="flex gap-3">
+    <div class="flex flex-wrap items-center gap-x-12 gap-y-3">
+      <div role="group" :aria-label="t('create.toolGroup')" class="flex gap-6">
         <button type="button" :class="toolBtn(tool === 'brush')" :aria-pressed="tool === 'brush'" @click="tool = 'brush'">
           <Brush aria-hidden="true" class="size-5" /> {{ t('create.toolBrush') }}
           <Check v-if="tool === 'brush'" aria-hidden="true" class="size-5" />
@@ -199,7 +197,7 @@ const toolBtn = (active: boolean) => [
         </button>
       </div>
 
-      <div role="group" :aria-label="t('create.sizeGroup')" class="flex gap-3">
+      <div role="group" :aria-label="t('create.sizeGroup')" class="flex gap-6">
         <button
           v-for="k in (['s', 'm', 'l'] as SizeKey[])"
           :key="k"
@@ -239,14 +237,14 @@ const toolBtn = (active: boolean) => [
         </button>
       </div>
 
-      <div class="paper-frame flex min-w-0 flex-1 justify-center rounded-card border-[1.5px] border-border p-2">
+      <div class="paper-frame flex min-w-0 flex-1 justify-center rounded-none p-2">
         <canvas
           ref="canvas"
           :width="W"
           :height="H"
           role="img"
           :aria-label="hasDrawing ? t('create.canvasLabelDrawn') : t('create.canvasLabel')"
-          class="block aspect-[4/3] w-full min-w-[min(100%,18rem)] cursor-crosshair touch-none rounded-control bg-paper"
+          class="block aspect-[4/3] w-full min-w-[min(100%,18rem)] cursor-crosshair touch-none rounded-none bg-paper"
           :style="paperH ? { maxWidth: `${Math.round((paperH * 4) / 3)}px` } : undefined"
           @pointerdown.prevent="down"
           @pointermove.prevent="move"
@@ -273,8 +271,7 @@ const toolBtn = (active: boolean) => [
 
     <!-- Crear docks to the bottom of the window while the panel is taller; the paper is sized to stay above it.
          Undo and clear live here too, so they are always in reach once there is something to undo. -->
-    <div ref="dock" class="crear-dock">
-      <hr class="flute-rule" />
+    <div ref="dock" class="sticky bottom-0 z-10 -mx-6 border-t border-hairline bg-card px-6 pb-4 pt-4 sm:-mx-8 sm:px-8">
       <div class="flex flex-wrap items-center gap-4">
         <SButton :disabled="!hasDrawing" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
         <p v-if="!hasDrawing" class="type-small text-muted-foreground">{{ t('create.drawNeeded') }}</p>
@@ -286,7 +283,7 @@ const toolBtn = (active: boolean) => [
     </div>
 
     <AlertDialog :open="confirmClear" @update:open="(v) => (confirmClear = v)">
-      <AlertDialogContent class="rounded-card border-2 border-input p-8">
+      <AlertDialogContent class="rounded-none border-2 border-input p-8">
         <AlertDialogHeader>
           <AlertDialogTitle class="type-h2">{{ t('create.clearTitle') }}</AlertDialogTitle>
           <AlertDialogDescription class="type-body text-muted-foreground">{{ t('create.clearBody') }}</AlertDialogDescription>

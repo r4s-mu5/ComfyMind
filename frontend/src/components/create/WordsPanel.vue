@@ -53,11 +53,11 @@ defineExpose({ focus: () => area.value?.focus() })
 
       <div class="flex flex-col gap-3">
         <p class="type-small font-semibold text-muted-foreground">{{ t('create.chipsTitle') }}</p>
-        <ul class="flex flex-wrap gap-3" role="list">
+        <ul class="flex flex-wrap gap-x-6 gap-y-2" role="list">
           <li v-for="chip in chips" :key="chip">
             <button
               type="button"
-              class="type-body inline-flex min-h-12 items-center rounded-control border-2 border-input bg-card px-4 text-foreground transition-colors hover:border-ring hover:bg-secondary"
+              class="chip type-body inline-flex items-center text-foreground"
               :aria-label="t('create.chipAdd', { text: chip })"
               @click="addChip(chip)"
             >
@@ -68,8 +68,7 @@ defineExpose({ focus: () => area.value?.focus() })
       </div>
 
       <!-- Crear stays on screen: this row docks to the bottom of the window while the panel is taller. -->
-      <div class="sticky bottom-0 z-10 -mx-6 flex flex-col gap-4 bg-card px-6 pb-4 sm:-mx-8 sm:px-8">
-        <hr class="flute-rule" />
+      <div class="sticky bottom-0 z-10 -mx-6 border-t border-hairline bg-card px-6 pb-4 pt-4 sm:-mx-8 sm:px-8">
         <div class="flex flex-wrap items-center gap-4">
           <SButton type="submit" :disabled="!canCreate" :busy="busy">{{ t('create.create') }}</SButton>
           <p v-if="!canCreate" class="type-small text-muted-foreground">{{ t('create.wordsNeeded') }}</p>

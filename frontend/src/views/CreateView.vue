@@ -28,13 +28,11 @@ import ImagePanel from '@/components/create/ImagePanel.vue'
 import ResultStage, { type ResultVersion } from '@/components/create/ResultStage.vue'
 import SessionChat from '@/components/create/SessionChat.vue'
 import { urlFor, type CreateKind } from '@/components/create/images'
-import { useNavLink } from '@/components/create/useNavLink'
 
 const route = useRoute()
 const { t, locale } = usePrototypeLocale()
 const { motionOff } = useComfort()
 const { ensureUTCString } = useDateHelpers()
-const nav = useNavLink()
 
 const sid = Number(route.params.sessionId)
 const inSession = Number.isFinite(sid)
@@ -366,8 +364,8 @@ onBeforeUnmount(() => {
           {{ t(`create.access.${access}Body`, { time: sessionTime(session?.start_date) }) }}
         </SNotice>
         <div class="flex flex-wrap gap-3">
-          <SButton v-bind="nav('/home')">{{ t('create.backHome') }}</SButton>
-          <SButton v-if="access !== 'error'" variant="secondary" v-bind="nav('/generation')">{{ t('create.ownInstead') }}</SButton>
+          <SButton to="/home">{{ t('create.backHome') }}</SButton>
+          <SButton v-if="access !== 'error'" variant="secondary" to="/generation">{{ t('create.ownInstead') }}</SButton>
         </div>
       </div>
 
@@ -386,7 +384,8 @@ onBeforeUnmount(() => {
             <WayInPicker v-model="way" />
           </div>
 
-          <div v-if="way" ref="panelHost" class="scroll-mt-24 rounded-card border-[1.5px] border-border bg-card p-6 sm:p-8">
+          <!-- The panel sits on a mat (a mount board on the page): no border, no radius. -->
+          <div v-if="way" ref="panelHost" class="scroll-mt-24 bg-card p-6 sm:p-8">
             <WordsPanel v-if="way === 'words'" v-model="words" @create="createFromWords" />
             <DrawPanel v-else-if="way === 'draw'" v-model:description="drawDesc" @create="createFromDrawing" />
             <ImagePanel v-else v-model:description="imageDesc" :user-id="user?.id ?? null" @create="createFromImages" />

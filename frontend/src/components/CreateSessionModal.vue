@@ -1,179 +1,75 @@
 <template>
   <div style="display: contents">
-  <Dialog :open="open" @update:open="(val) => !val && handleClose()">
-    <DialogContent>
-      <DialogHeader>
-        <DialogTitle>Crear una nueva sesión</DialogTitle>
-        <DialogDescription>
-          Rellena los detalles para programar una nueva sesión.
+    <Dialog :open="open" @update:open="(val) => !val && handleClose()">
+      <DialogContent class="max-w-[34rem] sm:max-w-[34rem]">
+        <DialogTitle class="type-h2">{{ editing ? t('calendar.update') : t('home.therapistCreate') }}</DialogTitle>
+        <DialogDescription v-if="editing && editingName" class="type-body text-muted-foreground">
+          {{ t('calendar.sessionWith', { name: editingName }) }}
         </DialogDescription>
-      </DialogHeader>
 
-      <form class="create-form" @submit.prevent="handleCreateSession">
-        <div class="grid gap-4">
-          <!-- Paciente -->
-          <div class="grid gap-2">
-            <Label for="patient">Usuario</Label>
-            <Popover :open="openCB" @update:open="openCB = $event">
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  :aria-expanded="openCB"
-                  class="w-full justify-between text-left font-normal"
-                >
-                  {{
-                    formData.patientId != null
-                      ? patients.find(patient => patient.id === formData.patientId)?.full_name
-                      : 'Selecciona usuario...'
-                  }}
-                  <ChevronsUpDownIcon class="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
+        <form class="flex flex-col gap-6" novalidate @submit.prevent="handleSubmit">
+          <SField v-if="!editing" :label="t('calendar.patient')">
+            <template #default="{ id }">
+              <select :id="id" v-model="formData.patientId" :class="control">
+                <option :value="null" disabled>{{ t('calendar.pickUser') }}</option>
+                <option v-for="p in patients" :key="p.id" :value="p.id">{{ p.full_name }}</option>
+              </select>
+            </template>
+          </SField>
 
-              <PopoverContent class="w-full p-0">
-                <Command>
-                  <CommandInput placeholder="Buscar usuario..." />
-                  <CommandList>
-                    <CommandEmpty>No se encontró a la persona usuaria.</CommandEmpty>
-                    <CommandGroup>
-                      <CommandItem
-                        v-for="patient in patients"
-                        :key="patient.id"
-                        :value="patient.id"
-                        @select="() => {
-                          formData.patientId = patient.id
-                          openCB = false
-                        }"
-                      >
-                          <CheckIcon
-                            :class="[ 'h-4 w-4', formData.patientId === patient.id ? 'opacity-100' : 'opacity-0' ]"
-                          />
-                        {{ patient.full_name }}
-                      </CommandItem>
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+          <SField :label="t('calendar.date')">
+            <template #default="{ id }">
+              <input :id="id" v-model="formData.date" type="date" :min="minDate" :class="control" />
+            </template>
+          </SField>
+
+          <div class="grid gap-6 sm:grid-cols-2">
+            <SField :label="t('calendar.startTime')">
+              <template #default="{ id }">
+                <input :id="id" v-model="formData.startTime" type="time" :class="control" />
+              </template>
+            </SField>
+            <SField :label="t('calendar.endTime')">
+              <template #default="{ id }">
+                <input :id="id" v-model="formData.endTime" type="time" :class="control" />
+              </template>
+            </SField>
           </div>
 
-          <!-- Fecha -->
-          <div class="grid gap-2">
-            <Label for="date">Fecha</Label>
-            <Popover v-slot="{ close }">
-              <PopoverTrigger as-child>
-                <Button
-                  variant="outline"
-                  class="w-full justify-start text-left font-normal"
-                >
-                  <CalendarIcon class="h-4 w-4" />
-                  {{ formData.date ? formData.date.toString() : "Selecciona fecha" }}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent class="w-full p-0" align="start">
-                <Calendar
-                  v-model="formData.date"
-                  :default-placeholder="defaultPlaceholder"
-                  :min-value="today(getLocalTimeZone())"
-                  layout="month-and-year"
-                  initial-focus
-                  @update:model-value="close"
-                />
-              </PopoverContent>
-            </Popover>
+          <SNotice v-if="errorMessage" tone="danger" :title="editing ? t('calendar.toastUpdateError') : t('calendar.createError')">
+            <p>{{ errorMessage }}</p>
+          </SNotice>
+
+          <div class="flex flex-wrap justify-end gap-3">
+            <SButton type="submit" size="compact" :busy="busy">{{ editing ? t('calendar.save') : t('calendar.schedule') }}</SButton>
           </div>
+        </form>
+      </DialogContent>
+    </Dialog>
 
-          <!-- Hora inicio -->
-          <div class="grid gap-2">
-            <Label for="horaInicio">Hora de inicio</Label>
-            <Input
-              id="horaInicio"
-              type="time"
-              v-model="formData.startTime"
-              class="w-full"
-            />
-          </div>
-
-          <!-- Hora fin -->
-          <div class="grid gap-2">
-            <Label for="horaFin">Hora de fin</Label>
-            <Input
-              id="horaFin"
-              type="time"
-              v-model="formData.endTime"
-              class="w-full"
-            />
-          </div>
-
-          <Alert v-if="errorMessage" class="bg-red-100 text-red-800 border border-red-300">
-            <AlertCircleIcon class="h-4 w-4" />
-            <AlertTitle>Error al crear la sesión</AlertTitle>
-            <AlertDescription class="text-red-800">
-              {{ errorMessage }}
-            </AlertDescription>
-          </Alert>
-
-          <!-- Botón de confirmación -->
-          <div class="flex justify-end mt-4">
-            <Button type="submit" variant="default">Confirmar</Button>
-          </div>
-
-        </div>
-      </form>
-    </DialogContent>
-  </Dialog>
-
-  <AlertDialog :open="showOverlapDialog" @update:open="showOverlapDialog = $event">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>Sesión solapada</AlertDialogTitle>
-        <AlertDialogDescription>
-          La sesión que intentas crear coincide con otra ya agendada.
-          ¿Deseas continuar igualmente?
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-
-      <AlertDialogFooter>
-        <AlertDialogCancel @click="cancelOverlap">Cancelar</AlertDialogCancel>
-        <AlertDialogAction @click="confirmOverlap">
-          Continuar
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+    <AlertDialog :open="showOverlapDialog" @update:open="showOverlapDialog = $event">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle class="type-h2">{{ t('calendar.overlapTitle') }}</AlertDialogTitle>
+          <AlertDialogDescription class="type-body">{{ t('calendar.overlapBody') }}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter class="gap-3">
+          <AlertDialogCancel as-child>
+            <SButton variant="secondary" size="compact" @click="cancelOverlap">{{ t('calendar.overlapBack') }}</SButton>
+          </AlertDialogCancel>
+          <AlertDialogAction as-child>
+            <SButton size="compact" @click="confirmOverlap">{{ t('calendar.overlapKeep') }}</SButton>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { sessionsService } from '../api/sessionsService'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { getLocalTimeZone, today } from '@internationalized/date'
-import { CheckIcon, ChevronsUpDownIcon, CalendarIcon, AlertCircleIcon } from 'lucide-vue-next'
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { Calendar } from '@/components/ui/calendar'
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -184,106 +80,121 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { toast } from 'vue-sonner'
-
+import { SButton, SField, SNotice } from '@/components/sanctuary'
 import { useDateHelpers } from '@/lib/useDateHelpers'
+import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 
-const {
-  ensureUTCString,
-  localToUTC
-} = useDateHelpers()
-
+/**
+ * Schedule a session, or (with `session`) change the date of one. Native date and time inputs in
+ * sanctuary fields (56px, 18px text); an overlap asks before keeping the time.
+ */
+interface SessionLike { id: number; start_date: string; end_date: string }
 interface Props {
   open: boolean
   patients: Array<{ id: number; full_name: string }>
-  existingSessions: Array<{ id: number; start_date: string; end_date: string }>
+  existingSessions: Array<SessionLike>
+  /** Edit mode: change the date and times of this session (the person stays the same). */
+  session?: SessionLike | null
+  /** Name shown in edit mode ("Sesión con {name}"). */
+  sessionName?: string
 }
 
 const props = defineProps<Props>()
-
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void
   (e: 'session-created'): void
+  (e: 'session-updated'): void
 }>()
 
-const formData = ref<{ patientId: number | null; date: any; startTime: string; endTime: string }>({ patientId: null, date: null, startTime: '', endTime: '' })
-const openCB = ref(false)
-const defaultPlaceholder = today(getLocalTimeZone())
-// no DateFormatter needed; we show YYYY-MM-DD from DateValue.toString()
+const { t, locale } = usePrototypeLocale()
+const { ensureUTCString, localToUTC, utcToLocalInput } = useDateHelpers()
+
+const control =
+  'min-h-14 w-full rounded-control border-2 border-input bg-card px-4 text-[1.125rem] text-foreground'
+
+const editing = computed(() => Boolean(props.session))
+const editingName = computed(() => props.sessionName || '')
+const pad = (n: number) => String(n).padStart(2, '0')
+const now = new Date()
+const minDate = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`
+
+const empty = () => ({ patientId: null as number | null, date: '', startTime: '', endTime: '' })
+const formData = ref(empty())
+const busy = ref(false)
 const showOverlapDialog = ref(false)
 const overlapAction = ref<null | (() => Promise<void>)>(null)
 const errorMessage = ref('')
 
-// Resetear formulario cuando se cierra el modal
-watch(() => props.open, (newVal) => {
-  if (!newVal) {
-    resetForm()
-  }
-})
-
-const handleCreateSession = async () => {
-  try {
-    errorMessage.value = ''
-    if (formData.value.patientId == null || !formData.value.date || !formData.value.startTime || !formData.value.endTime) {
-      errorMessage.value = 'Completa todos los campos'
-      return
-    }
-
-    if (formData.value.startTime >= formData.value.endTime) {
-      errorMessage.value = 'La hora de inicio debe ser anterior a la hora de fin'
-      return
-    }
-
-    const startDateTime = localToUTC(formData.value.date, formData.value.startTime);
-    const endDateTime = localToUTC(formData.value.date, formData.value.endTime);
-    const newStart = new Date(startDateTime);
-    const newEnd = new Date(endDateTime);
-    const session_data = {
-      start_date: startDateTime,
-      end_date: endDateTime,
-    }
-    
-    const overlap = props.existingSessions.find(s => {
-      if (!s.start_date || !s.end_date) return false
-      const sStart = new Date(ensureUTCString(s.start_date))
-      const sEnd = new Date(ensureUTCString(s.end_date))
-      return newStart < sEnd && newEnd > sStart
-    })
-
-    if (overlap) {
-      overlapAction.value = async () => await doCreateSession(session_data)
-      showOverlapDialog.value = true
-      return
-    }
-
-    await doCreateSession(session_data)
-  } catch (e) {
-    console.error('Error creando sesión:', e)
-    toast.error('No se pudo crear la sesión')
+const fill = () => {
+  errorMessage.value = ''
+  if (props.session) {
+    const start = utcToLocalInput(props.session.start_date)
+    const end = utcToLocalInput(props.session.end_date)
+    formData.value = { patientId: null, date: start.date, startTime: start.time, endTime: end.time }
+  } else {
+    formData.value = empty()
   }
 }
+watch(() => props.open, (v) => { if (v) fill() }, { immediate: true })
 
-const doCreateSession = async (session_data: { start_date: string; end_date: string }) => {
+const longDate = (iso: string) =>
+  new Intl.DateTimeFormat(locale.value, { day: 'numeric', month: 'long' }).format(new Date(iso))
+
+const handleSubmit = async () => {
+  errorMessage.value = ''
+  const f = formData.value
+  if ((!editing.value && f.patientId == null) || !f.date || !f.startTime || !f.endTime) {
+    errorMessage.value = t('calendar.fillAll')
+    return
+  }
+  if (f.startTime >= f.endTime) {
+    errorMessage.value = t('calendar.timeOrder')
+    return
+  }
+  const start_date = localToUTC(f.date, f.startTime)
+  const end_date = localToUTC(f.date, f.endTime)
+  const newStart = new Date(start_date)
+  const newEnd = new Date(end_date)
+  const overlap = props.existingSessions.find((s) => {
+    if (!s.start_date || !s.end_date || s.id === props.session?.id) return false
+    return newStart < new Date(ensureUTCString(s.end_date)) && newEnd > new Date(ensureUTCString(s.start_date))
+  })
+  const run = () => save({ start_date, end_date })
+  if (overlap) {
+    overlapAction.value = run
+    showOverlapDialog.value = true
+    return
+  }
+  await run()
+}
+
+const save = async (data: { start_date: string; end_date: string }) => {
+  busy.value = true
   try {
-    console.log('Creando sesión para paciente:', formData.value.patientId, session_data)
-    await sessionsService.createSession(formData.value.patientId as number, session_data)
-    console.log('Sesión creada exitosamente')
-    toast.success('Sesión creada correctamente')
-    emit('session-created')
+    if (props.session) {
+      await sessionsService.updateSession(props.session.id, data)
+      toast.success(t('calendar.toastMoved', { date: longDate(data.start_date) }))
+      emit('session-updated')
+    } else {
+      await sessionsService.createSession(formData.value.patientId as number, data)
+      toast.success(t('calendar.toastCreated', { date: longDate(data.start_date) }))
+      emit('session-created')
+    }
     handleClose()
-  } catch (error) {
-    console.error('Error al crear sesión:', error)
-    errorMessage.value = error?.response?.data?.detail || 'Error al crear sesión'
+  } catch (error: any) {
+    console.error('Session could not be saved', error)
+    errorMessage.value = error?.response?.data?.detail || (props.session ? t('calendar.toastUpdateError') : t('calendar.createError'))
+  } finally {
+    busy.value = false
   }
 }
 
 const confirmOverlap = async () => {
-  if (overlapAction.value) {
-    await overlapAction.value()
-  }
-  overlapAction.value = null
   showOverlapDialog.value = false
+  const action = overlapAction.value
+  overlapAction.value = null
+  if (action) await action()
 }
 
 const cancelOverlap = () => {
@@ -291,12 +202,5 @@ const cancelOverlap = () => {
   showOverlapDialog.value = false
 }
 
-const resetForm = () => {
-  formData.value = { patientId: null, date: null, startTime: '', endTime: '' }
-  errorMessage.value = ''
-}
-
-const handleClose = () => {
-  emit('update:open', false)
-}
+const handleClose = () => emit('update:open', false)
 </script>

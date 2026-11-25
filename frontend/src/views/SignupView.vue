@@ -128,17 +128,22 @@ const addUser = async () => {
           :error="errors.confirmPassword ? t(errors.confirmPassword) : undefined"
         />
 
-        <fieldset class="flex flex-col gap-3" :aria-describedby="errors.type ? 'type-error' : undefined">
+        <!-- Two choices as chips (VC4 §3.2): an underline, and ✓ + bold + a heavier rule when chosen.
+             The native radio stays for keyboard and screen readers; its focus ring is drawn on the chip. -->
+        <fieldset :aria-describedby="errors.type ? 'type-error' : undefined">
           <legend class="type-body mb-2 font-semibold">{{ t('signup.userType') }}</legend>
-          <label
-            v-for="option in ['patient', 'therapist']"
-            :key="option"
-            :class="['flex min-h-14 cursor-pointer items-center gap-4 rounded-control border-2 bg-card px-4', newUser.type === option ? 'border-primary' : 'border-input']"
-          >
-            <input v-model="newUser.type" type="radio" name="user-type" :value="option" class="size-5 accent-[var(--primary)]" />
-            <span class="type-body">{{ t(`signup.${option}`) }}</span>
-          </label>
-          <p v-if="errors.type" id="type-error" role="alert" class="type-small font-semibold text-danger">{{ t(errors.type) }}</p>
+          <div class="flex flex-wrap gap-x-6 gap-y-2">
+            <label
+              v-for="option in ['patient', 'therapist']"
+              :key="option"
+              :class="['chip signup-chip inline-flex min-h-14 cursor-pointer items-center gap-2 type-body', newUser.type === option && 'is-selected']"
+            >
+              <input v-model="newUser.type" type="radio" name="user-type" :value="option" class="sr-only" />
+              <span v-if="newUser.type === option" aria-hidden="true">✓</span>
+              <span>{{ t(`signup.${option}`) }}</span>
+            </label>
+          </div>
+          <p v-if="errors.type" id="type-error" role="alert" class="type-small mt-2 font-semibold text-danger">{{ t(errors.type) }}</p>
         </fieldset>
 
         <SButton type="submit" block :busy="isLoading">{{ isLoading ? t('signup.submitting') : t('signup.submit') }}</SButton>
@@ -150,3 +155,8 @@ const addUser = async () => {
     </div>
   </DuskLayout>
 </template>
+
+<style scoped>
+/* The radio is visually hidden, so its keyboard focus ring goes on the whole chip. */
+.signup-chip:has(input:focus-visible) { outline: 3px solid var(--focus-ring); outline-offset: 3px; }
+</style>

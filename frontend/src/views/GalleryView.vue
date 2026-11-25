@@ -77,20 +77,23 @@ const load = async () => {
       const perSession = await Promise.all(
         sList.map(async (s: any) => ({ s, imgs: listOf(await sessionsService.getImagesForSession(s.id).catch(() => [])) })),
       )
+      // One file per picture on the wall: demo data reuses a few images across sessions, and the same
+      // picture hung twice reads as a mistake. Real files always have their own URL, so nothing is lost there.
       const seen = new Set<string>()
+      const pictureOf = (i: any) => toObra(i, 'own').src.split('#')[0]
       const out: Obra[] = []
       perSession
         .sort((a, b) => +new Date(ensureUTCString(b.s.start_date)) - +new Date(ensureUTCString(a.s.start_date)))
         .forEach(({ s, imgs }) =>
           imgs.filter(GENERATED).forEach((i: any) => {
-            if (seen.has(i.fileName)) return
-            seen.add(i.fileName)
+            if (seen.has(pictureOf(i))) return
+            seen.add(pictureOf(i))
             out.push(toObra(i, 'session', s.start_date, s.id))
           }),
         )
       listOf(free).filter(GENERATED).forEach((i: any) => {
-        if (seen.has(i.fileName)) return
-        seen.add(i.fileName)
+        if (seen.has(pictureOf(i))) return
+        seen.add(pictureOf(i))
         out.push(toObra(i, 'own'))
       })
       obras.value = out
@@ -153,6 +156,10 @@ const open = async (o: Obra) => {
 }
 const close = () => { selected.value = null }
 const goCreate = () => router.push('/generation/')
+// A session that has not started yet has no obras on purpose: say so, and offer the way back, not "Crear".
+const notStarted = computed(() =>
+  Boolean(isSessionView.value && sessionInfo.value && +new Date(ensureUTCString(sessionInfo.value.start_date)) > Date.now()),
+)
 const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
 </script>
 
@@ -165,7 +172,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
           {{ isTherapist ? t('calendar.title') : t('gallery.toGallery') }}
         </SButton>
         <h1 class="type-h1">{{ sessionInfo ? t('gallery.sessionOf', { date: sessionDate }) : t('gallery.title') }}</h1>
-        <p v-if="sessionInfo" class="type-body text-muted-foreground">{{ t('gallery.withTherapist', { name: therapistName }) }} · {{ owner ? firstName(owner.full_name) : '' }}</p>
+        <p v-if="sessionInfo" class="type-body text-muted-foreground">{{ t('gallery.withTherapist', { name: isTherapist ? firstName(owner?.full_name) : therapistName }) }}</p>
       </template>
       <template v-else>
         <h1 class="type-h1">{{ t('gallery.title') }}</h1>
@@ -191,9 +198,18 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
         <SanctuaryScene object="escultura" framing="small" />
       </div>
       <div class="flex max-w-[30rem] flex-col items-start gap-4 md:pb-2">
-        <h2 id="empty-title" class="type-h1">{{ t('gallery.emptyHere') }}</h2>
-        <p class="type-body text-muted-foreground">{{ t('gallery.emptyHint') }}</p>
-        <SButton v-if="!isTherapist" class="mt-2" @click="goCreate">{{ t('gallery.createShort') }}</SButton>
+        <template v-if="notStarted">
+          <h2 id="empty-title" class="type-h1">{{ t('gallery.notStarted') }}</h2>
+          <p class="type-body text-muted-foreground">{{ t('gallery.notStartedHint') }}</p>
+          <SButton class="mt-2" variant="secondary" :to="isTherapist ? '/calendar' : '/freeimages/'">
+            {{ isTherapist ? t('gallery.backToCalendar') : t('gallery.backToGallery') }}
+          </SButton>
+        </template>
+        <template v-else>
+          <h2 id="empty-title" class="type-h1">{{ t('gallery.emptyHere') }}</h2>
+          <p class="type-body text-muted-foreground">{{ t('gallery.emptyHint') }}</p>
+          <SButton v-if="!isTherapist" class="mt-2" @click="goCreate">{{ t('gallery.createShort') }}</SButton>
+        </template>
       </div>
     </section>
 
@@ -248,7 +264,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
     </template>
 
     <Dialog :open="Boolean(selected)" @update:open="(v: boolean) => !v && close()">
-      <DialogContent :show-close-button="false" class="max-h-[92vh] max-w-[min(92vw,56rem)] overflow-y-auto rounded-card border-[1.5px] border-border bg-background p-6 sm:max-w-[min(92vw,56rem)] sm:p-8">
+      <DialogContent :show-close-button="false" class="max-h-[92vh] max-w-[min(92vw,56rem)] overflow-y-auto bg-background p-6 sm:max-w-[min(92vw,56rem)] sm:p-8">
         <DialogTitle class="type-h2">{{ t('gallery.detailTitle') }}</DialogTitle>
         <DialogDescription class="sr-only">{{ t('gallery.description') }}</DialogDescription>
         <div v-if="selected" class="grid gap-8 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -262,7 +278,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
           />
           <div class="flex flex-col gap-4">
             <h3 class="type-h3">{{ t('gallery.reflection') }}</h3>
-            <SCard v-if="note" :raised="false" padding="md"><p class="type-body">{{ note }}</p></SCard>
+            <SCard v-if="note" variant="mat" padding="md"><p class="type-body">{{ note }}</p></SCard>
             <p v-else class="type-body text-muted-foreground">{{ t('gallery.noReflection') }}</p>
             <div class="mt-auto flex flex-wrap gap-3 pt-4">
               <SButton as="a" :href="selected.src.split('#')[0]" :download="downloadName(selected)" variant="primary">

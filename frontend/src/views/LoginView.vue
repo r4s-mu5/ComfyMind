@@ -83,7 +83,8 @@ const login = async () => {
         <SButton block :disabled="isLoading" data-testid="demo-patient" @click="demoLogin('patient')">
           {{ t('login.demoPatient') }}
         </SButton>
-        <SButton variant="secondary" block :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
+        <!-- One primary per column (VC4 §4b): Marta and Entrar are text links in demo. -->
+        <SButton variant="quiet" class="self-start px-1 text-link underline" :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
           {{ t('login.demoTherapist') }}
         </SButton>
         <hr class="flute-rule mt-4" />
@@ -112,7 +113,7 @@ const login = async () => {
           @update:model-value="delete errors.password"
         />
 
-        <SButton type="submit" block :variant="isDemo ? 'secondary' : 'primary'" :busy="isLoading">{{ isLoading ? t('login.entering') : t('login.enter') }}</SButton>
+        <SButton type="submit" :block="!isDemo" :variant="isDemo ? 'quiet' : 'primary'" :class="isDemo && 'self-start px-1 text-link underline'" :busy="isLoading">{{ isLoading ? t('login.entering') : t('login.enter') }}</SButton>
       </form>
 
       <div class="mt-4 flex flex-wrap items-center gap-x-4">

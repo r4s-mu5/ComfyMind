@@ -118,8 +118,8 @@ const submit = () => {
 }
 
 const sourceBtn = (active: boolean) => [
-  'type-body inline-flex min-h-12 items-center rounded-control border-b-[3px] px-4 font-semibold transition-colors',
-  active ? 'border-mark bg-secondary text-foreground' : 'border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground',
+  'type-body -mb-px inline-flex min-h-12 items-center gap-2 rounded-none border-b-[3px] px-2 transition-colors',
+  active ? 'border-foreground font-bold text-foreground' : 'border-transparent font-medium text-muted-foreground hover:border-input hover:text-foreground',
 ]
 </script>
 
@@ -133,7 +133,7 @@ const sourceBtn = (active: boolean) => [
     <button
       type="button"
       :class="[
-        'grid min-h-20 w-full grid-cols-[auto_1fr] items-center gap-x-4 rounded-card border-2 border-dashed px-6 py-4 text-left transition-colors',
+        'grid min-h-20 w-full grid-cols-[auto_1fr] items-center gap-x-4 rounded-none border-2 border-dashed px-6 py-4 text-left transition-colors',
         dragOver ? 'border-ring bg-secondary' : 'border-input bg-card hover:bg-secondary',
       ]"
       :aria-busy="uploading || undefined"
@@ -154,15 +154,17 @@ const sourceBtn = (active: boolean) => [
 
     <div class="flex flex-col gap-4">
       <div class="flex flex-wrap items-end justify-between gap-4 border-b border-border">
-        <div role="group" :aria-label="t('create.sourceGroup')" class="flex gap-1">
+        <div role="group" :aria-label="t('create.sourceGroup')" class="flex gap-6">
           <button type="button" :class="sourceBtn(source === 'mine')" :aria-pressed="source === 'mine'" @click="source = 'mine'; shown = PAGE">
             {{ t('create.sourceMine') }}
+            <Check v-if="source === 'mine'" aria-hidden="true" class="size-5" />
           </button>
           <button type="button" :class="sourceBtn(source === 'templates')" :aria-pressed="source === 'templates'" @click="source = 'templates'; shown = PAGE">
             {{ t('create.sourceTemplates') }}
+            <Check v-if="source === 'templates'" aria-hidden="true" class="size-5" />
           </button>
         </div>
-        <label :for="multiId" class="type-body mb-2 inline-flex min-h-12 cursor-pointer items-center gap-3 rounded-control px-2">
+        <label :for="multiId" class="type-body mb-2 inline-flex min-h-12 cursor-pointer items-center gap-3 px-2">
           <input :id="multiId" type="checkbox" class="size-6 accent-[var(--dawn-violet)]" :checked="multi" @change="setMulti(($event.target as HTMLInputElement).checked)" />
           {{ t('create.multi') }}
         </label>
@@ -190,15 +192,15 @@ const sourceBtn = (active: boolean) => [
             :aria-pressed="selected.includes(tile.fileName)"
             :aria-label="t('create.tileLabel', { n: i + 1 })"
             :class="[
-              'relative block w-full rounded-control bg-dawn-surface p-2 transition-colors',
+              'relative block w-full rounded-none bg-dawn-surface p-2 transition-colors',
               selected.includes(tile.fileName) ? 'outline outline-[3px] outline-offset-2 outline-ring' : 'border-2 border-input hover:border-ring',
             ]"
             @click="toggle(tile.fileName)"
           >
-            <img :src="tile.src" alt="" loading="lazy" class="block aspect-square w-full rounded-sm object-cover" />
+            <img :src="tile.src" alt="" loading="lazy" class="block aspect-square w-full object-cover" />
             <span
               v-if="selected.includes(tile.fileName)"
-              class="type-small absolute left-3 top-3 inline-flex items-center gap-1 rounded-pill bg-primary px-3 py-1 font-semibold text-primary-foreground"
+              class="type-small absolute left-0 top-0 inline-flex items-center gap-1 rounded-none bg-primary px-2 py-1 font-semibold text-primary-foreground"
             >
               <Check aria-hidden="true" class="size-4" />
               {{ multi ? t('create.chosenN', { n: selected.indexOf(tile.fileName) + 1 }) : t('create.chosen') }}
@@ -212,8 +214,8 @@ const sourceBtn = (active: boolean) => [
     <div v-if="selectedTiles.length && multi" class="flex flex-col gap-3">
       <p class="type-body font-semibold">{{ t('create.combineTitle') }}</p>
       <ul class="flex flex-wrap gap-3" role="list">
-        <li v-for="tile in selectedTiles" :key="tile.fileName" class="size-20 rounded-control border-[1.5px] border-dawn-hairline bg-dawn-surface p-1">
-          <img :src="tile.src" alt="" class="size-full rounded-sm object-cover" />
+        <li v-for="tile in selectedTiles" :key="tile.fileName" class="size-20 bg-dawn-surface p-1">
+          <img :src="tile.src" alt="" class="size-full object-cover" />
         </li>
       </ul>
       <p class="type-small text-muted-foreground">{{ t('create.combineNote') }}</p>
@@ -234,8 +236,7 @@ const sourceBtn = (active: boolean) => [
     </div>
 
     <!-- Crear stays on screen: this row docks to the bottom of the window while the panel is taller. -->
-    <div class="sticky bottom-0 z-10 -mx-6 flex flex-col gap-4 bg-card px-6 pb-4 sm:-mx-8 sm:px-8">
-      <hr class="flute-rule" />
+    <div class="sticky bottom-0 z-10 -mx-6 border-t border-hairline bg-card px-6 pb-4 pt-4 sm:-mx-8 sm:px-8">
       <div class="flex flex-wrap items-center gap-4">
         <SButton :disabled="!canCreate" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
         <p v-if="!canCreate" class="type-small text-muted-foreground">

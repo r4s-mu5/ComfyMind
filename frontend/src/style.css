@@ -37,30 +37,39 @@
   --dusk-border: #8FA0B8;
   --dusk-focus: #FFE3A3;
 
-  /* Dawn: working screens */
-  --dawn-bg: #F2F0F5;
-  --dawn-bg-warm: #F6F1EE;
-  --dawn-surface: #FFFFFF;
-  --dawn-surface-2: #E7E3EE;
+  /* Dawn: working screens. D16 "Colonnade": the atrium in the morning, cool lilac-grey stone,
+     fluted courses under the header and between sections, a faint grain (off with Comfort > Plain). */
+  --dawn-bg: #E7E5ED;          /* lilac-grey stone */
+  --dawn-bg-warm: #EEEBF2;     /* the top light is cool, not peach */
+  --dawn-surface: #F5F4F7;     /* cool marble: inputs, mats for forms, popovers */
+  --dawn-surface-2: #DDDAE6;   /* selected and soft fills */
+  --dawn-mat: #FFFFFF;         /* the artwork mat: the brightest thing on the page */
   --dawn-ink: #14202F;
   --dawn-ink-soft: #3D4A5F;
   --dawn-teal: #1E5E61;
   --dawn-violet: #5B4E86;
   --dawn-border: #6B7488;
-  --dawn-hairline: rgba(20, 32, 47, 0.14);
+  --dawn-hairline: rgba(42, 49, 72, 0.22);  /* from --dusk-sky-mid */
   --dawn-sun: #F0D5BF;
+  /* Flute shading, one concave channel per period: arris (dark) -> lit wall -> shadowed wall -> arris */
+  --flute-dark: #CAC6D6;
+  --flute-lit: #F1EFF5;
+  --flute-mid: #DCD9E5;
+  --dawn-grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 
   /* Semantic colours: always shown with an icon and text. Both modes are explicit tokens. */
   --success-dawn: #1D6B47;
-  --warning-dawn: #8A5A00;
+  --warning-dawn: #7F5300;   /* 4.9:1 on surface-2, 5.4:1 on the page */
   --danger-dawn: #A3302A;
   --success-dusk: #7FD1A6;
   --warning-dusk: #F2C46D;
   --danger-dusk: #FF9C92;
 
-  /* Shape. Controls 12px, cards 16px, pills only for primary actions. */
-  --radius: 0.75rem;
-  --radius-niche: 999px 999px 0.75rem 0.75rem;
+  /* Shape: square-cut, like placards and wall labels. The niche (arch top, square foot) is the only
+     curve, and only on artwork and the atrium. Rooms are separated by rules and space, not boxes. */
+  --radius: 2px;
+  --radius-niche: 999px 999px 0 0;
+  /* --rule and --rule-strong are mode variables (section 3), so they follow .dusk. */
 
   /* Spacing scale in px: 4 8 12 16 24 32 48 64 96 (Tailwind steps 1 2 3 4 6 8 12 16 24) */
   --space-1: 0.25rem;
@@ -112,6 +121,7 @@
   --color-dawn-bg-warm: var(--dawn-bg-warm);
   --color-dawn-surface: var(--dawn-surface);
   --color-dawn-surface-2: var(--dawn-surface-2);
+  --color-dawn-mat: var(--dawn-mat);
   --color-dawn-ink: var(--dawn-ink);
   --color-dawn-ink-soft: var(--dawn-ink-soft);
   --color-dawn-teal: var(--dawn-teal);
@@ -130,10 +140,11 @@
   --color-hairline: var(--hairline);
 
   /* shadcn-vue variables */
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  /* Set explicitly: a calc() from the 2px base would go negative. This squares every ui/ primitive. */
+  --radius-sm: 0px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -180,13 +191,14 @@
   --text-small: 0.9375rem;
   --text-small--line-height: 1.45;
 
-  --radius-control: 0.75rem;
-  --radius-card: 1rem;
-  --radius-pill: 999px;
+  --radius-control: 2px;   /* buttons, inputs, segments: reads square without aliasing */
+  --radius-card: 0px;      /* panels, mats, dialogs, popovers, toasts */
+  --radius-pill: 2px;      /* RETIRED: old rounded-pill classes now render square. Do not use. */
+  --radius-mark: 50%;      /* only the sun disc, the "now" dot and the Dibujo colour swatches */
 
-  /* Elevation: dawn gets one soft lift, dusk gets a warm glow and no shadows (see .elev). */
-  --shadow-lift: 0 1px 0 rgba(20, 32, 47, 0.06), 0 10px 26px rgba(20, 32, 47, 0.07);
-  --shadow-glow: 0 0 40px rgba(240, 213, 191, 0.16);
+  /* Elevation: surfaces have none. Hung = artwork. Float = true overlays only (dialog, popover, menu, toast). */
+  --shadow-lift: none;     /* RETIRED: .elev resolves to nothing */
+  --shadow-float: 0 1px 0 rgba(20, 32, 47, 0.10), 0 24px 48px -28px rgba(20, 32, 47, 0.35);
   /* Hung: a frame on a wall. A short drop plus a long soft shadow below. Artwork mats only. */
   --shadow-hung: 0 2px 0 rgba(20, 32, 47, 0.06), 0 14px 22px -10px rgba(20, 32, 47, 0.18);
 
@@ -241,7 +253,10 @@
   --mark: var(--dawn-violet);
   --hairline: var(--dawn-hairline);
   --focus-ring: var(--dawn-violet);
-  --elevation: var(--shadow-lift);
+  --elevation: none;
+  --overlay-shadow: var(--shadow-float);
+  --rule: 1px solid var(--hairline);          /* room divider: one per section, not per item */
+  --rule-strong: 2px solid var(--dawn-ink);   /* once per screen, UNDER a title or active tab; never a left bar */
 }
 
 /* Dusk: wrap a threshold screen (or any panel) in class="dusk". Same variable names, dusk values. */
@@ -288,7 +303,10 @@
   --mark: var(--dusk-lilac);
   --hairline: rgba(244, 243, 247, 0.18);
   --focus-ring: var(--dusk-focus);
-  --elevation: var(--shadow-glow);
+  --elevation: none;
+  --overlay-shadow: none;   /* dusk overlays use a 1.5px --dusk-border instead of a shadow */
+  --rule: 1px solid var(--hairline);
+  --rule-strong: 2px solid var(--dusk-light);
 
   color: var(--foreground);
 }
