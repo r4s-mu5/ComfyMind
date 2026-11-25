@@ -3,10 +3,12 @@
 //
 //   const scene = await createSanctuaryScene(canvas, { object: 'escultura', seed: 427, onSculpture: s => {} })
 //   scene.regenerate()          // another sculpture (returns its seed); a click on the scene does the same
-//   scene.setOptions({ fx: false }); scene.resize(); scene.snapshot(); scene.anchor('plinth'); scene.dispose()
+//   scene.setOptions({ fx: false, turn: false }); scene.resize(); scene.snapshot(); scene.anchor('plinth'); scene.dispose()
 //
-// The scene is fully still: no camera drift, no pointer lean, no breathing. The only motion is an 800 ms
-// dissolve (in Bayer order) when a new sculpture appears, and none at all with motion: false.
+// The camera and the room never move: no drift, no pointer lean, no breathing. Two things move, and neither
+// does with motion: false: the sculpture turns on its plinth (D14: one turn every TURN_MS, linear, driven by
+// elapsed time, at about 30 fps; turn: false holds it at its current angle), and an 800 ms dissolve (in Bayer
+// order) brings in a new sculpture. When nothing moves, frames are drawn only on change.
 // 'escultura' is generative: a seeded signed-distance field, meshed with marching cubes, always abstract.
 // Everything is procedural geometry: no models, no textures, no figurative shapes.
 import {
@@ -28,7 +30,8 @@ export function hasWebGL() {
 
 const DEG = Math.PI / 180;
 const MAX_DPR = 1.5;
-const FRAME_MS = 32; // about 30 fps during a dissolve
+const FRAME_MS = 1000 / 30; // frame cap while anything moves (turntable, dissolve)
+const TURN_MS = 75000; // one full turn of the sculpture, linear (D14: 60-90 s)
 
 // The approved "Quiet" mood: pastel dusk, light fog, short colonnade, fully still.
 const MOOD = {
@@ -208,12 +211,15 @@ export function sculptureParams(seed) {
     // an open crescent: a broad ellipse with a deep off-axis bite
     P.rx = R(0.54, 0.7); P.ry = Math.min(P.rx * R(0.8, 0.95), (room + 0.08) / 1.96);
     P.cx = R(-0.08, 0.08); P.cy = top - 0.08 + P.ry * 0.96; P.lean = R(-0.22, 0.22);
-    P.biteA = side * R(0.34, 0.78);
-    const bk = R(0.62, 0.86);
+    // the bite takes one shoulder: near the top it leaves two symmetric prongs (horns, a tooth)
+    P.biteA = side * R(0.7, 1.0);
+    const bk = R(0.84, 1.0); // centred near the rim, so the bite opens one side right through
     P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk; P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
     // wide bites only: narrow ones leave two prongs
-    P.brx = R(0.32, 0.42) * P.rx / 0.6; P.bry = R(0.34, 0.55);
-    P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
+    // tall bites: a short one leaves a small low tip beside the mass (a thumb, a mitten)
+    P.brx = R(0.32, 0.42) * P.rx / 0.6; P.bry = R(0.62, 0.8);
+    // deep and barely tapered: a thin, tapering fin reads as a standing figure or a bird from the side
+    P.th0 = R(0.21, 0.28); P.taper = R(0.0, 0.03);
     P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
   } else if (P.family === 'pair') {
     // two soft blocks: a narrow lower one and a longer upper one cantilevered well off to one side
@@ -229,10 +235,13 @@ export function sculptureParams(seed) {
     P.cy = top - 0.04 + P.rr; P.cx = R(-0.06, 0.06);
     const gap = R(0.45, 0.8), gapAt = -Math.PI / 2 + side * R(0.95, 1.4);
     P.a0 = gapAt + gap / 2; P.a1 = gapAt - gap / 2 + Math.PI * 2;
-    P.t1 = R(0.12, 0.16); P.t2 = R(0.2, 0.3); P.bandTwist = side * R(0.2, 0.55);
+    // a light twist only: a strong one turns the deep side of the band inwards and closes the loop into a
+    // thick ring with a small round hole (a drilled hole; a snail or an ear from some angles)
+    P.t1 = R(0.12, 0.16); P.t2 = R(0.2, 0.3); P.bandTwist = side * R(0.04, 0.1);
   } else if (P.family === 'split') {
     // a low, wide stone split by one straight, narrow slot, cut diagonally from the top down to its middle
-    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.3, 0.4), room * 0.55); P.ez = R(0.36, 0.46);
+    // low and deep: seen from the side a rounder stone becomes a ball on a block (a head on a pedestal)
+    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.24, 0.31), room * 0.55); P.ez = R(0.5, 0.6);
     P.cx = R(-0.06, 0.06); P.cy = top - 0.06 + P.ey * 0.9; P.tilt = side * R(0.06, 0.2);
     const gA = side * R(0.45, 1.0), gl = Math.hypot(Math.cos(gA), 0.25, Math.sin(gA));
     P.gn = [Math.cos(gA) / gl, side * 0.25 / gl, Math.sin(gA) / gl];
@@ -243,7 +252,8 @@ export function sculptureParams(seed) {
     P.hx = R(0.56, 0.7); P.hy = Math.min(R(0.28, 0.38), room * 0.48); P.ht = R(0.1, 0.14);
     P.cy = top - 0.05 + P.hy; P.cx = R(-0.05, 0.05);
     P.roll = side * R(0.24, 0.48); P.pitch = R(0.18, 0.36);
-    P.dr = R(0.22, 0.34); P.dx = -side * R(0.14, 0.3); P.dy = R(-0.05, 0.12); P.dd = R(0.05, 0.08);
+    // a broad, shallow scoop: a small deep one reads as an eye when the slab is seen edge-on
+    P.dr = R(0.34, 0.46); P.dx = -side * R(0.14, 0.3); P.dy = R(-0.05, 0.12); P.dd = R(0.03, 0.045);
   }
   return P;
 }
@@ -435,13 +445,14 @@ export async function createSanctuaryScene(canvas, {
   seed = undefined,        // escultura: which sculpture (0..9999); random when omitted
   onSculpture = null,      // called with the seed whenever a sculpture is shown
   interactive = true,      // a click or tap on the scene calls regenerate()
+  turn = true,             // escultura: the sculpture turns on its plinth (only while motion is also true)
   dither = 0.8,            // 0 = no quantising, 1 = strongest
   grain = 0.5,             // 0 = none, 1 = most (still low amplitude); static, never refreshed
   vignette = 0,            // 0..1, soft
   onError = null,          // lost WebGL context; without it the handler throws
 } = {}) {
   if (!canvas) throw new Error('createSanctuaryScene: canvas is required');
-  const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette, interactive,
+  const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette, interactive, turn,
     seed: Number.isFinite(Number(seed)) && seed !== null ? clampSeed(seed) : randomSeed() };
   const host = canvas.parentElement || canvas;
 
@@ -549,7 +560,14 @@ export async function createSanctuaryScene(canvas, {
   let kit = null;
   const mesh = (geo, mat) => new Mesh(geo, mat);
 
+  // The turntable: only the sculpture turns; the plinth (and the label pinned to its corner) stays put.
+  // The angle lives here, not on the mesh, so a new sculpture carries on from the same angle.
+  const spin = { angle: 0, last: 0 };
+  let turner = null;
+  const spinning = () => !!(opts.motion && opts.turn && turner && opts.object === 'escultura');
+
   function buildKit(name, sculptureSeed) {
+    turner = null;
     const g = new Group(), own = [];
     const G = geo => { own.push(geo); return geo; };
     let focusY = 1.45, extent = 0.6, plinth = { w: 0.72, h: 1.04 };
@@ -574,8 +592,10 @@ export async function createSanctuaryScene(canvas, {
       const sc = mesh(geo, marble);
       sc.scale.setScalar(s);
       sc.position.y = PH - geo.boundingBox.min.y * s;
-      sc.rotation.y = geo.userData.params.yaw;
+      sc.rotation.y = geo.userData.params.yaw + spin.angle;
+      sc.userData.yaw = geo.userData.params.yaw;
       g.add(sc);
+      turner = sc;
       focusY = 1.5; extent = 0.55;
     } else {
       // the sculptor's study: three solids on plinths of different heights
@@ -752,7 +772,7 @@ export async function createSanctuaryScene(canvas, {
   };
   host.addEventListener('click', onClick);
 
-  /* render loop: frames only on change, about 30 fps during a dissolve, nothing while hidden */
+  /* render loop: frames only on change, about 30 fps while turning or dissolving, nothing while hidden */
   let raf = 0, needs = false, sceneDirty = true, lastRender = 0, ready = false, disposed = false, lost = false;
   function schedule() { if (!raf && !disposed && !lost && !document.hidden) raf = requestAnimationFrame(tick); }
   function requestRender() { needs = true; schedule(); }
@@ -768,21 +788,40 @@ export async function createSanctuaryScene(canvas, {
   function tick(now) {
     raf = 0;
     if (disposed || lost || document.hidden) return;
-    if (dissolve.active) {
-      if (now - lastRender < FRAME_MS && !needs) { schedule(); return; }
-      const k = Math.min(1, (now - dissolve.t0) / DISSOLVE_MS);
-      postU.progress.value = k;
-      if (k >= 1) endDissolve();
+    const moving = dissolve.active || spinning();
+    if (moving) {
+      // 2 ms of slack, so a 60 Hz display draws every second frame instead of every third
+      if (now - lastRender < FRAME_MS - 2 && !needs) { schedule(); return; }
+      if (dissolve.active) {
+        const k = Math.min(1, (now - dissolve.t0) / DISSOLVE_MS);
+        postU.progress.value = k;
+        if (k >= 1) endDissolve();
+      }
+      update(now);
     } else if (!needs) return;
     if (sceneDirty) renderScene();
     renderPost();
     lastRender = now; needs = false;
     if (!ready) { ready = true; try { onReady(); } catch (e) { console.error(e); } }
-    if (dissolve.active) schedule();
+    if (dissolve.active || spinning()) schedule();
+    else spin.last = 0;
+  }
+
+  // Advances the turntable by the time that really passed (frame-rate independent). A long gap (the
+  // first frame, a stall, a pause) never jumps: the step is capped and the turn simply resumes.
+  function update(now) {
+    if (!spinning()) { spin.last = 0; return; }
+    const dt = spin.last ? Math.min(now - spin.last, 100) : 0;
+    spin.last = now;
+    if (dt > 0) {
+      spin.angle = (spin.angle + (dt / TURN_MS) * Math.PI * 2) % (Math.PI * 2);
+      turner.rotation.y = turner.userData.yaw + spin.angle;
+      sceneDirty = true;
+    }
   }
 
   const onVis = () => {
-    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; endDissolve(); }
+    if (document.hidden) { cancelAnimationFrame(raf); raf = 0; endDissolve(); spin.last = 0; }
     else requestRender();
   };
   document.addEventListener('visibilitychange', onVis);
@@ -818,6 +857,10 @@ export async function createSanctuaryScene(canvas, {
     resize,
     regenerate,
     get seed() { return opts.seed; },
+    /** True while the sculpture is actually turning (motion on, turn on, escultura). */
+    get turning() { return spinning(); },
+    /** The turntable angle in radians (0..2π); it holds while paused. */
+    get angle() { return spin.angle; },
     snapshot(type = 'image/jpeg', q = 0.86) {
       if (disposed || lost) return '';
       endDissolve(); renderScene(); renderPost();

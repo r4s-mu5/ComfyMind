@@ -211,12 +211,15 @@ export function sculptureParams(seed) {
     // an open crescent: a broad ellipse with a deep off-axis bite
     P.rx = R(0.54, 0.7); P.ry = Math.min(P.rx * R(0.8, 0.95), (room + 0.08) / 1.96);
     P.cx = R(-0.08, 0.08); P.cy = top - 0.08 + P.ry * 0.96; P.lean = R(-0.22, 0.22);
-    P.biteA = side * R(0.34, 0.78);
-    const bk = R(0.62, 0.86);
+    // the bite takes one shoulder: near the top it leaves two symmetric prongs (horns, a tooth)
+    P.biteA = side * R(0.7, 1.0);
+    const bk = R(0.84, 1.0); // centred near the rim, so the bite opens one side right through
     P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk; P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
     // wide bites only: narrow ones leave two prongs
-    P.brx = R(0.32, 0.42) * P.rx / 0.6; P.bry = R(0.34, 0.55);
-    P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
+    // tall bites: a short one leaves a small low tip beside the mass (a thumb, a mitten)
+    P.brx = R(0.32, 0.42) * P.rx / 0.6; P.bry = R(0.62, 0.8);
+    // deep and barely tapered: a thin, tapering fin reads as a standing figure or a bird from the side
+    P.th0 = R(0.21, 0.28); P.taper = R(0.0, 0.03);
     P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
   } else if (P.family === 'pair') {
     // two soft blocks: a narrow lower one and a longer upper one cantilevered well off to one side
@@ -232,10 +235,13 @@ export function sculptureParams(seed) {
     P.cy = top - 0.04 + P.rr; P.cx = R(-0.06, 0.06);
     const gap = R(0.45, 0.8), gapAt = -Math.PI / 2 + side * R(0.95, 1.4);
     P.a0 = gapAt + gap / 2; P.a1 = gapAt - gap / 2 + Math.PI * 2;
-    P.t1 = R(0.12, 0.16); P.t2 = R(0.2, 0.3); P.bandTwist = side * R(0.2, 0.55);
+    // a light twist only: a strong one turns the deep side of the band inwards and closes the loop into a
+    // thick ring with a small round hole (a drilled hole; a snail or an ear from some angles)
+    P.t1 = R(0.12, 0.16); P.t2 = R(0.2, 0.3); P.bandTwist = side * R(0.04, 0.1);
   } else if (P.family === 'split') {
     // a low, wide stone split by one straight, narrow slot, cut diagonally from the top down to its middle
-    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.3, 0.4), room * 0.55); P.ez = R(0.36, 0.46);
+    // low and deep: seen from the side a rounder stone becomes a ball on a block (a head on a pedestal)
+    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.24, 0.31), room * 0.55); P.ez = R(0.5, 0.6);
     P.cx = R(-0.06, 0.06); P.cy = top - 0.06 + P.ey * 0.9; P.tilt = side * R(0.06, 0.2);
     const gA = side * R(0.45, 1.0), gl = Math.hypot(Math.cos(gA), 0.25, Math.sin(gA));
     P.gn = [Math.cos(gA) / gl, side * 0.25 / gl, Math.sin(gA) / gl];
@@ -246,7 +252,8 @@ export function sculptureParams(seed) {
     P.hx = R(0.56, 0.7); P.hy = Math.min(R(0.28, 0.38), room * 0.48); P.ht = R(0.1, 0.14);
     P.cy = top - 0.05 + P.hy; P.cx = R(-0.05, 0.05);
     P.roll = side * R(0.24, 0.48); P.pitch = R(0.18, 0.36);
-    P.dr = R(0.22, 0.34); P.dx = -side * R(0.14, 0.3); P.dy = R(-0.05, 0.12); P.dd = R(0.05, 0.08);
+    // a broad, shallow scoop: a small deep one reads as an eye when the slab is seen edge-on
+    P.dr = R(0.34, 0.46); P.dx = -side * R(0.14, 0.3); P.dy = R(-0.05, 0.12); P.dd = R(0.03, 0.045);
   }
   return P;
 }
