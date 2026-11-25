@@ -211,7 +211,8 @@ export function sculptureParams(seed) {
     P.biteA = side * R(0.34, 0.78);
     const bk = R(0.62, 0.86);
     P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk; P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
-    P.brx = R(0.32, 0.42) * P.rx / 0.6;   // wide bites only: narrow ones leave two prongs P.bry = R(0.34, 0.55);
+    // wide bites only: narrow ones leave two prongs
+    P.brx = R(0.32, 0.42) * P.rx / 0.6; P.bry = R(0.34, 0.55);
     P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
     P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
   } else if (P.family === 'pair') {
@@ -235,7 +236,8 @@ export function sculptureParams(seed) {
     P.cx = R(-0.06, 0.06); P.cy = top - 0.06 + P.ey * 0.9; P.tilt = side * R(0.06, 0.2);
     const gA = side * R(0.45, 1.0), gl = Math.hypot(Math.cos(gA), 0.25, Math.sin(gA));
     P.gn = [Math.cos(gA) / gl, side * 0.25 / gl, Math.sin(gA) / gl];
-    P.gOff = side * R(0.03, 0.13);   // near the middle: an edge slot leaves a beak-like cap P.gW = R(0.035, 0.06); P.gFloor = P.cy - P.ey * R(0.1, 0.35);
+    // the slot stays near the middle: an edge slot leaves a beak-like cap
+    P.gOff = side * R(0.03, 0.13); P.gW = R(0.035, 0.06); P.gFloor = P.cy - P.ey * R(0.1, 0.35);
   } else {
     // a wide slab leaning back and tipped sideways, with one shallow hollow off centre (never through)
     P.hx = R(0.56, 0.7); P.hy = Math.min(R(0.28, 0.38), room * 0.48); P.ht = R(0.1, 0.14);

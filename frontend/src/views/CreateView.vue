@@ -18,6 +18,7 @@ import { isDemo } from '@/lib/demo/isDemo'
 import { demoProgress } from '@/lib/demo/progress'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+import { useComfort } from '@/composables/useComfort'
 import { AppShell, CalmProgress, SButton, SNotice, WayInPicker } from '@/components/sanctuary'
 import type { WayIn } from '@/components/sanctuary/WayInPicker.vue'
 import SessionEndOverlay from '@/components/sanctuary/SessionEndOverlay.vue'
@@ -31,6 +32,7 @@ import { useNavLink } from '@/components/create/useNavLink'
 
 const route = useRoute()
 const { t, locale } = usePrototypeLocale()
+const { motionOff } = useComfort()
 const { ensureUTCString } = useDateHelpers()
 const nav = useNavLink()
 
@@ -323,10 +325,12 @@ watch(stage, async (s, prev) => {
   else if (s === 'result') resultStage.value?.focus()
   else if (prev) composeHeading.value?.focus()
 })
-watch(way, async (w, prev) => {
-  if (!w || !prev) return
+// Choosing a way brings the whole panel up: its top sits under the sticky header (scroll-mt), so the
+// paper, the image grid or the suggestions are on screen at once, above the docked Crear row.
+watch(way, async (w) => {
+  if (!w) return
   await nextTick()
-  panelHost.value?.querySelector<HTMLElement>('h2, label')?.scrollIntoView({ block: 'nearest' })
+  panelHost.value?.scrollIntoView({ block: 'start', behavior: motionOff.value ? 'auto' : 'smooth' })
 })
 watch(phase, async (p) => {
   if (p !== 'reflect') return
@@ -382,7 +386,7 @@ onBeforeUnmount(() => {
             <WayInPicker v-model="way" />
           </div>
 
-          <div v-if="way" ref="panelHost" class="rounded-card border-[1.5px] border-border bg-card p-6 sm:p-8">
+          <div v-if="way" ref="panelHost" class="scroll-mt-24 rounded-card border-[1.5px] border-border bg-card p-6 sm:p-8">
             <WordsPanel v-if="way === 'words'" v-model="words" @create="createFromWords" />
             <DrawPanel v-else-if="way === 'draw'" v-model:description="drawDesc" @create="createFromDrawing" />
             <ImagePanel v-else v-model:description="imageDesc" :user-id="user?.id ?? null" @create="createFromImages" />

@@ -42,18 +42,19 @@ onMounted(async () => { await nextTick(); heading.value?.focus() })
 
 <template>
   <div :class="overlay && 'fixed inset-0 z-50 overflow-y-auto'">
-    <DuskLayout width="52rem" align="start">
+    <!-- Wall text on the dusk sky (no card): the thanks, the one way on, then today's obras hung small in a row. -->
+    <DuskLayout width="46rem" align="start">
       <template #scene><SanctuaryScene object="escultura" framing="background" /></template>
-      <section class="scrim p-6 sm:p-10" aria-labelledby="session-end-title">
+      <section aria-labelledby="session-end-title">
         <p class="type-wordmark text-mark">ComfyMind</p>
-        <h1 id="session-end-title" ref="heading" tabindex="-1" class="type-h1 mt-5 outline-offset-4">{{ t('sessionEnd.title') }}</h1>
-        <p class="type-body measure mt-2 text-muted-foreground">{{ t('sessionEnd.lede') }}</p>
+        <h1 id="session-end-title" ref="heading" tabindex="-1" class="type-h1 mt-6 outline-offset-4">{{ t('sessionEnd.title') }}</h1>
+        <p class="type-body measure mt-3 text-muted-foreground">{{ t('sessionEnd.lede') }}</p>
+        <SButton :to="homeTo" class="mt-8" @click="emit('home')">{{ t('sessionEnd.home') }}</SButton>
 
-        <hr class="flute-rule my-8 max-w-xs" />
-
-        <h2 class="type-h3">{{ t('sessionEnd.today') }}</h2>
-        <ul v-if="artworks.length" class="mt-6 flex flex-wrap gap-6 text-pretty" role="list">
-          <li v-for="art in artworks" :key="art.id" class="w-full max-w-[17rem]">
+        <hr class="flute-rule mb-6 mt-12 max-w-[20rem]" />
+        <h2 class="type-label text-muted-foreground">{{ t('sessionEnd.today') }}</h2>
+        <ul v-if="artworks.length" class="mt-6 flex flex-wrap items-start gap-x-8 gap-y-10" role="list">
+          <li v-for="art in artworks" :key="art.id" class="w-[10.5rem]">
             <ArtworkMount
               :src="art.src"
               :title="art.title"
@@ -65,8 +66,6 @@ onMounted(async () => { await nextTick(); heading.value?.focus() })
           </li>
         </ul>
         <p v-else class="type-body mt-4 text-muted-foreground">{{ t('sessionEnd.none') }}</p>
-
-        <SButton :to="homeTo" class="mt-10" @click="emit('home')">{{ t('sessionEnd.home') }}</SButton>
       </section>
     </DuskLayout>
   </div>

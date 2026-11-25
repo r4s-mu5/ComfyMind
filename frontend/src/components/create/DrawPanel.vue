@@ -137,12 +137,37 @@ const onKey = (e: KeyboardEvent) => {
   }
 }
 
+// Size the paper so that, with the panel's top under the sticky header (where CreateView scrolls it),
+// the whole sheet sits above the docked Crear row. Never smaller than 15rem.
+const root = ref<HTMLElement | null>(null)
+const dock = ref<HTMLElement | null>(null)
+const paperH = ref<number | null>(null)
+const fitPaper = () => {
+  const r = root.value, c = canvas.value, d = dock.value
+  if (!r || !c || !d) return
+  const rem = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+  const host = r.parentElement ? parseFloat(getComputedStyle(r.parentElement).paddingTop) || 0 : 0
+  const above = c.getBoundingClientRect().top - r.getBoundingClientRect().top
+  paperH.value = Math.max(15 * rem, Math.floor(window.innerHeight - 6 * rem - host - above - d.offsetHeight - 1.5 * rem))
+}
+let fitObserver: ResizeObserver | null = null
+
 onMounted(() => {
   ctx = canvas.value?.getContext('2d') ?? null
   redraw()
   window.addEventListener('keydown', onKey)
+  fitPaper()
+  window.addEventListener('resize', fitPaper)
+  if (typeof ResizeObserver !== 'undefined' && root.value) {
+    fitObserver = new ResizeObserver(() => fitPaper())
+    fitObserver.observe(root.value)
+  }
 })
-onBeforeUnmount(() => window.removeEventListener('keydown', onKey))
+onBeforeUnmount(() => {
+  window.removeEventListener('keydown', onKey)
+  window.removeEventListener('resize', fitPaper)
+  fitObserver?.disconnect()
+})
 
 const submit = () => {
   if (!hasDrawing.value || !canvas.value) return
@@ -156,53 +181,45 @@ const toolBtn = (active: boolean) => [
 </script>
 
 <template>
-  <div class="flex flex-col gap-6">
+  <div ref="root" class="flex flex-col gap-6">
     <div class="flex flex-col gap-1">
       <h2 class="type-h2">{{ t('create.drawTitle') }}</h2>
       <p class="type-small text-muted-foreground">{{ t('create.drawHelp') }}</p>
     </div>
 
-    <div class="flex flex-col gap-4">
-      <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <div role="group" :aria-label="t('create.toolGroup')" class="flex gap-3">
-          <button type="button" :class="toolBtn(tool === 'brush')" :aria-pressed="tool === 'brush'" @click="tool = 'brush'">
-            <Brush aria-hidden="true" class="size-5" /> {{ t('create.toolBrush') }}
-            <Check v-if="tool === 'brush'" aria-hidden="true" class="size-5" />
-          </button>
-          <button type="button" :class="toolBtn(tool === 'eraser')" :aria-pressed="tool === 'eraser'" @click="tool = 'eraser'">
-            <Eraser aria-hidden="true" class="size-5" /> {{ t('create.toolEraser') }}
-            <Check v-if="tool === 'eraser'" aria-hidden="true" class="size-5" />
-          </button>
-        </div>
-
-        <div role="group" :aria-label="t('create.sizeGroup')" class="flex gap-3">
-          <button
-            v-for="k in (['s', 'm', 'l'] as SizeKey[])"
-            :key="k"
-            type="button"
-            :class="toolBtn(size === k)"
-            :aria-pressed="size === k"
-            @click="size = k"
-          >
-            <span aria-hidden="true" class="inline-flex size-6 items-center justify-center">
-              <span class="block rounded-full bg-foreground" :style="{ width: `${4 + SIZES[k] / 2}px`, height: `${4 + SIZES[k] / 2}px` }" />
-            </span>
-            {{ t(`create.size.${k}`) }}
-            <Check v-if="size === k" aria-hidden="true" class="size-5" />
-          </button>
-        </div>
-
-        <div class="ml-auto flex gap-3">
-          <SButton variant="secondary" :disabled="!strokes.length" @click="undo">
-            {{ t('create.undo') }}
-          </SButton>
-          <SButton variant="secondary" :disabled="!strokes.length" @click="confirmClear = true">
-            {{ t('create.clear') }}
-          </SButton>
-        </div>
+    <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+      <div role="group" :aria-label="t('create.toolGroup')" class="flex gap-3">
+        <button type="button" :class="toolBtn(tool === 'brush')" :aria-pressed="tool === 'brush'" @click="tool = 'brush'">
+          <Brush aria-hidden="true" class="size-5" /> {{ t('create.toolBrush') }}
+          <Check v-if="tool === 'brush'" aria-hidden="true" class="size-5" />
+        </button>
+        <button type="button" :class="toolBtn(tool === 'eraser')" :aria-pressed="tool === 'eraser'" @click="tool = 'eraser'">
+          <Eraser aria-hidden="true" class="size-5" /> {{ t('create.toolEraser') }}
+          <Check v-if="tool === 'eraser'" aria-hidden="true" class="size-5" />
+        </button>
       </div>
 
-      <div role="radiogroup" :aria-label="t('create.colourGroup')" class="flex flex-wrap gap-3">
+      <div role="group" :aria-label="t('create.sizeGroup')" class="flex gap-3">
+        <button
+          v-for="k in (['s', 'm', 'l'] as SizeKey[])"
+          :key="k"
+          type="button"
+          :class="toolBtn(size === k)"
+          :aria-pressed="size === k"
+          @click="size = k"
+        >
+          <span aria-hidden="true" class="inline-flex size-6 items-center justify-center">
+            <span class="block rounded-full bg-foreground" :style="{ width: `${4 + SIZES[k] / 2}px`, height: `${4 + SIZES[k] / 2}px` }" />
+          </span>
+          {{ t(`create.size.${k}`) }}
+          <Check v-if="size === k" aria-hidden="true" class="size-5" />
+        </button>
+      </div>
+    </div>
+
+    <!-- The palette beside the paper (two columns of colours), like paints next to a drawing board. -->
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+      <div role="radiogroup" :aria-label="t('create.colourGroup')" class="flex shrink-0 flex-wrap gap-3 sm:grid sm:grid-cols-2">
         <button
           v-for="c in COLOURS"
           :key="c"
@@ -221,22 +238,23 @@ const toolBtn = (active: boolean) => [
           <Check v-if="colour === c && tool === 'brush'" aria-hidden="true" class="size-6 text-dawn-surface drop-shadow" />
         </button>
       </div>
-    </div>
 
-    <div class="paper-frame flex justify-center rounded-card border-[1.5px] border-border p-2">
-      <canvas
-        ref="canvas"
-        :width="W"
-        :height="H"
-        role="img"
-        :aria-label="hasDrawing ? t('create.canvasLabelDrawn') : t('create.canvasLabel')"
-        class="block aspect-[4/3] w-full max-w-[calc((100vh-24rem)*4/3)] min-w-[min(100%,28rem)] cursor-crosshair touch-none rounded-control bg-paper"
-        @pointerdown.prevent="down"
-        @pointermove.prevent="move"
-        @pointerup="up"
-        @pointercancel="up"
-        @lostpointercapture="up"
-      />
+      <div class="paper-frame flex min-w-0 flex-1 justify-center rounded-card border-[1.5px] border-border p-2">
+        <canvas
+          ref="canvas"
+          :width="W"
+          :height="H"
+          role="img"
+          :aria-label="hasDrawing ? t('create.canvasLabelDrawn') : t('create.canvasLabel')"
+          class="block aspect-[4/3] w-full min-w-[min(100%,18rem)] cursor-crosshair touch-none rounded-control bg-paper"
+          :style="paperH ? { maxWidth: `${Math.round((paperH * 4) / 3)}px` } : undefined"
+          @pointerdown.prevent="down"
+          @pointermove.prevent="move"
+          @pointerup="up"
+          @pointercancel="up"
+          @lostpointercapture="up"
+        />
+      </div>
     </div>
 
     <div class="flex flex-col gap-2">
@@ -253,12 +271,17 @@ const toolBtn = (active: boolean) => [
       />
     </div>
 
-    <!-- Crear stays on screen: this row docks to the bottom of the window while the panel is taller. -->
-    <div class="sticky bottom-0 z-10 -mx-6 flex flex-col gap-4 bg-card px-6 pb-4 sm:-mx-8 sm:px-8">
+    <!-- Crear docks to the bottom of the window while the panel is taller; the paper is sized to stay above it.
+         Undo and clear live here too, so they are always in reach once there is something to undo. -->
+    <div ref="dock" class="crear-dock">
       <hr class="flute-rule" />
       <div class="flex flex-wrap items-center gap-4">
         <SButton :disabled="!hasDrawing" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
         <p v-if="!hasDrawing" class="type-small text-muted-foreground">{{ t('create.drawNeeded') }}</p>
+        <div v-else class="ml-auto flex flex-wrap gap-3">
+          <SButton variant="secondary" @click="undo">{{ t('create.undo') }}</SButton>
+          <SButton variant="secondary" @click="confirmClear = true">{{ t('create.clear') }}</SButton>
+        </div>
       </div>
     </div>
 
