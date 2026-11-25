@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useComfort } from '@/composables/useComfort'
+import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
+import SButton from './SButton.vue'
 
 /**
  * The Sanctuary scene (DESIGN.md §5.3): a thin, safe wrapper around the 3D module.
@@ -9,11 +11,14 @@ import { useComfort } from '@/composables/useComfort'
  *   2. Only if Comfort allows 3D (toggle on, desktop pointer) does it load the 3D code,
  *      with a dynamic import, so `three` never reaches screens that do not need it.
  *   3. Motion off  -> the scene renders ONE still frame (the module gets `motion: false`).
+ *      Motion on   -> on the landing the sculpture turns on its plinth (D14, one turn in 75 s), with a text
+ *      control to stop it (WCAG 2.2.2). The control goes into the host's label card (`controlsTo`) when it
+ *      exists, else it sits at the scene's bottom-right corner. Stopping holds the angle for the session.
  *   4. Any error (missing module, no WebGL, lost context) -> back to the poster.
  *
  * The scene itself (objects, post-FX at 1/4 resolution with strong dithering, the generative sculpture,
  * DPR cap, pause when hidden) lives in `./scene/sanctuaryScene.js` and is framework-agnostic.
- * The scene is fully still; the only motion is a short dissolve when a new sculpture appears.
+ * The camera never moves; the only motion is the turntable and a short dissolve when a new sculpture appears.
  *
  * Props
  *   object       'escultura' | 'ruina' | 'estudio'   which abstract object to show
@@ -21,6 +26,8 @@ import { useComfort } from '@/composables/useComfort'
  *   fx           pixelated render + dithering + grain
  *   seed         which generated sculpture (0..9999); default: one random seed per visit (sessionStorage)
  *   interactive  a click on the scene shows another sculpture (the host must ALSO offer a real button)
+ *   turn         the sculpture turns on its plinth (default: landing framing only; never with motion off)
+ *   controlsTo   CSS selector of the host's museum label card, where the stop/resume control is placed
  *
  * Emits `sculpture(seed)` whenever a sculpture is shown and `layout` when the scene is resized or reframed.
  * Exposes `regenerate(seed?)`, `live`, `seed` and `anchor()`: the plinth's front-right top corner in viewport
@@ -32,11 +39,27 @@ interface Props {
   fx?: boolean
   seed?: number
   interactive?: boolean
+  turn?: boolean
+  controlsTo?: string
 }
-const props = withDefaults(defineProps<Props>(), { object: 'escultura', framing: 'landing', fx: true, interactive: false })
+const props = withDefaults(defineProps<Props>(), {
+  object: 'escultura', framing: 'landing', fx: true, interactive: false, turn: undefined, controlsTo: '.sculpture-card',
+})
 const emit = defineEmits<{ sculpture: [seed: number]; layout: [] }>()
 
 const { state, motionOff } = useComfort()
+const { t } = usePrototypeLocale()
+
+// The turntable. Behind forms (background) and in small spots the sculpture stays still: motion there would
+// pull the eye from the task. "Stopped" is remembered for the session, like the seed.
+const TURN_KEY = 'comfymind.sculptureTurn'
+const turnWanted = computed(() => (props.turn ?? props.framing === 'landing') && props.object === 'escultura')
+const stopped = ref((() => { try { return sessionStorage.getItem(TURN_KEY) === 'stopped' } catch { return false } })())
+const turning = computed(() => turnWanted.value && !stopped.value && !motionOff.value)
+function toggleTurn() {
+  stopped.value = !stopped.value
+  try { sessionStorage.setItem(TURN_KEY, stopped.value ? 'stopped' : 'turning') } catch { /* private mode */ }
+}
 
 // One sculpture per visit: a random seed, remembered for the session, so a reload shows the same piece.
 const SEED_KEY = 'comfymind.sculptureSeed'
@@ -120,8 +143,9 @@ const start = async () => {
       framing: props.framing,
       seed: seed.value,
       interactive: props.interactive,
+      turn: turnWanted.value && !stopped.value,
       onSculpture,
-      onReady: () => { ready.value = true; void nextTick(() => emit('layout')) },
+      onReady: () => { ready.value = true; void nextTick(() => { findControls(); emit('layout') }) },
     })
     if (gone || !allowed.value) { created.dispose(); return }
     handle = created
@@ -140,6 +164,7 @@ const start = async () => {
 // Comfort: 3D toggle / screen size -> start or stop. Motion -> live or still frame.
 watch(allowed, (on) => { if (on) void start(); else stop() })
 watch(motionOff, (off) => handle?.setOptions({ motion: !off }))
+watch(() => turnWanted.value && !stopped.value, (turn) => handle?.setOptions({ turn }))
 watch(() => [props.object, props.fx, props.framing] as const, ([object, fx, framing]) => { handle?.setOptions({ object, fx, framing }); emit('layout') })
 watch(() => props.seed, (s) => { if (s !== undefined && s !== seed.value) handle?.regenerate(s) })
 
@@ -153,12 +178,21 @@ function anchor(): { x: number; y: number } | null {
 }
 const live = computed(() => ready.value && props.object === 'escultura')
 
+// Where the stop/resume control goes: into the host's label card once it is on screen, else in place.
+const controlsHost = ref<HTMLElement | null>(null)
+function findControls() {
+  const el = props.controlsTo ? document.querySelector<HTMLElement>(props.controlsTo) : null
+  if (el !== controlsHost.value) controlsHost.value = el
+}
+const showTurnControl = computed(() => live.value && turnWanted.value && !motionOff.value)
+watch(showTurnControl, () => void nextTick(() => emit('layout')))
+
 /** Show another sculpture. Returns the new seed, or null while only the poster is shown. */
 function regenerate(next?: number): number | null {
   if (!handle || !ready.value) return null
   return handle.regenerate(next)
 }
-defineExpose({ regenerate, live, seed, anchor })
+defineExpose({ regenerate, live, seed, anchor, turning, toggleTurn })
 
 // Pause when the tab is hidden (a still frame costs nothing), resume afterwards.
 const onVisibility = () => handle?.setOptions({ motion: !document.hidden && !motionOff.value })
@@ -191,6 +225,14 @@ onBeforeUnmount(() => {
     <canvas ref="canvas" :class="['sanctuary-canvas', ready && 'is-ready']" />
     <div v-if="framing === 'background'" class="sanctuary-veil" />
   </div>
+  <!-- Stop/resume for the turntable (WCAG 2.2.2): words, not a media-player icon. Outside the aria-hidden layer. -->
+  <Teleport v-if="showTurnControl" :to="controlsHost ?? 'body'" :disabled="!controlsHost">
+    <div :class="['sanctuary-turn', !controlsHost && 'is-free scrim rounded-control px-3']">
+      <SButton variant="quiet" size="compact" class="-ml-1 !min-h-14 px-1 text-link underline" @click="toggleTurn">
+        {{ turning ? t('landing.turnStop') : t('landing.turnResume') }}
+      </SButton>
+    </div>
+  </Teleport>
 </template>
 
 <style scoped>
@@ -207,5 +249,9 @@ onBeforeUnmount(() => {
   position: absolute; inset: 0;
   background: color-mix(in srgb, var(--dusk-sky-deep) 62%, transparent);
 }
+/* In the host's label card the control sits on its own line, under "Otra escultura", in the same quiet style
+   but with the full 56px target. */
+.sanctuary-turn { display: block; }
+.sanctuary-turn.is-free { position: absolute; right: 1rem; bottom: 1rem; z-index: 20; }
 @media (prefers-reduced-motion: reduce) { .sanctuary-canvas { transition: none; } }
 </style>
