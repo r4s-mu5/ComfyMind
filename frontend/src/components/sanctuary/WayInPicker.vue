@@ -19,7 +19,7 @@ const options: { value: WayIn; icon: typeof Type; label: string; hint: string }[
 </script>
 
 <template>
-  <div role="group" :aria-label="t('wayin.title')" class="grid gap-3 sm:grid-cols-3">
+  <div role="group" :aria-label="t('wayin.title')" class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,15rem),1fr))] gap-3">
     <button
       v-for="o in options"
       :key="o.value"
@@ -29,7 +29,7 @@ const options: { value: WayIn; icon: typeof Type; label: string; hint: string }[
       :class="[
         'relative flex min-h-36 flex-col items-start gap-2 rounded-card border-2 p-5 text-left transition-colors',
         'disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted-foreground',
-        model === o.value ? 'border-ring bg-secondary' : 'border-input bg-card hover:bg-secondary',
+        model === o.value ? 'border-ring bg-secondary' : 'border-input bg-card hover:border-ring',
       ]"
       @click="model = o.value"
     >

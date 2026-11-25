@@ -26,7 +26,7 @@ const THERAPIST = {
       'Me parece valioso que lo compartas. ¿Qué colores o formas te acompañan en este momento?',
     ],
     image: [
-      'Qué imagen tan especial. ¿Qué es lo primero que te transmite?',
+      'Gracias por compartirla. ¿Qué es lo primero que te transmite?',
       'Gracias por enseñármela. ¿Qué te hizo elegirla?',
       'La veo con calma. ¿Qué sientes al mirarla?',
     ],
@@ -40,7 +40,7 @@ const THERAPIST = {
       'Em sembla valuós que ho comparteixis. Quins colors o formes t\'acompanyen en aquest moment?',
     ],
     image: [
-      'Quina imatge tan especial. Què és el primer que et transmet?',
+      'Gràcies per compartir-la. Què és el primer que et transmet?',
       'Gràcies per ensenyar-me-la. Què et va fer triar-la?',
       'La miro amb calma. Què sents quan la mires?',
     ],
@@ -54,7 +54,7 @@ const THERAPIST = {
       'It means a lot that you shared that. What colours or shapes are with you right now?',
     ],
     image: [
-      'What a special image. What is the first thing it brings up for you?',
+      'Thank you for sharing it. What is the first thing it brings up for you?',
       'Thank you for showing me. What made you choose it?',
       'I\'m looking at it calmly. What do you feel when you look at it?',
     ],

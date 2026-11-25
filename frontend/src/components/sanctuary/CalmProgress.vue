@@ -22,8 +22,8 @@ const statusText = computed(() => props.status ?? t('progress.onItsWay'))
 </script>
 
 <template>
-  <div class="dusk relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-card px-6 pb-24 pt-10 text-center">
-    <div class="sky absolute inset-0 -z-10 [--horizon:20%] [--sun-size:10rem]" aria-hidden="true">
+  <div class="dusk relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-card px-6 pb-40 pt-10 text-center">
+    <div class="sky absolute inset-0 -z-10 [--horizon:14%] [--sun-size:8rem]" aria-hidden="true">
       <div class="mist" />
       <div class="sun-disc is-breathing" />
       <div class="dither" />
@@ -48,8 +48,7 @@ const statusText = computed(() => props.status ?? t('progress.onItsWay'))
       />
       <div
         v-else
-        class="h-full w-full rounded-pill"
-        style="background: linear-gradient(90deg, transparent 0%, var(--dusk-light) 35%, var(--dusk-light) 65%, transparent 100%); background-size: 60% 100%; background-repeat: no-repeat; background-position: 20% 0; animation: calm-sweep 3.2s ease-in-out infinite alternate"
+        class="calm-sweep h-full w-full rounded-pill"
       />
     </div>
 

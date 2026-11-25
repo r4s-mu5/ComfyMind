@@ -211,30 +211,34 @@ const onTabKey = (e: KeyboardEvent) => {
     </SNotice>
 
     <div v-else-if="!ended" class="flex flex-col gap-6">
-      <!-- Header strip: a plain ledger line between two rules, no card -->
-      <header class="flex flex-wrap items-end gap-x-8 gap-y-4 border-y-[1.5px] border-border py-5">
-        <div class="min-w-0 flex-1">
-          <p class="type-h3 text-muted-foreground">{{ timeRange }}</p>
-          <h1 class="type-h1 mt-1">{{ t('therapist.sessionWith', { name: patientName }) }}</h1>
-        </div>
-        <div class="w-full min-w-[14rem] sm:w-64">
-          <p class="text-[1.0625rem] font-semibold">{{ remainingText }}</p>
-          <div
-            class="mt-2 h-1.5 w-full bg-secondary"
-            role="progressbar"
-            :aria-label="t('therapist.remainingLabel')"
-            aria-valuemin="0"
-            aria-valuemax="100"
-            :aria-valuenow="progress"
-          >
-            <div class="h-full bg-foreground" :style="{ width: `${progress}%` }" />
+      <!-- Header strip: a plain ledger between two rules, no card. Row 1: time, name, Finalizar. Row 2: time left, status. -->
+      <header class="flex flex-col gap-4 border-y-[1.5px] border-border py-5">
+        <div class="flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
+          <div class="min-w-0">
+            <p class="type-h3 text-muted-foreground">{{ timeRange }}</p>
+            <h1 class="type-h1 mt-1 text-balance">{{ t('therapist.sessionWith', { name: patientName }) }}</h1>
           </div>
+          <SButton variant="danger" size="compact" class="shrink-0" @click="showEnd = true; endFailed = false">{{ t('therapist.end') }}</SButton>
         </div>
-        <p :class="['inline-flex min-h-11 items-center gap-2 rounded-control border-2 px-4 text-[1.0625rem] font-semibold', status.tone]" role="status">
-          <component :is="status.icon" aria-hidden="true" class="size-5" />
-          {{ status.text }}
-        </p>
-        <SButton variant="danger" size="compact" @click="showEnd = true; endFailed = false">{{ t('therapist.end') }}</SButton>
+        <div class="flex flex-wrap items-center gap-x-8 gap-y-3">
+          <div class="w-full min-w-[14rem] sm:w-64">
+            <p class="text-[1.0625rem] font-semibold">{{ remainingText }}</p>
+            <div
+              class="mt-2 h-1.5 w-full bg-secondary"
+              role="progressbar"
+              :aria-label="t('therapist.remainingLabel')"
+              aria-valuemin="0"
+              aria-valuemax="100"
+              :aria-valuenow="progress"
+            >
+              <div class="h-full bg-foreground" :style="{ width: `${progress}%` }" />
+            </div>
+          </div>
+          <p :class="['inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control border-2 px-4 text-[1.0625rem] font-semibold', status.tone]" role="status">
+            <component :is="status.icon" aria-hidden="true" class="size-5" />
+            {{ status.text }}
+          </p>
+        </div>
       </header>
 
       <!-- Current obra -->
@@ -249,24 +253,18 @@ const onTabKey = (e: KeyboardEvent) => {
           />
           <div v-if="sharedNote" class="border-l-[3px] border-foreground pl-5">
             <h2 class="type-h3">{{ t('therapist.reflectionTitle', { name: patientName }) }}</h2>
-            <p class="type-body mt-2" style="font-size: 1.0625rem">{{ sharedNote }}</p>
+            <p class="type-body mt-2 text-[1.0625rem]">{{ sharedNote }}</p>
           </div>
         </div>
         <VersionsStrip v-if="versions.length" :versions="versions" v-model="currentId" class="lg:pt-2" />
       </section>
 
-      <!-- Empty: nothing shared yet -->
-      <section v-else class="dusk sky relative isolate overflow-hidden rounded-card" aria-labelledby="t-empty">
-        <div class="absolute inset-0 -z-10" aria-hidden="true">
-          <div class="mist" />
-          <div class="sun-disc" />
-          <div class="grain" />
-        </div>
-        <div class="flex min-h-[22rem] items-center justify-center p-6">
-          <div class="scrim flex max-w-[32rem] flex-col items-center gap-3 p-8 text-center">
-            <h2 id="t-empty" class="type-h2 text-foreground">{{ t('therapist.emptyTitle', { name: patientName }) }}</h2>
-            <p class="type-body text-muted-foreground" style="font-size: 1.0625rem">{{ t('therapist.emptyHint') }}</p>
-          </div>
+      <!-- Empty: nothing shared yet. A plain dawn niche waiting for the obra, the words beside it (no sky, no sun). -->
+      <section v-else class="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-10" aria-labelledby="t-empty">
+        <div class="niche aspect-[4/5] w-full max-w-[14rem] shrink-0 border-[1.5px] border-dashed border-input bg-card" aria-hidden="true" />
+        <div class="flex max-w-[30rem] flex-col gap-2 sm:pb-2">
+          <h2 id="t-empty" class="type-h2">{{ t('therapist.emptyTitle', { name: patientName }) }}</h2>
+          <p class="type-body text-[1.0625rem] text-muted-foreground">{{ t('therapist.emptyHint') }}</p>
         </div>
       </section>
     </div>

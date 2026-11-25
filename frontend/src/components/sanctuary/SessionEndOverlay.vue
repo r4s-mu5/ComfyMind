@@ -44,16 +44,16 @@ onMounted(async () => { await nextTick(); heading.value?.focus() })
   <div :class="overlay && 'fixed inset-0 z-50 overflow-y-auto'">
     <DuskLayout width="52rem" align="start">
       <template #scene><SanctuaryScene object="escultura" framing="background" /></template>
-      <section class="scrim p-6 text-center sm:p-10" aria-labelledby="session-end-title">
+      <section class="scrim p-6 sm:p-10" aria-labelledby="session-end-title">
         <p class="type-wordmark text-mark">ComfyMind</p>
         <h1 id="session-end-title" ref="heading" tabindex="-1" class="type-h1 mt-5 outline-offset-4">{{ t('sessionEnd.title') }}</h1>
-        <p class="type-body measure mx-auto mt-2 text-muted-foreground">{{ t('sessionEnd.lede') }}</p>
+        <p class="type-body measure mt-2 text-muted-foreground">{{ t('sessionEnd.lede') }}</p>
 
-        <hr class="flute-rule mx-auto my-8 max-w-xs" />
+        <hr class="flute-rule my-8 max-w-xs" />
 
         <h2 class="type-h3">{{ t('sessionEnd.today') }}</h2>
-        <ul v-if="artworks.length" class="mt-6 grid grid-cols-1 justify-items-center gap-6 sm:grid-cols-2 lg:grid-cols-3" role="list">
-          <li v-for="art in artworks" :key="art.id" class="w-full max-w-[14rem]">
+        <ul v-if="artworks.length" class="mt-6 flex flex-wrap gap-6 text-pretty" role="list">
+          <li v-for="art in artworks" :key="art.id" class="w-full max-w-[17rem]">
             <ArtworkMount
               :src="art.src"
               :title="art.title"

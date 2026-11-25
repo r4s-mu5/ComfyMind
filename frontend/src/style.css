@@ -366,6 +366,17 @@ html.motion-off *::after {
   }
 }
 
+/* Larger text: the app header scrolls away instead of sticking (it may take two rows), and below
+   1280px the session side panel drops under the workspace instead of squeezing it. */
+html.text-125 .shell-header,
+html.text-150 .shell-header { position: static; }
+@media (max-width: 79.999rem) {
+  html.text-125 .shell-row,
+  html.text-150 .shell-row { flex-direction: column; align-items: stretch; }
+  html.text-125 .shell-aside,
+  html.text-150 .shell-aside { position: static; width: 100%; }
+}
+
 /* no-3d is read by the (lazy) SanctuaryScene through useComfort().scene3dAllowed; the poster stays. */
 html.no-3d .scene-3d canvas { display: none; }
 
@@ -536,6 +547,11 @@ html.no-3d .scene-3d canvas { display: none; }
   .language-selector {
     @apply inline-flex min-h-11 items-center gap-2 rounded-control border-2 border-input bg-card px-3 text-foreground;
   }
+  /* The <select> inside has no outline of its own: the ring goes around the whole control. */
+  .language-selector:has(select:focus-visible) {
+    outline: 3px solid var(--focus-ring);
+    outline-offset: 3px;
+  }
 }
 
 @keyframes mist-drift {
@@ -546,6 +562,15 @@ html.no-3d .scene-3d canvas { display: none; }
   0%, 100% { opacity: 1; }
   50% { opacity: 0.92; }
 }
+/* CalmProgress, indeterminate: a soft band of warm light sweeping slowly along the bar (still when motion is off). */
+.calm-sweep {
+  background: linear-gradient(90deg, transparent 0%, var(--dusk-light) 35%, var(--dusk-light) 65%, transparent 100%);
+  background-size: 60% 100%;
+  background-repeat: no-repeat;
+  background-position: 20% 0;
+  animation: calm-sweep 3.2s ease-in-out infinite alternate;
+}
+
 @keyframes calm-sweep {
   from { background-position: 150% 0; }
   to { background-position: -50% 0; }
