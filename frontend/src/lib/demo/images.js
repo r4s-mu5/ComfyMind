@@ -6,14 +6,17 @@ for (const [path, url] of Object.entries(files)) {
   urlByKey[path.split('/').pop().replace(/\.jpg$/, '')] = url
 }
 
-// Artwork-style images (used for templates and generation results).
+// Artwork-style images (used for templates and generation results). Abstract or near-abstract only:
+// no faces, bodies, animals or anything figurative (DESIGN.md §5.3). The order matters: results are
+// picked by hash, so the chips («Un lugar tranquilo» = 10, «Un recuerdo de verano» = 1,
+// «Cómo me siento hoy» = 9, «El mar en calma» = 11; "Otra versión" = next index) land on calm pieces.
 export const ARTWORK_KEYS = [
-  'ComfyUI_00015_', 'ComfyUI_00094_', 'ComfyUI_00105_', 'simple_test_00127_',
-  'simple_test_00145_', 'simple_test_00147_', 'simple_test_00160_', 'simple_test_00201_b',
-  'simple_test_00203_b', 'simple_test_00209_b', 'simple_test_00221_', 'simple_test_00223_',
+  'simple_test_00211_', 'ComfyUI_00158_', 'simple_test_00160_', 'simple_test_00178_',
+  'simple_test_00208_b', 'ComfyUI_00015_', 'simple_test_00218_', 'simple_test_00199_b',
+  'simple_test_00207_', 'ComfyUI_00129_', 'simple_test_00127_', 'simple_test_00145_',
 ]
-// Line-art images (used as drawn sketches).
-export const SKETCH_KEYS = ['simple_test_00180_', 'simple_test_00185_']
+// Abstract line sketches (used as drawn bocetos): a spiral, and horizon strokes.
+export const SKETCH_KEYS = ['sketch_spiral', 'sketch_horizon']
 
 export const templateFileNames = () => ARTWORK_KEYS.map((k) => `${k}.jpg`)
 

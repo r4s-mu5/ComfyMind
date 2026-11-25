@@ -42,7 +42,7 @@ defineExpose({ focus: () => area.value?.focus() })
           :id="id"
           ref="area"
           v-model="text"
-          rows="5"
+          rows="3"
           :aria-describedby="`${id}-help`"
           :placeholder="t('create.wordsPlaceholder')"
           class="type-body mt-2 w-full resize-y rounded-control border-2 border-input bg-card px-5 py-4 leading-relaxed text-foreground placeholder:text-muted-foreground"
@@ -67,10 +67,13 @@ defineExpose({ focus: () => area.value?.focus() })
         </ul>
       </div>
 
-      <hr class="flute-rule" />
-      <div class="flex flex-wrap items-center gap-4">
-        <SButton type="submit" :disabled="!canCreate" :busy="busy">{{ t('create.create') }}</SButton>
-        <p v-if="!canCreate" class="type-small text-muted-foreground">{{ t('create.wordsNeeded') }}</p>
+      <!-- Crear stays on screen: this row docks to the bottom of the window while the panel is taller. -->
+      <div class="sticky bottom-0 z-10 -mx-6 flex flex-col gap-4 bg-card px-6 pb-4 sm:-mx-8 sm:px-8">
+        <hr class="flute-rule" />
+        <div class="flex flex-wrap items-center gap-4">
+          <SButton type="submit" :disabled="!canCreate" :busy="busy">{{ t('create.create') }}</SButton>
+          <p v-if="!canCreate" class="type-small text-muted-foreground">{{ t('create.wordsNeeded') }}</p>
+        </div>
       </div>
   </form>
 </template>

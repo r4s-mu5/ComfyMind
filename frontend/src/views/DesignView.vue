@@ -121,7 +121,7 @@ const spaces = [4, 8, 12, 16, 24, 32, 48, 64, 96]
 const notice = ref(true)
 const wayIn = ref<'words' | 'draw' | 'image' | null>('words')
 const field = reactive({ text: '', pass: '', area: '' })
-const versions = ['ComfyUI_00015_', 'simple_test_00145_', 'simple_test_00201_b', 'ComfyUI_00094_'].map((k, i) => ({
+const versions = ['ComfyUI_00015_', 'simple_test_00145_', 'simple_test_00127_', 'simple_test_00211_'].map((k, i) => ({
   id: i + 1, src: resolveDemoImage(`${k}.jpg`), alt: '',
 }))
 const currentVersion = ref<number | null>(2)

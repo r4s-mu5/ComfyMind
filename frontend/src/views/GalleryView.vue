@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { Download, Plus, ArrowLeft } from 'lucide-vue-next'
+import { Download, ArrowLeft } from 'lucide-vue-next'
 import { imageUrl as fileUrl } from '@/lib/config'
 import { userService } from '@/api/userService'
 import { sessionsService } from '@/api/sessionsService'
@@ -9,6 +9,7 @@ import { useDateHelpers } from '@/lib/useDateHelpers'
 import { getReflectionNote } from '@/lib/reflection'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import { ArtworkMount, SButton, SCard, SNotice } from '@/components/sanctuary'
+import SanctuaryScene from '@/components/sanctuary/SanctuaryScene.vue'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 
 /**
@@ -102,6 +103,15 @@ const load = async () => {
   }
 }
 onMounted(load)
+// One view serves /freeimages and /session/:id: reload whenever the route changes, so obras never "disappear".
+watch(() => route.fullPath, (to, from) => {
+  if (to === from) return
+  selected.value = null
+  filter.value = 'all'
+  obras.value = []
+  sessionInfo.value = null
+  void load()
+})
 
 const shown = computed(() => (filter.value === 'all' ? obras.value : obras.value.filter((o) => o.kind === filter.value)))
 const madeBy = computed(() => firstName(owner.value?.full_name))
@@ -154,8 +164,8 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
           <template #icon><ArrowLeft aria-hidden="true" /></template>
           {{ isTherapist ? t('calendar.title') : t('gallery.toGallery') }}
         </SButton>
-        <h1 class="type-h1">{{ t('gallery.sessionOf', { date: sessionDate }) }}</h1>
-        <p class="type-body text-muted-foreground">{{ t('gallery.withTherapist', { name: therapistName }) }} · {{ owner ? firstName(owner.full_name) : '' }}</p>
+        <h1 class="type-h1">{{ sessionInfo ? t('gallery.sessionOf', { date: sessionDate }) : t('gallery.title') }}</h1>
+        <p v-if="sessionInfo" class="type-body text-muted-foreground">{{ t('gallery.withTherapist', { name: therapistName }) }} · {{ owner ? firstName(owner.full_name) : '' }}</p>
       </template>
       <template v-else>
         <h1 class="type-h1">{{ t('gallery.title') }}</h1>
@@ -170,26 +180,20 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
       <SButton class="mt-3" variant="secondary" size="compact" @click="load">{{ t('gallery.retry') }}</SButton>
     </SNotice>
 
-    <!-- Empty state: a soft dusk sky made of tokens (no figures), one primary action. -->
+    <!-- Empty state: an arched window onto the empty atrium (the Sanctuary poster, or its still scene)
+         with the wall text beside it on the dawn page. No card, no scrim, one action. -->
     <section
       v-else-if="obras.length === 0"
-      class="dusk sky relative isolate overflow-hidden rounded-card"
+      class="flex flex-col gap-8 md:flex-row md:items-end md:gap-12"
       aria-labelledby="empty-title"
     >
-      <div class="absolute inset-0 -z-10" aria-hidden="true">
-        <div class="mist" />
-        <div class="sun-disc" />
-        <div class="grain" />
+      <div class="niche relative isolate aspect-[4/5] w-full max-w-[20rem] shrink-0 overflow-hidden border-[1.5px] border-border bg-dusk-sky">
+        <SanctuaryScene object="escultura" framing="small" />
       </div>
-      <div class="flex min-h-[26rem] items-center justify-center p-6">
-        <div class="scrim flex max-w-[34rem] flex-col items-center gap-4 p-8 text-center">
-          <h2 id="empty-title" class="type-h1 text-foreground">{{ t('gallery.emptyHere') }}</h2>
-          <p class="type-body text-muted-foreground">{{ t('gallery.emptyHint') }}</p>
-          <SButton v-if="!isTherapist" class="mt-2" @click="goCreate">
-            <template #icon><Plus aria-hidden="true" /></template>
-            {{ t('gallery.createShort') }}
-          </SButton>
-        </div>
+      <div class="flex max-w-[30rem] flex-col items-start gap-4 md:pb-2">
+        <h2 id="empty-title" class="type-h1">{{ t('gallery.emptyHere') }}</h2>
+        <p class="type-body text-muted-foreground">{{ t('gallery.emptyHint') }}</p>
+        <SButton v-if="!isTherapist" class="mt-2" @click="goCreate">{{ t('gallery.createShort') }}</SButton>
       </div>
     </section>
 
@@ -226,7 +230,7 @@ const downloadName = (o: Obra) => o.fileName.replace(/^generated_/, 'obra_')
             <button
               type="button"
               class="block w-full text-left"
-              :aria-label="t('gallery.open', { title: t('art.untitled') })"
+              :aria-label="t('gallery.open', { title: [technique(o), dateLabel(o.date)].filter(Boolean).join(', ') })"
               @click="open(o)"
             >
               <ArtworkMount

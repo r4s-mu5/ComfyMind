@@ -167,9 +167,11 @@ const toolBtn = (active: boolean) => [
         <div role="group" :aria-label="t('create.toolGroup')" class="flex gap-3">
           <button type="button" :class="toolBtn(tool === 'brush')" :aria-pressed="tool === 'brush'" @click="tool = 'brush'">
             <Brush aria-hidden="true" class="size-5" /> {{ t('create.toolBrush') }}
+            <Check v-if="tool === 'brush'" aria-hidden="true" class="size-5" />
           </button>
           <button type="button" :class="toolBtn(tool === 'eraser')" :aria-pressed="tool === 'eraser'" @click="tool = 'eraser'">
             <Eraser aria-hidden="true" class="size-5" /> {{ t('create.toolEraser') }}
+            <Check v-if="tool === 'eraser'" aria-hidden="true" class="size-5" />
           </button>
         </div>
 
@@ -186,6 +188,7 @@ const toolBtn = (active: boolean) => [
               <span class="block rounded-full bg-foreground" :style="{ width: `${4 + SIZES[k] / 2}px`, height: `${4 + SIZES[k] / 2}px` }" />
             </span>
             {{ t(`create.size.${k}`) }}
+            <Check v-if="size === k" aria-hidden="true" class="size-5" />
           </button>
         </div>
 
@@ -227,7 +230,7 @@ const toolBtn = (active: boolean) => [
         :height="H"
         role="img"
         :aria-label="hasDrawing ? t('create.canvasLabelDrawn') : t('create.canvasLabel')"
-        class="block aspect-[4/3] w-full max-w-[calc((100vh-18rem)*4/3)] min-w-[min(100%,28rem)] cursor-crosshair touch-none rounded-control bg-paper"
+        class="block aspect-[4/3] w-full max-w-[calc((100vh-24rem)*4/3)] min-w-[min(100%,28rem)] cursor-crosshair touch-none rounded-control bg-paper"
         @pointerdown.prevent="down"
         @pointermove.prevent="move"
         @pointerup="up"
@@ -250,10 +253,13 @@ const toolBtn = (active: boolean) => [
       />
     </div>
 
-    <hr class="flute-rule" />
-    <div class="flex flex-wrap items-center gap-4">
-      <SButton :disabled="!hasDrawing" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
-      <p v-if="!hasDrawing" class="type-small text-muted-foreground">{{ t('create.drawNeeded') }}</p>
+    <!-- Crear stays on screen: this row docks to the bottom of the window while the panel is taller. -->
+    <div class="sticky bottom-0 z-10 -mx-6 flex flex-col gap-4 bg-card px-6 pb-4 sm:-mx-8 sm:px-8">
+      <hr class="flute-rule" />
+      <div class="flex flex-wrap items-center gap-4">
+        <SButton :disabled="!hasDrawing" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
+        <p v-if="!hasDrawing" class="type-small text-muted-foreground">{{ t('create.drawNeeded') }}</p>
+      </div>
     </div>
 
     <AlertDialog :open="confirmClear" @update:open="(v) => (confirmClear = v)">

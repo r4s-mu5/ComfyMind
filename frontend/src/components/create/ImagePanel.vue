@@ -233,12 +233,15 @@ const sourceBtn = (active: boolean) => [
       />
     </div>
 
-    <hr class="flute-rule" />
-    <div class="flex flex-wrap items-center gap-4">
-      <SButton :disabled="!canCreate" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
-      <p v-if="!canCreate" class="type-small text-muted-foreground">
-        {{ multi ? t('create.multiNeeded') : t('create.imageNeeded') }}
-      </p>
+    <!-- Crear stays on screen: this row docks to the bottom of the window while the panel is taller. -->
+    <div class="sticky bottom-0 z-10 -mx-6 flex flex-col gap-4 bg-card px-6 pb-4 sm:-mx-8 sm:px-8">
+      <hr class="flute-rule" />
+      <div class="flex flex-wrap items-center gap-4">
+        <SButton :disabled="!canCreate" :busy="busy" @click="submit">{{ t('create.create') }}</SButton>
+        <p v-if="!canCreate" class="type-small text-muted-foreground">
+          {{ multi ? t('create.multiNeeded') : t('create.imageNeeded') }}
+        </p>
+      </div>
     </div>
   </div>
 </template>

@@ -2,7 +2,7 @@
 import { onBeforeUnmount, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Brush, Check, Image, Images, Loader2, Sparkles, WandSparkles } from 'lucide-vue-next'
-import demoArtwork from '@/assets/images/template_images/ComfyUI_00105_.png'
+import demoArtwork from '@/assets/images/template_images/simple_test_00127_.png'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import { Alert, AlertDescription } from '@/components/ui/alert'
