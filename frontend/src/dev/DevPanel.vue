@@ -321,13 +321,13 @@ onBeforeUnmount(() => {
 .dev-panel summary { cursor: pointer; font-weight: 700; padding: 2px 0; }
 .dev-panel .dev-sub { border-top: 1px dashed #3f3f46; margin-left: 8px; }
 .dev-panel .dev-sub summary { font-weight: 400; }
-.dev-row { display: grid; grid-template-columns: 112px 1fr 64px; align-items: center; gap: 6px; margin: 3px 0; }
+.dev-row { display: grid; grid-template-columns: 128px 1fr 60px; align-items: center; gap: 6px; margin: 3px 0; }
 .dev-row input[type='range'] { width: 100%; accent-color: #d4d4d8; }
 .dev-row select, .dev-row input[type='number'], .dev-row input[type='color'], .dev-panel textarea {
   font: inherit; color: #e4e4e7; background: #27272a; border: 1px solid #52525b; padding: 2px 4px; min-width: 0;
 }
 .dev-row select { grid-column: span 2; }
-.dev-num { width: 64px; }
+.dev-num { width: 60px; }
 .dev-row code { font: inherit; color: #a1a1aa; }
 .dev-check { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; }
 .dev-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0; }

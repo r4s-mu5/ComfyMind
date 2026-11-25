@@ -13,6 +13,8 @@ export interface DevScene {
 }
 
 export const scenes = shallowReactive(new Set<DevScene>())
+// For the browser console and scripted checks: window.__devScenes
+;(window as any).__devScenes = scenes
 
 export function bindScene(handle: any, info: { framing: string; canvas: HTMLCanvasElement | null }) {
   const { settings } = useDevSettings()

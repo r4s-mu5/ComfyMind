@@ -4,6 +4,8 @@
 //   const scene = await createSanctuaryScene(canvas, { object: 'escultura', seed: 427, onSculpture: s => {} })
 //   scene.regenerate()          // another sculpture (returns its seed); a click on the scene does the same
 //   scene.setOptions({ fx: false, turn: false }); scene.resize(); scene.snapshot(); scene.anchor('plinth'); scene.dispose()
+//   scene.setTuning({ pixelScale: 2, palette: {...}, assets: { sculpture: { y: 0.1 } } })   // live tuning (dev panel)
+//   scene.setPlinthControls({ on: true, label: 'Escultura nº', technique: 'Mármol, generada para ti', pause: 'pause' })
 //
 // The camera and the room never move: no drift, no pointer lean, no breathing. Two things move, and neither
 // does with motion: false: the sculpture turns on its plinth (D14: one turn every TURN_MS, linear, driven by
@@ -12,7 +14,7 @@
 // 'escultura' is generative: a seeded signed-distance field, meshed with marching cubes, always abstract.
 // Everything is procedural geometry: no models, no textures, no figurative shapes.
 import {
-  ACESFilmicToneMapping, BackSide, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, Color, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, FogExp2, Group, HalfFloatType, HemisphereLight, InstancedMesh, LatheGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, NoColorSpace, OrthographicCamera, PerspectiveCamera, PlaneGeometry, SRGBColorSpace, Scene, ShaderMaterial, Shape, SphereGeometry, TorusGeometry, TubeGeometry, UnsignedByteType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
+  ACESFilmicToneMapping, BackSide, Box3, BoxGeometry, BufferAttribute, BufferGeometry, CanvasTexture, CatmullRomCurve3, CircleGeometry, Color, CylinderGeometry, DirectionalLight, ExtrudeGeometry, Float32BufferAttribute, FogExp2, Group, HalfFloatType, HemisphereLight, InstancedMesh, LatheGeometry, Matrix4, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, NoColorSpace, OrthographicCamera, PerspectiveCamera, PlaneGeometry, Raycaster, SRGBColorSpace, Scene, ShaderMaterial, Shape, SphereGeometry, TorusGeometry, TubeGeometry, UnsignedByteType, Vector2, Vector3, WebGLRenderTarget, WebGLRenderer,
 } from 'three';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { ConvexGeometry } from 'three/addons/geometries/ConvexGeometry.js';
@@ -46,6 +48,32 @@ const MOOD = {
   stone: '#E7E0E2',
   colonnade: { count: 6, spacing: 2.7, x: 2.8, start: -1.8 },
 };
+
+/* ------------------------------------------------------------------ live tuning (dev panel) */
+
+// The scene's colours as one palette (src/theme/palettes.ts uses the same shape). This one is today's MOOD.
+// marble tints every stone material, marbleShadow the hemisphere ground light, floor and contact shadows,
+// sun the disc and the key light.
+export const DEFAULT_PALETTE = {
+  skyTop: MOOD.sky.top, skyMid: MOOD.sky.mid, skyLow: MOOD.sky.low, horizon: MOOD.sky.horizon,
+  sun: MOOD.sun.color, marble: MOOD.stone, marbleShadow: MOOD.hemi[1], fog: MOOD.fog.color,
+};
+// Each asset takes { visible, x, y, z (m, offsets from its place), rotY (degrees, added), scale (factor) }.
+// object = the plinth and its sculpture together; sun x/y move the disc (direction units), scale its size.
+export const ASSETS = ['object', 'sculpture', 'plinth', 'shadow', 'colonnadeLeft', 'colonnadeRight', 'floor', 'sky', 'sun'];
+export const DITHER_PATTERNS = ['bayer4', 'bayer8', 'none'];
+const assetDefaults = () => ({ visible: true, x: 0, y: 0, z: 0, rotY: 0, scale: 1 });
+/** Today's look. pixelScale 1..8; levels = colours per channel (2..32); grainAmount 0..3; fog and light are factors. */
+export function defaultTuning() {
+  return {
+    pixelScale: 4, dither: true, ditherStrength: 1, ditherPattern: 'bayer4', levels: 13,
+    grain: true, grainAmount: 0.5, vignette: 0, fog: 1, exposure: 1,
+    light: { key: 1, fill: 1, back: 1 },
+    turntable: true, turnSeconds: TURN_MS / 1000, seed: null,
+    palette: { ...DEFAULT_PALETTE },
+    assets: Object.fromEntries(ASSETS.map(n => [n, assetDefaults()])),
+  };
+}
 
 /* ------------------------------------------------------------------ geometry */
 
@@ -403,10 +431,11 @@ void main(){
 const POST_VS = `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0., 1.); }`;
 // Nearest upscale in whole device-pixel blocks, an optional Bayer-order dissolve, then tone map, encode,
 // static grain, ordered dither and vignette.
-const POST_FS = `uniform sampler2D tScene, tPrev; uniform vec2 rtSize, outSize; uniform float block, levels, ditherAmt, grainAmt, vignetteAmt, seed, progress;
+const POST_FS = `uniform sampler2D tScene, tPrev; uniform vec2 rtSize, outSize; uniform float block, levels, ditherAmt, grainAmt, vignetteAmt, seed, progress, pattern;
 varying vec2 vUv;
 float bayer2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
 float bayer4(vec2 a){ return bayer2(0.5 * a) * 0.25 + bayer2(a); }
+float bayer8(vec2 a){ return bayer4(0.5 * a) * 0.25 + bayer2(a); }
 float hash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }
 void main(){
   vec2 cell = floor(gl_FragCoord.xy / block);
@@ -426,10 +455,33 @@ void main(){
   c *= 1. - vignetteAmt * smoothstep(0.35, 1.05, length(q));
   c += (hash(cell + seed) - 0.5) * grainAmt;
   if (levels > 1.5) {
-    float b = 0.5 + (bayer4(cell) - 0.5) * ditherAmt;
+    float r = pattern > 1.5 ? bayer8(cell) : pattern > 0.5 ? bayer4(cell) : 0.5;
+    float b = 0.5 + (r - 0.5) * ditherAmt;
     c = floor(c * (levels - 1.) + b) / (levels - 1.);
   }
   gl_FragColor = vec4(clamp(c, 0., 1.), 1.);
+}`;
+
+// The plinth controls (nameplate and buttons) are drawn in a second pass at full resolution, so their text
+// stays legible, with the same vignette, grain (on the main pixel grid) and ordered dither (on a grid half
+// as coarse) as the output pass. Injected at the end of their MeshStandardMaterial shaders.
+const OV_HEAD = `uniform float uBlock, uOvBlock, uLevels, uDitherAmt, uGrainAmt, uVignetteAmt, uSeed, uPattern; uniform vec2 uOutSize;
+float ovB2(vec2 a){ a = floor(a); return fract(dot(a, vec2(0.5, a.y * 0.75))); }
+float ovB4(vec2 a){ return ovB2(0.5 * a) * 0.25 + ovB2(a); }
+float ovB8(vec2 a){ return ovB4(0.5 * a) * 0.25 + ovB2(a); }
+float ovHash(vec2 p){ p = fract(p * vec2(123.34, 456.21)); p += dot(p, p + 45.32); return fract(p.x * p.y); }`;
+const OV_TAIL = `{
+  vec3 c = gl_FragColor.rgb;
+  vec2 big = floor(gl_FragCoord.xy / uBlock);
+  vec2 q = (big + 0.5) * uBlock / uOutSize - 0.5; q.x *= uOutSize.x / uOutSize.y;
+  c *= 1. - uVignetteAmt * smoothstep(0.35, 1.05, length(q));
+  c += (ovHash(big + uSeed) - 0.5) * uGrainAmt;
+  if (uLevels > 1.5) {
+    vec2 cell = floor(gl_FragCoord.xy / uOvBlock);
+    float r = uPattern > 1.5 ? ovB8(cell) : uPattern > 0.5 ? ovB4(cell) : 0.5;
+    c = floor(c * (uLevels - 1.) + 0.5 + (r - 0.5) * uDitherAmt) / (uLevels - 1.);
+  }
+  gl_FragColor.rgb = clamp(c, 0., 1.);
 }`;
 
 /* ------------------------------------------------------------------ the scene */
@@ -450,10 +502,20 @@ export async function createSanctuaryScene(canvas, {
   grain = 0.5,             // 0 = none, 1 = most (still low amplitude); static, never refreshed
   vignette = 0,            // 0..1, soft
   onError = null,          // lost WebGL context; without it the handler throws
+  onControl = null,        // a click on a plinth control (setPlinthControls): called with 'regenerate' or 'pause'
 } = {}) {
   if (!canvas) throw new Error('createSanctuaryScene: canvas is required');
   const opts = { object, fx, pixelScale, motion, framing, dither, grain, vignette, interactive, turn,
     seed: Number.isFinite(Number(seed)) && seed !== null ? clampSeed(seed) : randomSeed() };
+  // Everything setTuning() can change. The post-FX fields start from the options above.
+  const tune = defaultTuning();
+  function fxFromOptions(o) {
+    if ('pixelScale' in o) tune.pixelScale = num(o.pixelScale, 4);
+    if ('dither' in o) { const d = clamp01(num(o.dither, 0.8)); tune.dither = d > 0; if (d > 0) tune.levels = Math.round(34 - 26 * d); }
+    if ('grain' in o) { const g = clamp01(num(o.grain, 0.5)); tune.grain = g > 0; tune.grainAmount = g; }
+    if ('vignette' in o) tune.vignette = clamp01(num(o.vignette, 0));
+  }
+  fxFromOptions(opts);
   const host = canvas.parentElement || canvas;
 
   const renderer = new WebGLRenderer({ canvas, antialias: false, alpha: false, powerPreference: 'low-power', preserveDrawingBuffer: false });
@@ -483,17 +545,21 @@ export async function createSanctuaryScene(canvas, {
   sky.renderOrder = -1;
   scene.add(sky);
   scene.fog = new FogExp2(C(MOOD.fog.color), MOOD.fog.density);
+  scene.background = null; // set to the fog colour only while the sky is hidden (dev tuning)
 
   /* lights */
   const hemi = new HemisphereLight(C(MOOD.hemi[0]), C(MOOD.hemi[1]), MOOD.hemi[2]);
   const key = new DirectionalLight(C(MOOD.key[0]), MOOD.key[1]);
   const back = new DirectionalLight(C(MOOD.back[0]), MOOD.back[1]);
   scene.add(hemi, key, back, key.target, back.target);
+  [hemi, key, back].forEach(l => l.layers.enable(1)); // layer 1: the plinth controls' full-resolution pass
 
   /* materials */
   const materials = [];
+  const rimColors = []; // every material's rim colour uniform, for the palette
   function withRim(mat, strength = MOOD.rim[1]) {
     const rim = { color: { value: C(MOOD.rim[0]) }, strength: { value: strength } };
+    rimColors.push(rim.color);
     mat.onBeforeCompile = s => {
       s.uniforms.rimColor = rim.color; s.uniforms.rimStrength = rim.strength;
       s.fragmentShader = s.fragmentShader
@@ -519,23 +585,29 @@ export async function createSanctuaryScene(canvas, {
   const colNear = keepGeo(column(40)), colFar = keepGeo(column(24));
   const COL_H = colNear.userData.height;
   const M = (x, y, z) => new Matrix4().makeTranslation(x, y, z);
+  const colonnades = {};
   {
-    const cfg = MOOD.colonnade, near = [], far = [];
-    for (const side of [-1, 1]) for (let i = 0; i < cfg.count; i++) (i < 4 ? near : far).push(M(side * cfg.x, 0, cfg.start - i * cfg.spacing));
-    for (const [geo, list] of [[colNear, near], [colFar, far]]) {
-      const m = new InstancedMesh(geo, stone, list.length);
-      list.forEach((mx, i) => m.setMatrixAt(i, mx));
-      scene.add(m);
-    }
+    const cfg = MOOD.colonnade;
     const len = cfg.count * cfg.spacing + 1.2;
     const beamGeo = keepGeo(new BoxGeometry(0.95, 0.62, len));
     for (const side of [-1, 1]) {
+      // one group per side, so each colonnade can be moved or hidden on its own
+      const grp = new Group(), near = [], far = [];
+      for (let i = 0; i < cfg.count; i++) (i < 4 ? near : far).push(M(side * cfg.x, 0, cfg.start - i * cfg.spacing));
+      for (const [geo, list] of [[colNear, near], [colFar, far]]) {
+        const m = new InstancedMesh(geo, stone, list.length);
+        list.forEach((mx, i) => m.setMatrixAt(i, mx));
+        grp.add(m);
+      }
       const beam = new Mesh(beamGeo, stone);
       beam.position.set(side * cfg.x, COL_H + 0.31, cfg.start - len / 2 + 0.6);
-      scene.add(beam);
+      grp.add(beam);
+      scene.add(grp);
+      colonnades[side < 0 ? 'colonnadeLeft' : 'colonnadeRight'] = grp;
     }
   }
-  scene.add(new Mesh(keepGeo(new PlaneGeometry(240, 240).rotateX(-Math.PI / 2)), floorMat));
+  const floor = new Mesh(keepGeo(new PlaneGeometry(240, 240).rotateX(-Math.PI / 2)), floorMat);
+  scene.add(floor);
 
   // fake contact shadow: a soft radial-gradient decal on the floor (no shadow maps)
   const shadowTex = (() => {
@@ -551,7 +623,150 @@ export async function createSanctuaryScene(canvas, {
   function contact(x, z, sx, sz, rot = 0) {
     const m = new Mesh(shadowGeo, shadowMat);
     m.position.set(x, 0.004, z); m.scale.set(sx, 1, sz); m.rotation.y = rot; m.renderOrder = 1;
+    m.userData.shadow = true;
     return m;
+  }
+
+  /* plinth controls: a nameplate and two buttons set into the plinth's front face (setPlinthControls).
+     Layer 1 only: they are drawn in their own full-resolution pass (renderOverlay), never in the low-res one. */
+  const controls = (() => {
+    const group = new Group(); group.visible = false;
+    const own = [], texes = [];
+    const ovU = { ovBlock: { value: 1 } };
+    const FACE = 0.36; // the escultura plinth body's front face (w 0.72)
+    const state = { label: '', technique: '', pause: null, hover: null, focus: null, press: null, ink: '#3a3046', hi: '#ffffff', plate: '#eeeeee', stone: '#e4dcdb' };
+    function ovMat(p, rimStrength = 0.3) {
+      const m = new MeshStandardMaterial({ fog: false, roughness: 0.8, ...p });
+      const rim = { color: { value: C(MOOD.rim[0]) }, strength: { value: rimStrength } };
+      rimColors.push(rim.color);
+      m.onBeforeCompile = sh => {
+        Object.assign(sh.uniforms, {
+          rimColor: rim.color, rimStrength: rim.strength, uOvBlock: ovU.ovBlock,
+          uBlock: postU.block, uLevels: postU.levels, uDitherAmt: postU.ditherAmt, uGrainAmt: postU.grainAmt,
+          uVignetteAmt: postU.vignetteAmt, uSeed: postU.seed, uPattern: postU.pattern, uOutSize: postU.outSize,
+        });
+        sh.fragmentShader = sh.fragmentShader
+          .replace('#include <common>', '#include <common>\nuniform vec3 rimColor; uniform float rimStrength;\n' + OV_HEAD)
+          .replace('#include <opaque_fragment>', 'float rimF = pow(1.0 - saturate(dot(normal, normalize(vViewPosition))), 2.6);\noutgoingLight += rimColor * rimF * rimStrength;\n#include <opaque_fragment>')
+          .replace('#include <dithering_fragment>', '#include <dithering_fragment>\n' + OV_TAIL);
+      };
+      materials.push(m);
+      return m;
+    }
+    const canvasTex = (w, h) => {
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; t.anisotropy = 4;
+      texes.push(t);
+      return t;
+    };
+    const L1 = o => { o.traverse(x => x.layers.set(1)); return o; };
+    const G = g => { own.push(g); return g; };
+
+    // the nameplate: a thin marble panel inlaid flush (2 mm proud), with the text cut into it
+    const plateTex = canvasTex(1024, 312);
+    const plateSide = ovMat({ color: 0xffffff });
+    const plateFace = ovMat({ color: 0xffffff, map: plateTex, roughness: 0.7 });
+    const plate = new Mesh(G(new BoxGeometry(0.56, 0.17, 0.004)), [plateSide, plateSide, plateSide, plateSide, plateFace, plateSide]);
+    plate.position.set(0, 0.8, FACE + 0.002);
+    group.add(L1(plate));
+
+    // two round buttons under it: a low stone drum in a cut socket, its face carrying the glyph
+    const buttons = {};
+    for (const [name, x] of [['regenerate', -0.12], ['pause', 0.12]]) {
+      const holder = new Group(); holder.position.set(x, 0.55, FACE);
+      const socket = new Mesh(G(new TorusGeometry(0.081, 0.0045, 8, 48)), ovMat({ color: 0x000000, roughness: 1 }, 0));
+      socket.position.z = 0.001;
+      const press = new Group();
+      const bodyMat = ovMat({ color: 0xffffff, emissive: 0x000000 });
+      const body = new Mesh(G(new CylinderGeometry(0.074, 0.077, 0.024, 48).rotateX(Math.PI / 2).translate(0, 0, 0.012)), bodyMat);
+      const tex = canvasTex(256, 256);
+      // the glyph stays dark when lit: the emission follows the face texture (light stone, dark cut)
+      const faceMat = ovMat({ color: 0xffffff, map: tex, emissiveMap: tex, emissive: 0x000000, roughness: 0.7 });
+      const face = new Mesh(G(new CircleGeometry(0.074, 48)), faceMat);
+      face.position.z = 0.0242;
+      press.add(body, face);
+      holder.add(socket, press);
+      holder.userData.control = name; body.userData.control = name; face.userData.control = name;
+      group.add(L1(holder));
+      buttons[name] = { holder, press, tex, mats: [bodyMat, faceMat], socket };
+    }
+
+    function drawGlyph(name) {
+      const b = buttons[name], c = b.tex.image, x = c.getContext('2d'), S = c.width;
+      x.fillStyle = state.stone; x.fillRect(0, 0, S, S);
+      const ink = (dx, dy, col) => {
+        x.save(); x.translate(S / 2 + dx, S / 2 + dy);
+        x.strokeStyle = col; x.fillStyle = col; x.lineWidth = S * 0.075; x.lineCap = 'butt';
+        if (name === 'regenerate') {
+          // the classic reload sign: an open circle with one arrowhead
+          const r = S * 0.25, a0 = -Math.PI * 0.32, a1 = Math.PI * 1.36;
+          x.beginPath(); x.arc(0, 0, r, a0, a1); x.stroke();
+          const ax = Math.cos(a0) * r, ay = Math.sin(a0) * r, h = S * 0.13;
+          x.beginPath();
+          x.moveTo(ax + h * 0.95, ay - h * 0.1);
+          x.lineTo(ax - h * 0.55, ay - h * 0.95);
+          x.lineTo(ax - h * 0.25, ay + h * 0.75);
+          x.closePath(); x.fill();
+        } else if (state.pause === 'play') {
+          x.beginPath(); x.moveTo(-S * 0.11, -S * 0.2); x.lineTo(S * 0.21, 0); x.lineTo(-S * 0.11, S * 0.2); x.closePath(); x.fill();
+        } else {
+          x.fillRect(-S * 0.15, -S * 0.19, S * 0.1, S * 0.38); x.fillRect(S * 0.05, -S * 0.19, S * 0.1, S * 0.38);
+        }
+        x.restore();
+      };
+      // cut, not printed: a light lower lip under a dark incision
+      ink(0, S * 0.012, state.hi); ink(0, 0, state.ink);
+      b.tex.needsUpdate = true;
+    }
+    function drawPlateText(title, technique) {
+      const c = plateTex.image, x = c.getContext('2d'), W = c.width, H = c.height;
+      x.fillStyle = state.plate; x.fillRect(0, 0, W, H);
+      x.strokeStyle = state.ink; x.globalAlpha = 0.55; x.lineWidth = 4; x.strokeRect(22, 22, W - 44, H - 44); x.globalAlpha = 1;
+      const line = (text, px, y, spacing) => {
+        let size = px;
+        x.font = `${size}px 'Tenor Sans', serif`;
+        if ('letterSpacing' in x) x.letterSpacing = `${Math.round(size * spacing)}px`;
+        while (x.measureText(text).width > W - 120 && size > 20) {
+          size -= 2; x.font = `${size}px 'Tenor Sans', serif`;
+          if ('letterSpacing' in x) x.letterSpacing = `${Math.round(size * spacing)}px`;
+        }
+        x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+        x.fillStyle = state.hi; x.fillText(text, W / 2, y + 3);
+        x.fillStyle = state.ink; x.fillText(text, W / 2, y);
+      };
+      line(title.toUpperCase(), 92, H * 0.5, 0.1);
+      line(technique.toUpperCase(), 60, H * 0.8, 0.08);
+      plateTex.needsUpdate = true;
+    }
+    function shade() {
+      for (const [name, b] of Object.entries(buttons)) {
+        const lit = state.hover === name || state.focus === name;
+        b.mats.forEach(m => { m.emissive.copy(skyU.sunColor.value); m.emissiveIntensity = lit ? 0.28 : 0; });
+        b.press.position.z = state.press === name ? -0.011 : 0;
+      }
+      buttons.pause.holder.visible = state.pause !== null;
+    }
+    return {
+      group, state, ovU,
+      recolour(p) {
+        const ink = C(p.marbleShadow).lerp(C('#000000'), 0.45);
+        state.ink = '#' + ink.getHexString();
+        state.hi = '#' + C(p.marble).lerp(C('#ffffff'), 0.5).getHexString();
+        state.plate = '#' + marble.color.getHexString();
+        state.stone = '#' + plinthMat.color.clone().lerp(C('#ffffff'), 0.12).getHexString();
+        plateSide.color.copy(marble.color);
+        Object.values(buttons).forEach(b => b.socket.material.color.copy(plinthMat.color).lerp(C(p.marbleShadow), 0.6));
+        drawGlyph('regenerate'); drawGlyph('pause');
+      },
+      drawPlate: drawPlateText, drawGlyph, shade,
+      buttons, plate,
+      dispose() { own.forEach(g => g.dispose()); texes.forEach(t => t.dispose()); },
+    };
+  })();
+  function drawPlate() {
+    if (!controls.group.visible || !kit || kit.name !== 'escultura') return;
+    controls.drawPlate(`${controls.state.label} ${String(opts.seed).padStart(4, '0')}`, controls.state.technique);
+    requestRender();
   }
 
   /* the object on its plinth(s) */
@@ -564,17 +779,24 @@ export async function createSanctuaryScene(canvas, {
   // The angle lives here, not on the mesh, so a new sculpture carries on from the same angle.
   const spin = { angle: 0, last: 0 };
   let turner = null;
-  const spinning = () => !!(opts.motion && opts.turn && turner && opts.object === 'escultura');
+  const spinning = () => !!(opts.motion && opts.turn && tune.turntable && turner && opts.object === 'escultura');
 
   function buildKit(name, sculptureSeed) {
     turner = null;
     const g = new Group(), own = [];
     const G = geo => { own.push(geo); return geo; };
     let focusY = 1.45, extent = 0.6, plinth = { w: 0.72, h: 1.04 };
+    const plinths = [];
+    const plinthMesh = (w, h, x = 0, z = 0) => {
+      const p = mesh(G(plinthGeo(w, h)), plinthMat);
+      p.position.set(x, 0, z); p.userData.base = new Vector3(x, 0, z);
+      plinths.push(p);
+      return p;
+    };
     if (name === 'ruina') {
       const PH = 1.0;
       plinth = { w: 0.8, h: PH };
-      g.add(mesh(G(plinthGeo(0.8, PH)), plinthMat), contact(0.08, 0.06, 1.7, 1.7));
+      g.add(plinthMesh(0.8, PH), contact(0.08, 0.06, 1.7, 1.7));
       const cap = mesh(G(ionicCapital()), ruinStone);
       cap.scale.setScalar(1.05); cap.position.y = PH; cap.rotation.y = -30 * DEG;
       g.add(cap);
@@ -586,7 +808,7 @@ export async function createSanctuaryScene(canvas, {
       focusY = 1.42; extent = 0.75;
     } else if (name === 'escultura') {
       const PH = 1.04;
-      g.add(mesh(G(plinthGeo(0.72, PH)), plinthMat), contact(0.06, 0.06, 1.6, 1.6));
+      g.add(plinthMesh(0.72, PH), contact(0.06, 0.06, 1.6, 1.6));
       const s = 0.37;
       const geo = G(buildSculptureGeometry(sculptureSeed));
       const sc = mesh(geo, marble);
@@ -594,6 +816,7 @@ export async function createSanctuaryScene(canvas, {
       sc.position.y = PH - geo.boundingBox.min.y * s;
       sc.rotation.y = geo.userData.params.yaw + spin.angle;
       sc.userData.yaw = geo.userData.params.yaw;
+      sc.userData.scale = s; sc.userData.plinthH = PH;
       g.add(sc);
       turner = sc;
       focusY = 1.5; extent = 0.55;
@@ -604,7 +827,7 @@ export async function createSanctuaryScene(canvas, {
         { x: 0.0, z: -0.14, h: 1.08, w: 0.46 },
         { x: 0.5, z: 0.3, h: 0.9, w: 0.38 },
       ];
-      for (const sp of spots) { const p = mesh(G(plinthGeo(sp.w, sp.h)), plinthMat); p.position.set(sp.x, 0, sp.z); g.add(p, contact(sp.x + 0.05, sp.z + 0.05, sp.w * 2.1, sp.w * 2.1)); }
+      for (const sp of spots) g.add(plinthMesh(sp.w, sp.h, sp.x, sp.z), contact(sp.x + 0.05, sp.z + 0.05, sp.w * 2.1, sp.w * 2.1));
       const ring = mesh(G(new TorusGeometry(0.15, 0.052, 14, 48)), ringMat);
       ring.position.set(spots[0].x, spots[0].h + 0.202, spots[0].z); ring.rotation.y = 28 * DEG;
       const solid = mesh(G(durerSolid(0.46)), facetMat);
@@ -614,53 +837,131 @@ export async function createSanctuaryScene(canvas, {
       g.add(ring, solid, ball);
       focusY = 1.34; extent = 1.0; plinth = { w: 0.46, h: 1.08, z: -0.14 };
     }
-    return { name, seed: sculptureSeed, group: g, focusY, extent, plinth, own };
+    // the main plinth: the label anchor and the plinth controls belong to it
+    const main = name === 'estudio' ? plinths[1] : plinths[0];
+    return { name, seed: sculptureSeed, group: g, focusY, extent, plinth, plinths, main, own };
   }
 
   function setKit(name, sculptureSeed) {
-    if (kit) { rig.remove(kit.group); kit.own.forEach(g => g.dispose()); }
+    if (kit) { kit.main.remove(controls.group); rig.remove(kit.group); kit.own.forEach(g => g.dispose()); }
     kit = buildKit(name, sculptureSeed);
     rig.add(kit.group);
+    if (name === 'escultura') kit.main.add(controls.group);
+    applyAssets();
+    drawPlate();
     if (name === 'escultura' && typeof onSculpture === 'function') {
       try { onSculpture(sculptureSeed); } catch (e) { console.error(e); }
     }
   }
 
   /* framing: a fixed camera per framing; nothing moves */
-  const view = { cam: new Vector3(), offX: 0, offY: 0, fov: 38 };
+  const view = { cam: new Vector3(), offX: 0, offY: 0, fov: 38, rigBase: new Vector3() };
   function frame3() {
-    const portrait = size.w / size.h < 0.95;
-    const f = opts.framing, k = kit;
+    const aspect = size.w / size.h, portrait = aspect < 0.95;
+    const f = opts.framing, k = kit, base = view.rigBase;
     if (f === 'small') {
       view.fov = 30;
-      const dist = (k.extent * 1.25) / Math.tan(view.fov * DEG / 2) / Math.min(1, size.w / size.h);
-      rig.position.set(0, 0, 0);
+      const dist = (k.extent * 1.25) / Math.tan(view.fov * DEG / 2) / Math.min(1, aspect);
+      base.set(0, 0, 0);
       view.cam.set(0, k.focusY + 0.1, dist);
       view.offX = 0; view.offY = 0.16;
     } else if (f === 'background') {
       view.fov = portrait ? 52 : 36;
-      rig.position.set(0, 0, 0);
+      base.set(0, 0, 0);
       view.cam.set(0, k.focusY + 0.15, portrait ? 4.2 : 4.6);
       view.offX = 0; view.offY = portrait ? 0.3 : 0.12;
     } else if (portrait) {
+      // portrait desktop screens (3D needs a 1024 px wide, hovering pointer): right of centre, clear of the text
       view.fov = 50;
-      rig.position.set(0, 0, 0.3);
+      base.set((2 * 0.68 - 1) * (4.0 - 0.3 - 0.36) * Math.tan(view.fov * DEG / 2) * aspect, 0, 0.3);
       view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 4.6 : 4.0);
       view.offX = 0; view.offY = 0.42; // the object sits in the upper third, above a bottom text panel
     } else {
-      // landscape landing: text panel on the left, object at about two thirds
-      const wide = size.w / size.h > 2;
-      view.fov = wide ? 32 : 38;
-      rig.position.set(0.62, 0, 0.3);
+      // landscape landing: text panel on the left (about 45% of the width), the object right of centre.
+      // The plinth's centre lands at a fixed share of the width: 61% at 16:10 and wider, easing to 64.5%
+      // at 4:3, where the text column takes relatively more room. (It sat at about 72% before 2026-11-25.)
+      view.fov = aspect > 2 ? 32 : 38;
+      const share = 0.61 + 0.035 * clamp01((1.6 - aspect) / 0.27);
+      const depth = 4.3 - 0.3 - 0.36; // camera to the plinth's front face
+      base.set((2 * share - 1) * depth * Math.tan(view.fov * DEG / 2) * aspect, 0, 0.3);
       view.cam.set(0, k.focusY + 0.2, 4.3);
-      view.offX = -0.08; view.offY = 0.03;
+      view.offX = 0; view.offY = 0.07; // a little higher than the old 0.03, clear of the bottom edge
     }
+    camera.position.copy(view.cam);
+    camera.rotation.set(0, 0, 0);
+    applyAssets();
+  }
+
+  /* assets: base transforms (framing, kit) plus the tuning's offsets */
+  const sunBase = new Vector3(MOOD.sun.dir[0], MOOD.sun.dir[1], -1);
+  function applyAssets() {
+    const A = tune.assets;
+    const o = A.object;
+    rig.position.set(view.rigBase.x + o.x, view.rigBase.y + o.y, view.rigBase.z + o.z);
+    rig.rotation.y = o.rotY * DEG; rig.scale.setScalar(o.scale); rig.visible = o.visible;
     const kp = MOOD.key[2], bp = MOOD.back[2];
     key.target.position.copy(rig.position); back.target.position.copy(rig.position);
     key.position.set(rig.position.x + kp[0], kp[1], rig.position.z + kp[2]);
     back.position.set(rig.position.x + bp[0], bp[1], rig.position.z + bp[2]);
-    camera.position.copy(view.cam);
-    camera.rotation.set(0, 0, 0);
+    if (kit) {
+      const P = A.plinth;
+      for (const m of kit.plinths) {
+        const b = m.userData.base;
+        m.position.set(b.x + P.x, b.y + P.y, b.z + P.z);
+        m.rotation.y = P.rotY * DEG; m.scale.setScalar(P.scale); m.visible = P.visible;
+      }
+      kit.group.children.forEach(m => { if (m.userData.shadow) m.visible = A.shadow.visible; });
+      if (turner) {
+        // the sculpture stands on the plinth wherever the plinth goes
+        const S = A.sculpture, sc = turner.userData.scale * S.scale;
+        turner.scale.setScalar(sc);
+        turner.position.set(P.x + S.x, P.y + turner.userData.plinthH * P.scale - turner.geometry.boundingBox.min.y * sc + S.y, P.z + S.z);
+        turner.visible = S.visible;
+        turner.rotation.y = turner.userData.yaw + spin.angle + S.rotY * DEG;
+      }
+    }
+    for (const n of ['colonnadeLeft', 'colonnadeRight']) {
+      const g = colonnades[n], t = A[n];
+      g.position.set(t.x, t.y, t.z); g.rotation.y = t.rotY * DEG; g.scale.setScalar(t.scale); g.visible = t.visible;
+    }
+    floor.position.set(A.floor.x, A.floor.y, A.floor.z); floor.visible = A.floor.visible;
+    sky.visible = A.sky.visible;
+    scene.background = A.sky.visible ? null : scene.fog.color;
+    skyU.sunDir.value.set(sunBase.x + A.sun.x, sunBase.y + A.sun.y, -1).normalize();
+    skyU.sunSize.value = MOOD.sun.size * DEG * A.sun.scale;
+    skyU.sunAlpha.value = A.sun.visible ? MOOD.sun.alpha : 0;
+    skyU.glow.value = A.sun.visible ? MOOD.sun.glow : 0;
+    sceneDirty = true;
+  }
+
+  /* palette: sky, sun and fog take the colours as they are; materials are tinted by the ratio to the
+     default palette, so the default reproduces today's colours exactly */
+  const ratio = (hex, ref) => { const a = C(hex), b = C(ref); return new Color(a.r / b.r, a.g / b.g, a.b / b.b); };
+  const tinted = (hex, r) => { const c = C(hex).multiply(r); c.r = Math.min(1, c.r); c.g = Math.min(1, c.g); c.b = Math.min(1, c.b); return c; };
+  const BASE = {
+    stone: MOOD.stone, plinth: '#E4DCDB', marble: '#F1EBE6', ruin: '#E9E1DE', facet: '#F0E2D8', honed: '#ECE6EC', ring: '#E3DDEE',
+    floor: MOOD.floor, shadow: '#241d38',
+  };
+  function applyPalette() {
+    const p = { ...DEFAULT_PALETTE, ...tune.palette }, D = DEFAULT_PALETTE;
+    skyU.top.value.set(p.skyTop); skyU.mid.value.set(p.skyMid); skyU.low.value.set(p.skyLow); skyU.horizon.value.set(p.horizon);
+    skyU.sunColor.value.set(p.sun);
+    skyU.sunColor2.value.copy(p.sun.toLowerCase() === D.sun.toLowerCase() ? C(MOOD.sun.color2) : C(p.sun).lerp(C(p.horizon), 0.35));
+    key.color.copy(tinted(MOOD.key[0], ratio(p.sun, D.sun)));
+    // the cool lights (sky fill, back light, rim) follow the sky, so a palette's stone never keeps today's lilac
+    const sk = ratio(p.skyMid, D.skyMid);
+    hemi.color.copy(tinted(MOOD.hemi[0], sk)); back.color.copy(tinted(MOOD.back[0], sk));
+    rimColors.forEach(u => u.value.copy(tinted(MOOD.rim[0], sk)));
+    scene.fog.color.set(p.fog);
+    const m = ratio(p.marble, D.marble), sh = ratio(p.marbleShadow, D.marbleShadow);
+    stone.color.copy(tinted(BASE.stone, m)); plinthMat.color.copy(tinted(BASE.plinth, m)); marble.color.copy(tinted(BASE.marble, m));
+    ruinStone.color.copy(tinted(BASE.ruin, m)); facetMat.color.copy(tinted(BASE.facet, m));
+    honed.color.copy(tinted(BASE.honed, m)); ringMat.color.copy(tinted(BASE.ring, m));
+    hemi.groundColor.set(p.marbleShadow);
+    floorMat.color.copy(tinted(BASE.floor, sh)); shadowMat.color.copy(tinted(BASE.shadow, sh));
+    controls.recolour(p);
+    drawPlate();
+    sceneDirty = true;
   }
 
   /* render targets (two, for the dissolve) and the output pass */
@@ -670,6 +971,7 @@ export async function createSanctuaryScene(canvas, {
     tScene: { value: null }, tPrev: { value: null }, progress: { value: 1 },
     rtSize: { value: new Vector2(1, 1) }, outSize: { value: new Vector2(1, 1) },
     block: { value: 1 }, levels: { value: 0 }, ditherAmt: { value: 1 }, grainAmt: { value: 0 }, vignetteAmt: { value: 0 }, seed: { value: 17.0 },
+    pattern: { value: 1 },
   };
   const postMat = new ShaderMaterial({ uniforms: postU, vertexShader: POST_VS, fragmentShader: POST_FS, depthTest: false, depthWrite: false });
   const postGeo = new BufferGeometry();
@@ -681,12 +983,14 @@ export async function createSanctuaryScene(canvas, {
   const postCam = new OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
   function fxParams() {
-    const on = !!opts.fx;
+    const on = !!opts.fx, t = tune;
     return {
-      d: on ? clamp01(num(opts.dither, 0.8)) : 0,
-      gr: on ? clamp01(num(opts.grain, 0.5)) : 0,
-      v: on ? clamp01(num(opts.vignette, 0)) : 0,
-      scale: on ? Math.max(1, Math.min(4, Math.round(num(opts.pixelScale, 4)))) : 1,
+      levels: on && t.dither ? Math.max(2, Math.min(64, Math.round(num(t.levels, 13)))) : 0,
+      ditherAmt: clamp01(num(t.ditherStrength, 1)),
+      pattern: t.ditherPattern === 'none' ? 0 : t.ditherPattern === 'bayer8' ? 2 : 1,
+      gr: on && t.grain ? Math.max(0, Math.min(3, num(t.grainAmount, 0.5))) : 0,
+      v: on ? clamp01(num(t.vignette, 0)) : 0,
+      scale: on ? Math.max(1, Math.min(8, Math.round(num(t.pixelScale, 4)))) : 1,
     };
   }
   const makeRT = samples => new WebGLRenderTarget(size.rw, size.rh, {
@@ -717,9 +1021,12 @@ export async function createSanctuaryScene(canvas, {
     postU.rtSize.value.set(size.rw, size.rh);
     postU.outSize.value.set(size.dw, size.dh);
     postU.block.value = size.block;
-    postU.levels.value = p.d > 0 ? Math.round(34 - 26 * p.d) : 0;
+    postU.levels.value = p.levels;
+    postU.ditherAmt.value = p.ditherAmt;
+    postU.pattern.value = p.pattern;
     postU.grainAmt.value = p.gr * 0.045;
     postU.vignetteAmt.value = p.v * 0.4;
+    controls.ovU.ovBlock.value = Math.max(1, Math.floor(size.block / 2));
     frame3();
     camera.aspect = size.rw / size.rh;
     camera.fov = view.fov;
@@ -765,15 +1072,32 @@ export async function createSanctuaryScene(canvas, {
   }
 
   /* the only interaction: a click or tap on the scene shows another sculpture */
+  const raycaster = new Raycaster(); raycaster.layers.set(1);
+  function pickControl(clientX, clientY) {
+    if (!controls.group.visible || !kit || !rig.visible) return null;
+    const r = canvas.getBoundingClientRect();
+    const cropX = (size.rw * size.block - size.dw) / dpr, cropY = (size.rh * size.block - size.dh) / dpr;
+    const ndc = new Vector2(((clientX - r.left) / (size.w + cropX)) * 2 - 1, 1 - ((clientY - r.top + cropY) / (size.h + cropY)) * 2);
+    raycaster.setFromCamera(ndc, camera);
+    for (const hit of raycaster.intersectObject(controls.group, true)) {
+      for (let o = hit.object; o; o = o.parent) {
+        if (o.userData.control && (o.userData.control !== 'pause' || controls.state.pause !== null)) return o.userData.control;
+      }
+    }
+    return null;
+  }
   const onClick = e => {
-    if (!opts.interactive || disposed || opts.object !== 'escultura') return;
+    if (disposed) return;
+    const hit = pickControl(e.clientX, e.clientY);
+    if (hit) { if (typeof onControl === 'function') onControl(hit); return; }
+    if (!opts.interactive || opts.object !== 'escultura') return;
     if (e.target && e.target.closest && e.target.closest('button, a, input, select, textarea, label, [role="button"], [data-no-tap]')) return;
     regenerate();
   };
   host.addEventListener('click', onClick);
 
   /* render loop: frames only on change, about 30 fps while turning or dissolving, nothing while hidden */
-  let raf = 0, needs = false, sceneDirty = true, lastRender = 0, ready = false, disposed = false, lost = false;
+  let raf = 0, needs = false, sceneDirty = true, lastRender = 0, ready = false, disposed = false, lost = false, frames = 0;
   function schedule() { if (!raf && !disposed && !lost && !document.hidden) raf = requestAnimationFrame(tick); }
   function requestRender() { needs = true; schedule(); }
 
@@ -783,7 +1107,23 @@ export async function createSanctuaryScene(canvas, {
     renderer.setRenderTarget(null);
     sceneDirty = false;
   }
-  function renderPost() { renderer.render(postScene, postCam); }
+  function renderPost() { renderer.render(postScene, postCam); renderOverlay(); frames++; }
+  // the plinth controls at full resolution, on the same frame as the low-res image (whose grid is
+  // rw*block x rh*block device px from the bottom-left corner, cropped at the top and right)
+  function renderOverlay() {
+    if (!controls.group.visible || !kit || !rig.visible || !kit.main.visible) return;
+    const bg = scene.background;
+    scene.background = null;
+    renderer.autoClear = false;
+    renderer.clearDepth();
+    renderer.setViewport(0, 0, size.rw * size.block, size.rh * size.block);
+    camera.layers.set(1);
+    renderer.render(scene, camera);
+    camera.layers.set(0);
+    renderer.setViewport(0, 0, size.dw, size.dh);
+    renderer.autoClear = true;
+    scene.background = bg;
+  }
 
   function tick(now) {
     raf = 0;
@@ -814,8 +1154,9 @@ export async function createSanctuaryScene(canvas, {
     const dt = spin.last ? Math.min(now - spin.last, 100) : 0;
     spin.last = now;
     if (dt > 0) {
-      spin.angle = (spin.angle + (dt / TURN_MS) * Math.PI * 2) % (Math.PI * 2);
-      turner.rotation.y = turner.userData.yaw + spin.angle;
+      const turnMs = Math.max(5, num(tune.turnSeconds, TURN_MS / 1000)) * 1000;
+      spin.angle = (spin.angle + (dt / turnMs) * Math.PI * 2) % (Math.PI * 2);
+      turner.rotation.y = turner.userData.yaw + spin.angle + tune.assets.sculpture.rotY * DEG;
       sceneDirty = true;
     }
   }
@@ -836,7 +1177,44 @@ export async function createSanctuaryScene(canvas, {
   canvas.addEventListener('webglcontextlost', onLost);
 
   setKit(opts.object = OBJECTS.includes(opts.object) ? opts.object : 'escultura', opts.seed);
-  resize();
+  applyTuning();
+  // the nameplate is drawn in Tenor Sans: draw it again once the font is there
+  try { document.fonts.load("92px 'Tenor Sans'").then(() => { if (!disposed) drawPlate(); }, () => {}); } catch (e) { /* no font loading API */ }
+
+  // Live tuning: post-FX, light, palette, turntable and per-asset offsets. Only changed parts are needed.
+  function applyTuning() {
+    scene.fog.density = MOOD.fog.density * Math.max(0, num(tune.fog, 1));
+    renderer.toneMappingExposure = Math.max(0.05, num(tune.exposure, 1));
+    hemi.intensity = MOOD.hemi[2] * num(tune.light.fill, 1);
+    key.intensity = MOOD.key[1] * num(tune.light.key, 1);
+    back.intensity = MOOD.back[1] * num(tune.light.back, 1);
+    applyPalette();
+    resize(); // post-FX uniforms, pixel grid, framing and assets
+  }
+  const isObj = v => v && typeof v === 'object' && !Array.isArray(v);
+  function deepMerge(into, from) {
+    for (const [k, v] of Object.entries(from)) {
+      if (isObj(v) && isObj(into[k])) deepMerge(into[k], v);
+      else if (v !== undefined) into[k] = v;
+    }
+  }
+  // Where an object sits on screen, in CSS px from the canvas's top-left corner (the same mapping as anchor()).
+  function toScreen(v) {
+    v.project(camera);
+    const cropX = (size.rw * size.block - size.dw) / dpr, cropY = (size.rh * size.block - size.dh) / dpr;
+    return { x: (v.x * 0.5 + 0.5) * (size.w + cropX), y: (1 - (v.y * 0.5 + 0.5)) * (size.h + cropY) - cropY };
+  }
+  function screenRect(obj) {
+    scene.updateMatrixWorld();
+    const b = new Box3().setFromObject(obj);
+    if (b.isEmpty()) return null;
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (let i = 0; i < 8; i++) {
+      const p = toScreen(new Vector3(i & 1 ? b.max.x : b.min.x, i & 2 ? b.max.y : b.min.y, i & 4 ? b.max.z : b.min.z));
+      x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y);
+    }
+    return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+  }
 
   return {
     setOptions(partial = {}) {
@@ -844,6 +1222,7 @@ export async function createSanctuaryScene(canvas, {
       const prevObj = opts.object, prevSeed = opts.seed;
       const { seed: nextSeed, ...rest } = partial;
       Object.assign(opts, rest);
+      fxFromOptions(rest);
       if (!OBJECTS.includes(opts.object)) opts.object = 'escultura';
       if (!opts.motion) endDissolve();
       if (nextSeed !== undefined && nextSeed !== null && clampSeed(nextSeed) !== prevSeed && opts.object === prevObj) {
@@ -856,6 +1235,55 @@ export async function createSanctuaryScene(canvas, {
     },
     resize,
     regenerate,
+    /** Live tuning (dev panel): any part of defaultTuning()'s shape. Re-renders, never reloads. */
+    setTuning(partial = {}) {
+      if (disposed || !isObj(partial)) return;
+      const { seed: nextSeed, ...rest } = partial;
+      deepMerge(tune, rest);
+      if (nextSeed !== undefined && nextSeed !== null && clampSeed(nextSeed) !== opts.seed) regenerate(nextSeed);
+      applyTuning();
+      if (spinning()) requestRender();
+    },
+    /** A copy of the current tuning. */
+    getTuning() { return JSON.parse(JSON.stringify({ ...tune, seed: opts.seed })); },
+    /**
+     * The nameplate and buttons on the plinth's front face (escultura only). label: 'Escultura nº' (the seed is
+     * added), technique: the second line, pause: 'pause' | 'play' | null (null hides that button).
+     */
+    setPlinthControls(o = {}) {
+      if (disposed) return;
+      const st = controls.state;
+      if (typeof o.label === 'string') st.label = o.label;
+      if (typeof o.technique === 'string') st.technique = o.technique;
+      const glyphWas = st.pause;
+      if ('pause' in o) st.pause = o.pause === 'play' || o.pause === 'pause' ? o.pause : null;
+      if ('on' in o) controls.group.visible = !!o.on;
+      if (st.pause !== glyphWas && st.pause) controls.drawGlyph('pause');
+      controls.shade();
+      drawPlate();
+      requestRender();
+    },
+    /** Hover, keyboard focus and press feedback: each 'regenerate' | 'pause' | null. */
+    setControlState(o = {}) {
+      if (disposed) return;
+      Object.assign(controls.state, o);
+      controls.shade();
+      requestRender();
+    },
+    /** Screen rectangles (CSS px from the canvas's top-left) of the nameplate and the two buttons, or null. */
+    controlRects() {
+      if (disposed || !controls.group.visible || !kit || kit.name !== 'escultura' || !rig.visible || !kit.main.visible) return null;
+      const B = controls.buttons;
+      return {
+        plate: screenRect(controls.plate),
+        regenerate: screenRect(B.regenerate.press),
+        pause: controls.state.pause ? screenRect(B.pause.press) : null,
+      };
+    },
+    /** Which plinth control is under a viewport point, if any. */
+    pickControl,
+    /** Frames drawn so far (for an FPS readout). */
+    get frames() { return frames; },
     get seed() { return opts.seed; },
     /** True while the sculpture is actually turning (motion on, turn on, escultura). */
     get turning() { return spinning(); },
@@ -870,16 +1298,11 @@ export async function createSanctuaryScene(canvas, {
     // 'plinth': the front-right top corner of the (main) plinth. 'beside': right of the object at its middle height.
     anchor(which = 'plinth') {
       if (!kit) return null;
-      const p = kit.plinth, half = p.w / 2 + 0.07, z = (p.z || 0) + half;
-      const v = which === 'beside'
-        ? new Vector3(half + 0.06, p.h + 0.28, p.z || 0)
-        : new Vector3(half, p.h, z);
-      v.add(rig.position).project(camera);
-      const cropX = (size.rw * size.block - size.dw) / dpr, cropY = (size.rh * size.block - size.dh) / dpr;
-      return {
-        x: (v.x * 0.5 + 0.5) * (size.w + cropX),
-        y: (1 - (v.y * 0.5 + 0.5)) * (size.h + cropY) - cropY,
-      };
+      const p = kit.plinth, half = p.w / 2 + 0.07;
+      // in the main plinth's own space, so the anchor follows any tuning of the object or the plinth
+      const v = which === 'beside' ? new Vector3(half + 0.06, p.h + 0.28, 0) : new Vector3(half, p.h, half);
+      scene.updateMatrixWorld();
+      return toScreen(kit.main.localToWorld(v));
     },
     triangles(part = 'scene') {
       let n = 0;
@@ -901,6 +1324,7 @@ export async function createSanctuaryScene(canvas, {
       canvas.removeEventListener('webglcontextlost', onLost);
       if (ro) ro.disconnect();
       if (kit) kit.own.forEach(g => g.dispose());
+      controls.dispose();
       geometries.forEach(g => g.dispose());
       sky.geometry.dispose(); skyMat.dispose();
       materials.forEach(m => m.dispose());

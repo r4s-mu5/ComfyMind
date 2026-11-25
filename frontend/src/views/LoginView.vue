@@ -72,7 +72,9 @@ const login = async () => {
 </script>
 
 <template>
-  <DuskLayout width="30rem" fit>
+  <!-- Same left line as the landing plaque, so the plaque becomes the door. A little wider than the plaque at 1024
+       (the fields and the demo buttons need the room; the scene here is only a veiled background). -->
+  <DuskLayout width="clamp(26rem, 36vw, 30rem)" fit>
     <template #scene><SanctuaryScene object="escultura" framing="background" /></template>
     <template #top><LanguageSelector /></template>
 
@@ -92,7 +94,7 @@ const login = async () => {
           {{ t('login.demoPatient') }}
         </SButton>
         <!-- One primary per column (VC4 §4b): Marta is a text link. -->
-        <SButton variant="quiet" class="mt-1 !px-0 text-link underline" :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
+        <SButton variant="quiet" class="mt-1 !justify-start !px-0 text-left text-link underline" :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
           {{ t('login.demoTherapist') }}
         </SButton>
         <hr class="flute-rule mt-5" />

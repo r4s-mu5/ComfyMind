@@ -556,8 +556,10 @@ export async function createSanctuaryScene(canvas, {
 
   /* materials */
   const materials = [];
+  const rimColors = []; // every material's rim colour uniform, for the palette
   function withRim(mat, strength = MOOD.rim[1]) {
     const rim = { color: { value: C(MOOD.rim[0]) }, strength: { value: strength } };
+    rimColors.push(rim.color);
     mat.onBeforeCompile = s => {
       s.uniforms.rimColor = rim.color; s.uniforms.rimStrength = rim.strength;
       s.fragmentShader = s.fragmentShader
@@ -636,6 +638,7 @@ export async function createSanctuaryScene(canvas, {
     function ovMat(p, rimStrength = 0.3) {
       const m = new MeshStandardMaterial({ fog: false, roughness: 0.8, ...p });
       const rim = { color: { value: C(MOOD.rim[0]) }, strength: { value: rimStrength } };
+      rimColors.push(rim.color);
       m.onBeforeCompile = sh => {
         Object.assign(sh.uniforms, {
           rimColor: rim.color, rimStrength: rim.strength, uOvBlock: ovU.ovBlock,
@@ -671,13 +674,14 @@ export async function createSanctuaryScene(canvas, {
     const buttons = {};
     for (const [name, x] of [['regenerate', -0.12], ['pause', 0.12]]) {
       const holder = new Group(); holder.position.set(x, 0.55, FACE);
-      const socket = new Mesh(G(new TorusGeometry(0.083, 0.006, 8, 48)), ovMat({ color: 0x000000, roughness: 1 }, 0));
+      const socket = new Mesh(G(new TorusGeometry(0.081, 0.0045, 8, 48)), ovMat({ color: 0x000000, roughness: 1 }, 0));
       socket.position.z = 0.001;
       const press = new Group();
       const bodyMat = ovMat({ color: 0xffffff, emissive: 0x000000 });
       const body = new Mesh(G(new CylinderGeometry(0.074, 0.077, 0.024, 48).rotateX(Math.PI / 2).translate(0, 0, 0.012)), bodyMat);
       const tex = canvasTex(256, 256);
-      const faceMat = ovMat({ color: 0xffffff, map: tex, emissive: 0x000000, roughness: 0.7 });
+      // the glyph stays dark when lit: the emission follows the face texture (light stone, dark cut)
+      const faceMat = ovMat({ color: 0xffffff, map: tex, emissiveMap: tex, emissive: 0x000000, roughness: 0.7 });
       const face = new Mesh(G(new CircleGeometry(0.074, 48)), faceMat);
       face.position.z = 0.0242;
       press.add(body, face);
@@ -731,13 +735,13 @@ export async function createSanctuaryScene(canvas, {
         x.fillStyle = state.ink; x.fillText(text, W / 2, y);
       };
       line(title.toUpperCase(), 92, H * 0.5, 0.1);
-      line(technique.toUpperCase(), 52, H * 0.8, 0.12);
+      line(technique.toUpperCase(), 60, H * 0.8, 0.08);
       plateTex.needsUpdate = true;
     }
     function shade() {
       for (const [name, b] of Object.entries(buttons)) {
         const lit = state.hover === name || state.focus === name;
-        b.mats.forEach(m => { m.emissive.copy(skyU.sunColor.value); m.emissiveIntensity = lit ? 0.32 : 0; });
+        b.mats.forEach(m => { m.emissive.copy(skyU.sunColor.value); m.emissiveIntensity = lit ? 0.28 : 0; });
         b.press.position.z = state.press === name ? -0.011 : 0;
       }
       buttons.pause.holder.visible = state.pause !== null;
@@ -751,7 +755,7 @@ export async function createSanctuaryScene(canvas, {
         state.plate = '#' + marble.color.getHexString();
         state.stone = '#' + plinthMat.color.clone().lerp(C('#ffffff'), 0.12).getHexString();
         plateSide.color.copy(marble.color);
-        Object.values(buttons).forEach(b => b.socket.material.color.copy(C(p.marbleShadow).lerp(C('#000000'), 0.6)));
+        Object.values(buttons).forEach(b => b.socket.material.color.copy(plinthMat.color).lerp(C(p.marbleShadow), 0.6));
         drawGlyph('regenerate'); drawGlyph('pause');
       },
       drawPlate: drawPlateText, drawGlyph, shade,
@@ -867,8 +871,9 @@ export async function createSanctuaryScene(canvas, {
       view.cam.set(0, k.focusY + 0.15, portrait ? 4.2 : 4.6);
       view.offX = 0; view.offY = portrait ? 0.3 : 0.12;
     } else if (portrait) {
+      // portrait desktop screens (3D needs a 1024 px wide, hovering pointer): right of centre, clear of the text
       view.fov = 50;
-      base.set(0, 0, 0.3);
+      base.set((2 * 0.68 - 1) * (4.0 - 0.3 - 0.36) * Math.tan(view.fov * DEG / 2) * aspect, 0, 0.3);
       view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 4.6 : 4.0);
       view.offX = 0; view.offY = 0.42; // the object sits in the upper third, above a bottom text panel
     } else {
@@ -943,6 +948,10 @@ export async function createSanctuaryScene(canvas, {
     skyU.sunColor.value.set(p.sun);
     skyU.sunColor2.value.copy(p.sun.toLowerCase() === D.sun.toLowerCase() ? C(MOOD.sun.color2) : C(p.sun).lerp(C(p.horizon), 0.35));
     key.color.copy(tinted(MOOD.key[0], ratio(p.sun, D.sun)));
+    // the cool lights (sky fill, back light, rim) follow the sky, so a palette's stone never keeps today's lilac
+    const sk = ratio(p.skyMid, D.skyMid);
+    hemi.color.copy(tinted(MOOD.hemi[0], sk)); back.color.copy(tinted(MOOD.back[0], sk));
+    rimColors.forEach(u => u.value.copy(tinted(MOOD.rim[0], sk)));
     scene.fog.color.set(p.fog);
     const m = ratio(p.marble, D.marble), sh = ratio(p.marbleShadow, D.marbleShadow);
     stone.color.copy(tinted(BASE.stone, m)); plinthMat.color.copy(tinted(BASE.plinth, m)); marble.color.copy(tinted(BASE.marble, m));
