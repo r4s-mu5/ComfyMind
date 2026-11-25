@@ -8,6 +8,8 @@ import { SButton } from '@/components/sanctuary'
  * The patient's side panel in a session: the chat with the therapist, the "Marta can see what you
  * share" line, and a collapsed, clearly inactive placeholder for the future assistant.
  * Messages are { sender: 'patient' | 'therapist', text }. Emits `send` with the text.
+ * Shown as a transcript, not bubbles: a name line and the text, a hairline between turns; your own
+ * turns are set in a little, like a reply in a script.
  */
 const props = defineProps<{
   messages: { sender: string; text: string }[]
@@ -39,7 +41,7 @@ const send = () => {
 </script>
 
 <template>
-  <section class="flex flex-col gap-4 rounded-card border-[1.5px] border-border bg-card p-5" :aria-labelledby="`${inputId}-title`">
+  <section class="panel flex flex-col gap-4" :aria-labelledby="`${inputId}-title`">
     <div class="flex flex-col gap-1">
       <h2 :id="`${inputId}-title`" class="type-body font-semibold">{{ t('session.chatTitle', { name: therapistName }) }}</h2>
       <p class="type-small text-muted-foreground">{{ t('session.canSee', { name: therapistName }) }}</p>
@@ -50,25 +52,14 @@ const send = () => {
       role="log"
       aria-live="polite"
       :aria-label="t('session.chatLog')"
-      class="flex max-h-[24rem] min-h-40 flex-col gap-4 overflow-y-auto rounded-control bg-background p-4"
+      class="flex max-h-[24rem] min-h-32 flex-col divide-y divide-hairline overflow-y-auto border-b border-hairline"
     >
-      <p v-if="!messages.length" class="type-small text-muted-foreground">{{ t('session.chatEmpty', { name: therapistName }) }}</p>
-      <div
-        v-for="(m, i) in messages"
-        :key="i"
-        :class="['flex max-w-[90%] flex-col gap-1', m.sender === 'patient' ? 'items-end self-end text-right' : 'items-start self-start']"
-      >
-        <span class="type-small font-semibold text-muted-foreground">
+      <p v-if="!messages.length" class="type-small py-3 text-muted-foreground">{{ t('session.chatEmpty', { name: therapistName }) }}</p>
+      <div v-for="(m, i) in messages" :key="i" :class="['flex flex-col gap-1 py-3', m.sender === 'patient' && 'pl-8']">
+        <span :class="['type-small font-semibold', m.sender === 'patient' ? 'text-muted-foreground' : 'text-foreground']">
           {{ m.sender === 'patient' ? t('session.chatYou') : therapistName }}
         </span>
-        <p
-          :class="[
-            'type-body rounded-control px-4 py-3 text-left',
-            m.sender === 'patient' ? 'bg-secondary text-foreground' : 'border-[1.5px] border-border bg-card text-foreground',
-          ]"
-        >
-          {{ m.text }}
-        </p>
+        <p class="type-body text-foreground">{{ m.text }}</p>
       </div>
     </div>
 
@@ -85,10 +76,10 @@ const send = () => {
       <p v-if="connected === false" class="type-small text-muted-foreground">{{ t('session.chatOffline') }}</p>
     </form>
 
-    <div class="border-t border-border pt-4">
+    <div class="border-t border-hairline pt-4">
       <button
         type="button"
-        class="type-small flex min-h-12 w-full items-center justify-between gap-3 rounded-control px-2 text-left font-semibold text-muted-foreground hover:bg-secondary"
+        class="type-small flex min-h-12 w-full items-center justify-between gap-3 rounded-none px-1 text-left font-semibold text-muted-foreground hover:text-foreground"
         :aria-expanded="assistantOpen"
         :aria-controls="`${inputId}-assistant`"
         @click="assistantOpen = !assistantOpen"
@@ -96,7 +87,7 @@ const send = () => {
         <span>{{ t('session.assistant') }}</span>
         <ChevronDown aria-hidden="true" :class="['size-5 transition-transform', assistantOpen && 'rotate-180']" />
       </button>
-      <p v-show="assistantOpen" :id="`${inputId}-assistant`" class="type-small px-2 pt-2 text-muted-foreground">
+      <p v-show="assistantOpen" :id="`${inputId}-assistant`" class="type-small px-1 pt-2 text-muted-foreground">
         {{ t('session.assistantBody') }}
       </p>
     </div>

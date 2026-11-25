@@ -3,7 +3,6 @@ import { computed, ref } from 'vue'
 import { Check } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 import { ArtworkMount, ReflectionPrompt, SButton, VersionsStrip } from '@/components/sanctuary'
-import { useNavLink } from './useNavLink'
 
 /**
  * The obra just made: a large mounted piece in its niche and, beside it, the choices.
@@ -11,6 +10,7 @@ import { useNavLink } from './useNavLink'
  * phase 'reflect'  the optional ReflectionPrompt (after Guardar, or from "Anotar un pensamiento")
  * phase 'done'     what happened, then Crear otra obra / Ver mis obras
  * No ranking and no "regenerate": versions are only listed, the current one outlined.
+ * Each stack of choices has one fill, at most one outline, and the rest are quiet text buttons.
  */
 export interface ResultVersion { id: number; fileName: string; src: string; technique: string; date: string }
 
@@ -38,7 +38,6 @@ const emit = defineEmits<{
   fresh: []
 }>()
 const { t } = usePrototypeLocale()
-const nav = useNavLink()
 const noteDraft = ref('')
 const heading = ref<HTMLElement | null>(null)
 
@@ -90,23 +89,23 @@ defineExpose({ focus: () => heading.value?.focus() })
         <SButton v-if="!kept" class="self-start" :busy="busy?.keep" @click="emit('keep')">{{ t('create.keep') }}</SButton>
         <div class="flex flex-wrap gap-3">
           <SButton variant="secondary" @click="emit('another')">{{ t('create.another') }}</SButton>
-          <SButton v-if="inSession && !shared" variant="secondary" :busy="busy?.share" @click="emit('share')">
+          <SButton v-if="inSession && !shared" variant="quiet" :busy="busy?.share" @click="emit('share')">
             {{ t('create.share', { name: therapistName }) }}
           </SButton>
+          <SButton v-if="!hasNote" variant="quiet" @click="emit('note')">{{ t('create.addThought') }}</SButton>
         </div>
-        <button v-if="!hasNote" type="button" class="type-body inline-flex min-h-12 items-center self-start font-semibold text-link underline underline-offset-4 hover:no-underline" @click="emit('note')">{{ t('create.addThought') }}</button>
         <p v-if="inSession" class="type-small text-muted-foreground">{{ t('session.canSee', { name: therapistName }) }}</p>
       </div>
 
-      <div v-else-if="phase === 'reflect'" data-reflect class="rounded-card border-[1.5px] border-border bg-card p-6">
+      <div v-else-if="phase === 'reflect'" data-reflect class="mat p-6 sm:p-8">
         <ReflectionPrompt v-model="noteDraft" :busy="busy?.note" @save="(n) => emit('saveNote', n)" @skip="emit('skipNote')" />
       </div>
 
       <div v-else class="flex flex-col gap-4">
         <SButton class="self-start" @click="emit('fresh')">{{ t('create.fresh') }}</SButton>
         <div class="flex flex-wrap gap-3">
-          <SButton variant="secondary" v-bind="nav(galleryTo)">{{ t('create.toGallery') }}</SButton>
-          <SButton v-if="inSession && !shared" variant="secondary" :busy="busy?.share" @click="emit('share')">
+          <SButton variant="secondary" :to="galleryTo">{{ t('create.toGallery') }}</SButton>
+          <SButton v-if="inSession && !shared" variant="quiet" :busy="busy?.share" @click="emit('share')">
             {{ t('create.share', { name: therapistName }) }}
           </SButton>
           <SButton variant="quiet" @click="emit('another')">{{ t('create.another') }}</SButton>

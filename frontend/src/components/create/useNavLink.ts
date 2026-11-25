@@ -3,7 +3,8 @@ import { useRouter } from 'vue-router'
 /**
  * Props for an SButton that navigates: a real <a> with a working href (keyboard-focusable, opens in a
  * new tab) and client-side routing on click. Use as <SButton v-bind="nav('/home')">.
- * (SButton's own `to` currently renders an <a> without href; see the B2 note in PLAN.md.)
+ * Deprecated: SButton's own `to` now renders a RouterLink with a real href, so prefer
+ * <SButton to="/home">. The Taller no longer uses this; HomeView still does (delete this file once it moves).
  */
 export const useNavLink = () => {
   const router = useRouter()

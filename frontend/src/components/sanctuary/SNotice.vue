@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { AlertTriangle, CheckCircle2, Info, OctagonAlert, X } from 'lucide-vue-next'
+import { AlertTriangle, CheckCircle2, Info, OctagonAlert } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 
 /**
@@ -36,7 +36,7 @@ const close = () => {
   <div
     v-if="open"
     :role="tone === 'danger' ? 'alert' : 'status'"
-    :class="['flex items-start gap-4 rounded-card border-2 bg-card p-4 text-card-foreground', toneClass[tone].split(' ')[0]]"
+    :class="['flex items-start gap-4 rounded-none border-2 bg-card p-4 text-card-foreground', toneClass[tone].split(' ')[0]]"
   >
     <component :is="icon" aria-hidden="true" :class="['mt-0.5 size-6 shrink-0', toneClass[tone].split(' ')[1]]" />
     <div class="type-body min-w-0 flex-1">
@@ -50,10 +50,9 @@ const close = () => {
     <button
       v-if="dismissible"
       type="button"
-      class="type-small inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control px-3 font-semibold hover:bg-secondary"
+      class="type-small inline-flex min-h-12 shrink-0 items-center px-1 font-semibold underline decoration-1 underline-offset-[6px] hover:decoration-2"
       @click="close"
     >
-      <X aria-hidden="true" class="size-4" />
       {{ t('notice.dismiss') }}
     </button>
   </div>

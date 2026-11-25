@@ -22,7 +22,7 @@ const statusText = computed(() => props.status ?? t('progress.onItsWay'))
 </script>
 
 <template>
-  <div class="dusk relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-card px-6 pb-40 pt-10 text-center">
+  <div class="dusk relative isolate flex flex-col items-center gap-6 overflow-hidden rounded-none px-6 pb-40 pt-10 text-center">
     <div class="sky absolute inset-0 -z-10 [--horizon:14%] [--sun-size:8rem]" aria-hidden="true">
       <div class="mist" />
       <div class="sun-disc is-breathing" />
@@ -39,16 +39,16 @@ const statusText = computed(() => props.status ?? t('progress.onItsWay'))
       aria-valuemax="100"
       :aria-valuenow="determinate ? pct : undefined"
       :aria-valuetext="determinate ? `${pct}%` : statusText"
-      class="h-1.5 w-full max-w-sm overflow-hidden rounded-pill bg-dusk-sky/70 ring-1 ring-dusk-border"
+      class="h-1.5 w-full max-w-sm overflow-hidden rounded-none bg-dusk-sky/70 ring-1 ring-dusk-border"
     >
       <div
         v-if="determinate"
-        class="h-full rounded-pill bg-dusk-light transition-[width] duration-700 ease-calm"
+        class="h-full rounded-none bg-dusk-light transition-[width] duration-700 ease-calm"
         :style="{ width: `${pct}%` }"
       />
       <div
         v-else
-        class="calm-sweep h-full w-full rounded-pill"
+        class="calm-sweep h-full w-full rounded-none"
       />
     </div>
 

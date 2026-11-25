@@ -39,24 +39,33 @@ const linkAttrs = computed(() => {
 })
 
 const variants = {
-  // dusk: peach fill + sky text; dawn: ink fill + white text (both come from --primary)
-  primary: 'rounded-pill bg-primary text-primary-foreground hover:bg-primary/90 border-2 border-transparent',
-  secondary: 'rounded-control bg-card text-foreground border-2 border-input hover:bg-secondary',
-  quiet: 'rounded-control bg-transparent text-foreground border-2 border-transparent underline-offset-4 hover:underline',
-  danger: 'rounded-pill bg-danger text-danger-foreground hover:bg-danger/90 border-2 border-transparent',
+  // Square-cut, like a placard. dusk: peach fill + sky text; dawn: ink fill + light text (both from --primary).
+  primary: 'rounded-control bg-primary text-primary-foreground hover:bg-primary-hover border-2 border-transparent',
+  // Transparent, not white: the 2px border is the control boundary (>= 3:1).
+  secondary: 'rounded-control bg-transparent text-foreground border-2 border-input hover:bg-secondary',
+  // No box: an always-visible underline. px-1 keeps the target width; min-h keeps it >= 48px.
+  quiet: 'rounded-none bg-transparent text-foreground border-0 px-1 underline decoration-1 underline-offset-[6px] hover:decoration-2',
+  danger: 'rounded-control bg-danger text-danger-foreground hover:bg-danger/90 border-2 border-transparent',
 }
 const sizes = {
   patient: 'type-button min-h-14 px-7',
   compact: 'min-h-11 px-5 text-base font-semibold leading-tight',
+}
+// Quiet buttons have no box, so they keep only the height (48px floor for patient screens).
+const quietSizes = {
+  patient: 'type-button min-h-12',
+  compact: 'min-h-11 text-base font-semibold leading-tight',
 }
 const classes = computed(() =>
   cn(
     'inline-flex items-center justify-center gap-3 text-center no-underline transition-colors',
     '[&_svg]:size-5 [&_svg]:shrink-0',
     variants[props.variant],
-    sizes[props.size],
+    props.variant === 'quiet' ? quietSizes[props.size] : sizes[props.size],
     props.block && 'w-full',
-    inert.value && 'cursor-not-allowed border-transparent bg-secondary text-muted-foreground hover:bg-secondary hover:no-underline',
+    // Disabled keeps the variant's shape but never looks like the primary: soft fill, dashed border.
+    inert.value && props.variant !== 'quiet' && 'cursor-not-allowed border-2 border-dashed border-input bg-secondary text-muted-foreground hover:bg-secondary',
+    inert.value && props.variant === 'quiet' && 'cursor-not-allowed text-muted-foreground no-underline hover:no-underline',
   ),
 )
 </script>

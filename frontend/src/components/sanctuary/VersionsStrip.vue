@@ -27,12 +27,12 @@ const pick = (id: string | number) => {
           :aria-current="current === v.id ? 'true' : undefined"
           :aria-label="`${t('versions.item', { n: i + 1, total: versions.length })}${current === v.id ? `, ${t('versions.current')}` : ''}`"
           :class="[
-            'block size-20 overflow-hidden rounded-control border-dawn-surface bg-dawn-surface p-1',
-            current === v.id ? 'outline outline-[3px] outline-offset-2 outline-ring' : 'border-2 border-input hover:border-ring',
+            'block size-20 overflow-hidden rounded-none bg-dawn-mat p-1',
+            current === v.id ? 'outline outline-[3px] outline-offset-2 outline-foreground' : 'border-2 border-input hover:border-foreground',
           ]"
           @click="pick(v.id)"
         >
-          <img :src="v.src" :alt="v.alt ?? ''" class="size-full rounded-sm object-cover" loading="lazy" />
+          <img :src="v.src" :alt="v.alt ?? ''" class="size-full rounded-none object-cover" loading="lazy" />
         </button>
       </li>
     </ul>

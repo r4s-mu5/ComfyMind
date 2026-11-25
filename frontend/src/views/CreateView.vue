@@ -385,7 +385,7 @@ onBeforeUnmount(() => {
           </div>
 
           <!-- The panel sits on a mat (a mount board on the page): no border, no radius. -->
-          <div v-if="way" ref="panelHost" class="scroll-mt-24 bg-card p-6 sm:p-8">
+          <div v-if="way" ref="panelHost" class="mat scroll-mt-24 p-6 sm:p-8">
             <WordsPanel v-if="way === 'words'" v-model="words" @create="createFromWords" />
             <DrawPanel v-else-if="way === 'draw'" v-model:description="drawDesc" @create="createFromDrawing" />
             <ImagePanel v-else v-model:description="imageDesc" :user-id="user?.id ?? null" @create="createFromImages" />

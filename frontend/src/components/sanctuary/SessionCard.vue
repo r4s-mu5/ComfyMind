@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import SCard from './SCard.vue'
 
 /**
- * A session: a date "leaf" (month, day and the status in a word: Now / Today / Next), time and therapist.
- * "Now" turns the leaf peach with a small sun dot; the word carries the state, never colour alone.
+ * A session as a ledger row (hairlines above and below, no card): a date "leaf" (month, day and the status
+ * in a word: Now / Today / Next), time and therapist. "Now" puts the leaf on a square of sun colour with
+ * a small dot; the word carries the state, never colour alone. Consecutive rows share one hairline.
  * Put the single action in the `action` slot (e.g. <SButton>Entrar a la sesión</SButton>).
  */
 interface Props {
@@ -26,11 +26,11 @@ const fullDate = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyl
 </script>
 
 <template>
-  <SCard class="flex flex-wrap items-center gap-6">
+  <div class="flex flex-wrap items-center gap-6 border-y border-hairline py-6 [&+&]:border-t-0">
     <div
       :class="[
-        'flex min-h-24 w-24 shrink-0 flex-col items-center justify-center gap-0.5 rounded-control border-2 px-1 py-2 text-center',
-        status === 'now' ? 'border-dawn-ink bg-dawn-sun text-dawn-ink' : 'border-input bg-card text-card-foreground',
+        'flex min-h-24 w-24 shrink-0 flex-col items-center justify-center gap-0.5 rounded-none px-1 py-2 text-center',
+        status === 'now' ? 'bg-dawn-sun text-dawn-ink' : 'text-foreground',
       ]"
     >
       <span class="sr-only">{{ fullDate }}</span>
@@ -50,5 +50,5 @@ const fullDate = computed(() => new Intl.DateTimeFormat(locale.value, { dateStyl
     </div>
 
     <div v-if="$slots.action" class="flex shrink-0 items-center"><slot name="action" /></div>
-  </SCard>
+  </div>
 </template>

@@ -175,7 +175,7 @@ const submit = () => {
 }
 
 // Tools and sizes are underline chips (style.css .chip): selection = 3px rule + ✓ + bold, via aria-pressed.
-const toolBtn = (active: boolean) => ['chip type-small inline-flex min-h-14 items-center gap-2 text-foreground', active ? 'font-bold' : 'font-medium']
+const toolBtn = 'chip type-small min-h-14 gap-2'
 </script>
 
 <template>
@@ -187,11 +187,11 @@ const toolBtn = (active: boolean) => ['chip type-small inline-flex min-h-14 item
 
     <div class="flex flex-wrap items-center gap-x-12 gap-y-3">
       <div role="group" :aria-label="t('create.toolGroup')" class="flex gap-6">
-        <button type="button" :class="toolBtn(tool === 'brush')" :aria-pressed="tool === 'brush'" @click="tool = 'brush'">
+        <button type="button" :class="toolBtn" :aria-pressed="tool === 'brush'" @click="tool = 'brush'">
           <Brush aria-hidden="true" class="size-5" /> {{ t('create.toolBrush') }}
           <Check v-if="tool === 'brush'" aria-hidden="true" class="size-5" />
         </button>
-        <button type="button" :class="toolBtn(tool === 'eraser')" :aria-pressed="tool === 'eraser'" @click="tool = 'eraser'">
+        <button type="button" :class="toolBtn" :aria-pressed="tool === 'eraser'" @click="tool = 'eraser'">
           <Eraser aria-hidden="true" class="size-5" /> {{ t('create.toolEraser') }}
           <Check v-if="tool === 'eraser'" aria-hidden="true" class="size-5" />
         </button>
@@ -202,7 +202,7 @@ const toolBtn = (active: boolean) => ['chip type-small inline-flex min-h-14 item
           v-for="k in (['s', 'm', 'l'] as SizeKey[])"
           :key="k"
           type="button"
-          :class="toolBtn(size === k)"
+          :class="toolBtn"
           :aria-pressed="size === k"
           @click="size = k"
         >

@@ -35,7 +35,7 @@ withDefaults(defineProps<Props>(), { align: 'start', showComfort: true, width: '
 
     <div v-if="showComfort || $slots.top" class="relative z-10 flex flex-wrap items-center justify-end gap-3 px-4 py-4 sm:px-6">
       <slot name="top" />
-      <ComfortPanel v-if="showComfort" variant="secondary" />
+      <ComfortPanel v-if="showComfort" variant="quiet" />
     </div>
 
     <main
