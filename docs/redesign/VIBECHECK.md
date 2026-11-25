@@ -58,6 +58,8 @@ Anything rated "yes" or "somewhat" is fixed before it ships.
 - A pill badge above the headline ("✨ New", "Beta", "AI-powered")
 - Numbered steps "01 / 02 / 03" that aren't really a sequence
 - Every block is a card with the same radius, border and shadow
+- **Rounded cards as the default container** (owner flagged this in ComfyMind specifically): rounded rectangles around everything, rounded pill buttons, rounded chips. Prefer architectural edges, hairlines, mats and open layout.
+- A near-white app interior that has nothing to do with the brand's hero/landing ("generic dashboard inside, art direction only on the landing")
 - Cards that lift on hover (`translate-y-1` + bigger shadow) everywhere
 - A left accent bar on rounded cards
 - Bento grids for no reason

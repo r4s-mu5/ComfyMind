@@ -27,6 +27,9 @@ the stakeholder meeting.
 | D11 | **No "patient" in the GUI.** Use the person's name and *tú*; the role word is usuario · usuari · user ("persona usuaria" in sentences). Code identifiers are unchanged. | User |
 | D12 | 3D = **procedural three.js only** (no model files), lazy-loaded, low-res render pass, tight budget. A shader-only scene was considered and kept as an option. | User + orchestrator |
 | D13 | 3D: **generative Escultura abstracta**, a new seeded sculpture on click/tap plus a keyboard button, with a museum label "Escultura nº NNNN". FX = 1/4 pixels + strong dither + static grain. **No camera or object motion** except the regenerate transition. | User |
+| D14 | Sculpture **turns slowly 360°** on its plinth (60–90 s/rev, linear) so users see all angles; camera still fixed; still under Motion off / reduced motion. Supersedes the "no object motion" part of D13. | User |
+| D15 | **Rounded cards read as vibecoded** → review and replace with architectural, near-square edges; arch/niche is the only curve; reconsider pills/chips. | User |
+| D16 | **App interior too white** → integrate dawn with dusk (same place, lower intensity). | User |
 | D9 | Demo: Spanish default; reviewers view it over a video call and on their own computers, so desktop QA comes first; curated template images. | User (interview) |
 
 ## Known facts / constraints
@@ -122,3 +125,4 @@ the stakeholder meeting.
 - 2026-11-25 — L2 (round 2): generative Escultura (seeded SDF, 0–1 opening, 120 seeds checked for figurative reads), regenerate via button/click with an 800 ms Bayer dissolve, museum label + aria-live, fully still scene, FX default 1/4 + strong dither; SanctuaryScene.vue (seed, regenerate, label, `sculpture` event), WelcomeView button, `landing.*` keys; posters re-rendered (seed 0427); both builds pass, no console errors. Status done.
 - 2026-11-25 — F2: demo art abstract only (12 abstract/near-abstract artworks + 2 generated abstract sketches; figurative 00180/00185, neon aurora 00094 and 7 others removed; first «Un lugar tranquilo» result is the watercolour); VC2 must-fixes F1–F11 (gallery reload on route change, sticky Crear row, demo shortcuts first on login, sun below Cancelar, poster-niche gallery empty + plain dawn niche for the therapist, panel toggle in the aside, header without flask/文A, unclipped nav ring, language focus ring, static 2-row header at ≥125 %, WayIn auto-fit grid, 2-row therapist ledger, wrapping session-end list) + quick wins F13–F15, F21; both builds pass; two-page Playwright flow at 1440/1280/1024/1024+150 %, no console errors, no pacient/patient. Status done.
 - 2026-11-25 09:15 — Orchestrator: usage-limit stop interrupted F3 and L2b (partial work builds, landing and Taller checked). Demo republished (v3). Handoff written: `HANDOFF.md`; scripts in `tools/`.
+- 2026-11-25 — Owner requested D14–D16 + a review of other vibecoded tells; brief for the next session written in `HANDOFF.md` §0.

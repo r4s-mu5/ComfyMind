@@ -2,7 +2,50 @@
 
 **Last updated:** 2026-11-25 09:15 (Madrid). Branch `claude/art-therapy-gui-redesign-8c2ik9` on `r4s-mu5/ComfyMind`, pushed.
 
-Read in this order: this file → `PLAN.md` (decisions D1–D13, status, log) → `DESIGN.md` (the spec) → `VIBECHECK.md` (mandatory rule) → the latest review, `reviews/VC3_FINAL.md`.
+Read in this order: this file → `PLAN.md` (decisions D1–D16, status, log) → `DESIGN.md` (the spec) → `VIBECHECK.md` (mandatory rule) → the latest review, `reviews/VC3_FINAL.md`.
+
+## 0. Next session's brief (owner request, 2026-11-25)
+
+The owner wants these done in a fresh conversation. Act as orchestrator: plan, delegate to workers with exclusive files, and review with fresh eyes. Commit through the autosave loop.
+
+**A. The sculpture turns, calmly (D14).**
+- The sculpture rotates slowly and continuously, a 360° turntable on its plinth, about 60–90 s per revolution, linear, so the user sees every angle.
+- The camera stays fixed.
+- It stops completely with Comfort → Motion off or `prefers-reduced-motion`.
+- Consider a small pause/play control next to the museum label (WCAG 2.2.2).
+- It keeps the render loop light: about 30 fps is enough, pauses when the tab is hidden, and keeps the dither grid stable while turning (no shimmer; check at 1/4 pixel scale).
+- Files: `frontend/src/components/sanctuary/scene/sanctuaryScene.js` (`update()`), `SanctuaryScene.vue`.
+- Also finish the L2b items below (contact sheet with no figurative readings, prototype republish).
+
+**B. Vibecoded tells review, starting with rounded cards (D15).**
+1. Run a fresh-eyes review (Opus, an agent that didn't build it) of every screen against `VIBECHECK.md`. Focus on rounded cards as the default container, pill buttons and chips, uniform card grids, icon-in-box tiles, header button boxes, soft-shadow lifts, and anything else that reads "generic LLM app".
+2. It proposes a concrete replacement language: architectural, near-square edges; hairlines; mats; open layouts; the arch/niche as the only curve.
+3. Apply it in the tokens (`style.css` radius and elevation) and the sanctuary components first, so screens inherit it, then fix screen-level leftovers.
+4. Update DESIGN.md §4.5 with the final values and remove the "UNDER REVIEW" note.
+
+**C. Integrate the app interior with the welcome (D16).**
+- Dawn screens are too white and feel like another product.
+- Explore 2–3 options as quick screenshots, using the directions listed in DESIGN.md §5.2 (D16 note). The owner picks one: show them side by side, with a published artifact or images.
+- Then apply it to the tokens and the shell: dawn page tint, surfaces, a top sky band, low-strength dither and grain, colonnade/flute motifs.
+- It stays lower in intensity than dusk, and every contrast rule still applies.
+
+**D. Branches to check during the same review.**
+- The session-end screen and the therapist calendar plus its "ended" modal (still "somewhat" in VC3).
+- The way-in picker (it must not read as three feature cards).
+- The header (too many boxed controls?).
+- Toasts and dialogs (rounded and default-looking?).
+- Empty states.
+- Button shapes across dusk and dawn.
+- Whether the poster fallback looks right when 3D is off.
+- Copy tone in ES, CA and EN.
+- Plus the unfinished F3 items below.
+
+**Done when:**
+- A fresh vibecheck (VC4) answers "no" for every screen.
+- The owner has chosen the D16 option.
+- Both builds pass.
+- The hosted demo is republished at the same URL (see "How to work").
+- DESIGN.md, PLAN.md and this file are updated.
 
 ## Where things are
 

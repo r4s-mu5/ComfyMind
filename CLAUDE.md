@@ -1,5 +1,7 @@
 # ComfyMind: instructions for Claude
 
+**New session? Start with `docs/redesign/HANDOFF.md`**: current state, links, the next task brief, and how to work (autosave, worker rules, publishing the demo).
+
 Read and follow `AGENTS.md` (project scope, stack, accessibility) before changing anything.
 
 Design work must follow:

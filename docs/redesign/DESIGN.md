@@ -127,7 +127,7 @@ Destructive actions (end session, delete) use `--danger` for **both** the trigge
 
 - **Spacing scale (px):** 4, 8, 12, 16, 24, 32, 48, 64, 96. Use `gap` on flex and grid containers.
 - **Targets:** patient primary controls are **56 px** tall, with 48 px as the floor for any patient target. Therapist targets are at least 44 px. Leave at least 12 px between adjacent targets.
-- **Radius:** controls 12 px. Cards 16 px. Pill buttons 999 px (primary actions only). The arch top (`border-radius: 999px 999px 12px 12px`) is the **niche** motif for featured artwork and the atrium.
+- **Radius (UNDER REVIEW, D15):** the owner reads *rounded cards* as a vibecoded tell. Direction: architectural, near-square edges (0–4 px) for cards, panels and inputs; hairlines and mats instead of rounded boxes; the **arch/niche** stays as the only curved motif, reserved for artwork and the atrium; pill buttons to be reconsidered in the same review. Final values are set by the next review (see `HANDOFF.md`). Until then, the values below are the current implementation: controls 12 px. Cards 16 px. Pill buttons 999 px (primary actions only). The arch top (`border-radius: 999px 999px 12px 12px`) is the **niche** motif for featured artwork and the atrium.
 - **Borders:** controls 2 px solid (`--dawn-border` / `--dusk-border`). Cards 1.5 px hairline plus surface colour.
 - **Elevation:** at dawn, one soft lift `0 1px 0 rgba(20,32,47,.06), 0 10px 26px rgba(20,32,47,.07)`. At dusk, no shadows; depth comes from translucency and a soft warm glow `0 0 40px rgba(240,213,191,.16)`.
 - **Focus:** a 3 px ring in `--dawn-violet` / `--dusk-focus`, with a 3 px offset, on every interactive element. Never remove it.
@@ -158,6 +158,9 @@ Destructive actions (end session, delete) use `--danger` for **both** the trigge
 
 ### 5.2 Dawn echoes (no 3D)
 
+> **D16 (owner, after the meeting prep):** the inside of the app reads *too white* and clashes with the dusk welcome. Keep dawn lower-intensity than dusk, but clearly the **same place**: dawn is the atrium in the morning, not a blank web page. Directions for the next session to explore and choose from: tint the page and surfaces from the dusk palette (lilac/peach haze, marble-warm off-whites instead of `#FFFFFF`); carry a faint horizon or sky band at the top of working screens; reuse the dither/grain at low strength; use the colonnade/flute motif in headers and dividers; let artwork mats be the brightest thing on screen. Contrast rules (§4, §9) still apply.
+
+
 Working screens quote the sanctuary lightly:
 - the warm dawn glow at the top of the page (`--dawn-bg-warm` radial)
 - the **niche** arch for featured artwork
@@ -176,7 +179,7 @@ Working screens quote the sanctuary lightly:
 - **Never on:** the workspace, the canvas, the therapist console, or behind running text.
 - **Assets:** procedural three.js geometry (no third-party models). The scene code lives in `frontend/src/components/sanctuary/scene/sanctuaryScene.js`, wrapped by `SanctuaryScene.vue`. Budget: < 60k triangles, DPR capped at 1.5, paused when the tab is hidden.
 - The prototype is in `docs/redesign/liminal/`. Owner's choices: the **Quiet** mood; the object is a **generative *Escultura abstracta***: each visit gets a seeded sculpture, and the user can make another (click/tap, or the "Otra escultura" button), labelled like a museum piece ("Escultura nº 0427 · Mármol, generada para ti"). FX default: 1/4 pixels, strong dither, static grain.
-- **The scene does not move:** no camera drift, no pointer lean, no breathing. The only motion is the short transition to a new sculpture (instant when motion is off).
+- **The camera never moves** (no drift, no pointer lean). **The sculpture turns slowly on its plinth** (D14): a calm, constant 360° turntable so the user sees every angle, about 60–90 s per revolution, linear, no easing bursts. With Comfort → Motion off or `prefers-reduced-motion`, it stands still (WCAG 2.2.2: moving content must be stoppable; the Comfort toggle is the control, and a small pause control by the label is a good addition). A new sculpture still arrives with the short dither dissolve.
 
 ### 5.4 Comfort panel (patient and therapist)
 
