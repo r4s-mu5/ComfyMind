@@ -97,6 +97,7 @@ the stakeholder meeting.
 | VC1 | done | foundation vibecheck: somewhat vibecoded (generic dusk blobs/orb/centred card, card-everything, caps eyebrows, Sparkles on Crear); 9 must-fix in reviews/VC1_FOUNDATION.md |
 | VC2 | done | screens vibecheck: somewhat vibecoded (figurative demo sketches, neon aurora first result, ghost-sun empty states, feature-card way-in, header wrap/icon soup; Crear below fold, gallery no reload); 11 must-fix in reviews/VC2_SCREENS.md |
 | F2 | done | VC2 must-fixes + abstract demo art |
+| VC3 | done | final vibecheck: no, 3 corners somewhat (way-in cards, session end, therapist calendar/ended); 8 must-fix (~75 min) in reviews/VC3_FINAL.md |
 
 ## Log
 
