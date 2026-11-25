@@ -84,7 +84,7 @@ const login = async () => {
           {{ t('login.demoPatient') }}
         </SButton>
         <!-- One primary per column (VC4 §4b): Marta and Entrar are text links in demo. -->
-        <SButton variant="quiet" class="self-start px-1 text-link underline" :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
+        <SButton variant="quiet" class="self-start px-0 text-link underline" :disabled="isLoading" data-testid="demo-therapist" @click="demoLogin('therapist')">
           {{ t('login.demoTherapist') }}
         </SButton>
         <hr class="flute-rule mt-4" />
@@ -113,15 +113,15 @@ const login = async () => {
           @update:model-value="delete errors.password"
         />
 
-        <SButton type="submit" :block="!isDemo" :variant="isDemo ? 'quiet' : 'primary'" :class="isDemo && 'self-start px-1 text-link underline'" :busy="isLoading">{{ isLoading ? t('login.entering') : t('login.enter') }}</SButton>
+        <SButton type="submit" :block="!isDemo" :variant="isDemo ? 'quiet' : 'primary'" :class="isDemo && 'self-start px-0 text-link underline'" :busy="isLoading">{{ isLoading ? t('login.entering') : t('login.enter') }}</SButton>
       </form>
 
-      <div class="mt-4 flex flex-wrap items-center gap-x-4">
-        <SButton variant="quiet" class="px-2 text-link underline" :aria-expanded="showForgot" @click="showForgot = !showForgot">
+      <div class="mt-4 flex flex-wrap items-center gap-x-6">
+        <SButton variant="quiet" class="px-0 text-link underline" :aria-expanded="showForgot" @click="showForgot = !showForgot">
           {{ t('login.forgot') }}
         </SButton>
         <p v-if="showForgot" class="type-small order-last w-full text-muted-foreground" role="status">{{ t('login.forgotHelp') }}</p>
-        <SButton variant="quiet" class="px-2 text-link underline" :disabled="isLoading" @click="router.push(locationWithDemo('/signup'))">
+        <SButton variant="quiet" class="px-0 text-link underline" :disabled="isLoading" @click="router.push(locationWithDemo('/signup'))">
           {{ t('login.create') }}
         </SButton>
       </div>
