@@ -546,8 +546,8 @@ export async function createSanctuaryScene(canvas, {
     } else if (portrait) {
       view.fov = 50;
       rig.position.set(0, 0, 0.3);
-      view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 4.4 : 3.7);
-      view.offX = 0; view.offY = 0.3;
+      view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 4.6 : 4.0);
+      view.offX = 0; view.offY = 0.42; // the object sits in the upper third, above a bottom text panel
     } else {
       // landscape landing: text panel on the left, object at about two thirds
       const wide = size.w / size.h > 2;

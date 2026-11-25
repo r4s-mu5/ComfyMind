@@ -325,11 +325,12 @@ function placeLabel(){
   el.hidden = !live; $('#another').hidden = !live;
   if (!live) return;
   const portrait = innerWidth / innerHeight < 0.95;
-  const a = scene.anchor(portrait ? 'beside' : 'plinth');
+  // landscape: a wall label just right of the plinth; portrait: on the plinth's front face, right-aligned
+  const a = scene.anchor('plinth');
   if (!a) return;
   const w = el.offsetWidth, h = el.offsetHeight;
-  const x = Math.min(innerWidth - w - 16, Math.max(16, a.x + 14));
-  const y = Math.min(innerHeight - h - 16, Math.max(72, portrait ? a.y - h / 2 : a.y + 6));
+  const x = Math.min(innerWidth - w - 16, Math.max(16, portrait ? a.x - w - 10 : a.x + 14));
+  const y = Math.min(innerHeight - h - 16, Math.max(72, portrait ? a.y + 12 : a.y + 6));
   el.style.transform = `translate(${Math.round(x)}px, ${Math.round(y)}px)`;
 }
 function onSculpture(s){
