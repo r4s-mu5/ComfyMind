@@ -866,14 +866,18 @@ export async function createSanctuaryScene(canvas, {
       view.cam.set(0, k.focusY + 0.1, dist);
       view.offX = 0; view.offY = 0.16;
     } else if (f === 'background') {
+      // behind a form on the left (login, signup, session end): the object right of centre, clear of the panel
+      // (62% of the width at 16:10, easing to 67% at 4:3); centred in portrait
       view.fov = portrait ? 52 : 36;
-      base.set(0, 0, 0);
+      const share = portrait ? 0.5 : 0.62 + 0.05 * clamp01((1.6 - aspect) / 0.27);
+      base.set((2 * share - 1) * (4.6 - 0.36) * Math.tan(view.fov * DEG / 2) * aspect, 0, 0);
       view.cam.set(0, k.focusY + 0.15, portrait ? 4.2 : 4.6);
       view.offX = 0; view.offY = portrait ? 0.3 : 0.12;
     } else if (portrait) {
-      // portrait desktop screens (3D needs a 1024 px wide, hovering pointer): right of centre, clear of the text
+      // portrait desktop screens (1000 px wide or more): right of centre, clear of the text column.
+      // Narrower (the phone poster, text at the bottom): centred.
       view.fov = 50;
-      base.set((2 * 0.68 - 1) * (4.0 - 0.3 - 0.36) * Math.tan(view.fov * DEG / 2) * aspect, 0, 0.3);
+      base.set((2 * (size.w >= 1000 ? 0.68 : 0.5) - 1) * (4.0 - 0.3 - 0.36) * Math.tan(view.fov * DEG / 2) * aspect, 0, 0.3);
       view.cam.set(0, k.focusY + 0.3, k.name === 'estudio' ? 4.6 : 4.0);
       view.offX = 0; view.offY = 0.42; // the object sits in the upper third, above a bottom text panel
     } else {

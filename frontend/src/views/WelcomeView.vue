@@ -36,7 +36,7 @@ function onSculpture(s: number) {
 // corner sits in each file, in the poster's own CSS px (measured with the scene's anchor('plinth') when rendered).
 const POSTER_SEED = 427
 const POSTER = {
-  landscape: { w: 1440, h: 900, x: 1220, y: 664 },
+  landscape: { w: 1440, h: 900, x: 1039, y: 628 },
   portrait: { w: 390, h: 844, x: 315, y: 276 },
 }
 const live = computed(() => Boolean(scene.value?.live))
