@@ -9,7 +9,7 @@ while true; do
       git add -A && git commit -q -m "autosave: work in progress $(date -u +%H:%M)Z
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
-Claude-Session: https://claude.ai/code/session_01Kk9Ps64XG2jxb5VeaSqfrE" && break
+Claude-Session: https://claude.ai/code/session_01Kk9Ps4EAPUfB7J83BRscWT" && break
       sleep 5
     done
   fi
