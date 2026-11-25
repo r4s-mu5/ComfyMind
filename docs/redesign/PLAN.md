@@ -98,6 +98,8 @@ the stakeholder meeting.
 | VC2 | done | screens vibecheck: somewhat vibecoded (figurative demo sketches, neon aurora first result, ghost-sun empty states, feature-card way-in, header wrap/icon soup; Crear below fold, gallery no reload); 11 must-fix in reviews/VC2_SCREENS.md |
 | F2 | done | VC2 must-fixes + abstract demo art |
 | VC3 | done | final vibecheck: no, 3 corners somewhat (way-in cards, session end, therapist calendar/ended); 8 must-fix (~75 min) in reviews/VC3_FINAL.md |
+| F3 | partial | VC3 must-fixes: Taller scroll/Crear fixed; others to verify (see HANDOFF.md) |
+| L2b | partial | sculpture variety + label button done; contact-sheet check + prototype republish pending |
 
 ## Log
 
@@ -119,3 +121,4 @@ the stakeholder meeting.
 - 2026-11-24 — B2: patient home + creation workspace (CreateView "Taller", components/create/*, notesService + demo notes map, session chat aside, session end via B1 overlay); legacy creation screens under /legacy/*; demo + normal builds pass; Playwright: words/draw/combine flows, versions, keep, reflection note stored, two-page share reaches therapist, session end, 1440/1280/1024, 150% EN keyboard pass, no console errors. Status done.
 - 2026-11-25 — L2 (round 2): generative Escultura (seeded SDF, 0–1 opening, 120 seeds checked for figurative reads), regenerate via button/click with an 800 ms Bayer dissolve, museum label + aria-live, fully still scene, FX default 1/4 + strong dither; SanctuaryScene.vue (seed, regenerate, label, `sculpture` event), WelcomeView button, `landing.*` keys; posters re-rendered (seed 0427); both builds pass, no console errors. Status done.
 - 2026-11-25 — F2: demo art abstract only (12 abstract/near-abstract artworks + 2 generated abstract sketches; figurative 00180/00185, neon aurora 00094 and 7 others removed; first «Un lugar tranquilo» result is the watercolour); VC2 must-fixes F1–F11 (gallery reload on route change, sticky Crear row, demo shortcuts first on login, sun below Cancelar, poster-niche gallery empty + plain dawn niche for the therapist, panel toggle in the aside, header without flask/文A, unclipped nav ring, language focus ring, static 2-row header at ≥125 %, WayIn auto-fit grid, 2-row therapist ledger, wrapping session-end list) + quick wins F13–F15, F21; both builds pass; two-page Playwright flow at 1440/1280/1024/1024+150 %, no console errors, no pacient/patient. Status done.
+- 2026-11-25 09:15 — Orchestrator: usage-limit stop interrupted F3 and L2b (partial work builds, landing and Taller checked). Demo republished (v3). Handoff written: `HANDOFF.md`; scripts in `tools/`.
