@@ -1,13 +1,9 @@
-# ComfyMind: nota de seguridad antes de publicar
+# ComfyMind: nota de seguridad
 
-**Fecha:** 25 de noviembre de 2026 · **Alcance:** backend (FastAPI) y conexión con el frontend.
+**Alcance:** backend (FastAPI) y conexión con el frontend.
 
-## En resumen
-
-La demo v6 funciona **sin backend**.
+La demo v6 adjunta al mail funciona **sin backend**. Esta nota es solo para la app real.
 La app real **no está lista para usarse con personas reales**. **Antes de publicar nada hace falta una revisión de seguridad.**
-
-## Lo más importante
 
 1. **Permisos.** Algunas rutas no comprueban quién hace la petición:
    - la lista de todos los usuarios es pública.
