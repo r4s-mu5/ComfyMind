@@ -127,3 +127,4 @@ the stakeholder meeting.
 - 2026-11-25 09:15 — Orchestrator: usage-limit stop interrupted F3 and L2b (partial work builds, landing and Taller checked). Demo republished (v3). Handoff written: `HANDOFF.md`; scripts in `tools/`.
 - 2026-11-25 — Owner requested D14–D16 + a review of other vibecoded tells; brief for the next session written in `HANDOFF.md` §0.
 - 2026-11-25 — D14 turntable built. D16: owner chose option 3 "Colonnade" (applied to style.css). VC4 review written (`reviews/VC4_REVIEW.md`), fixes pending. Demo v4 republished.
+- 2026-11-25 — VC4 fixes applied (W1–W4); night mode added (Comfort → Pantalla); v5 single-file demo. Seed 1203 figurative read deferred by owner. VC5 pending.

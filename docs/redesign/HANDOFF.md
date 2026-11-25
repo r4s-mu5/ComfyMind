@@ -4,6 +4,13 @@
 
 Read in this order: this file → `PLAN.md` (decisions D1–D16, status, log) → `DESIGN.md` (the spec) → `VIBECHECK.md` (mandatory rule) → the latest review, `reviews/VC3_FINAL.md`.
 
+## Status 2026-11-25, afternoon (v5)
+
+- **VC4 fixes applied** (workers W1–W4): square-cut shape language in tokens and components (radius 2px/0, niche the only curve, no lifts), Colonnade folded into the real dawn tokens, way-in as doorways, therapist calendar/home/session rebuilt in our words, landing hero as wall text, login with one primary, poster re-rendered without the hole, CA/EN copy slips fixed.
+- **Night mode** (owner request): Comfort → Pantalla: Clara / Oscura / Como el dispositivo (default Clara), the atrium at night from the dusk tokens. DESIGN.md §4.2b.
+- **v5 demo as one HTML file:** `python3 tools/build-single-html.py ComfyMind-demo-v5.html` (opens from disk; the file is git-ignored locally). The hosted artifact is still v4 at the owner's request.
+- **Later:** sculpture seed 1203 reads like a head in profile mid-turn (owner: fix later; check every seed at 4 angles). VC5 fresh review not run yet. Known leftovers: DesignView still shows old shape demos and the removed `raised` prop; DESIGN.md §6 component table still says 16px cards and pills; the landing text shade reads a bit heavy; the way-in may show Palabras underlined before a choice.
+
 ## Status 2026-11-25 (before the meeting)
 
 - **Done:** A, the turntable (D14): about 75 s per turn, frame-rate independent, stops with Motion off or reduced motion, and has an "Parar el giro" text control by the label; the scene module was re-copied to `liminal/scene/`. **D16, chosen by the owner: option 3 "Colonnade"** (a cool lilac-grey stone tint, a fluted course under the header and between sections, faint grain, off with Atmosphere → Plain), applied as a block at the end of `frontend/src/style.css`. The hosted demo was republished as v4 at the same URL. Both builds pass.
