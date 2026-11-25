@@ -173,9 +173,9 @@ Destructive actions (end session, delete) use `--danger` for **both** the trigge
 - **Chips** (`.chip`: suggestions, segments, tools): not boxes. 48 px tall, a 2 px bottom border in `--input` (≥ 3 : 1), no sides. Selected (`aria-pressed`/`aria-selected`/`.is-selected`): 3 px bottom rule in `--primary`, bold, plus a ✓ in the markup.
 - **Buttons:** primary = ink fill (peach at dusk), 2 px radius, 56 px; secondary = transparent with a 2 px `--input` border; quiet = no box, an always-visible 1 px underline (2 px on hover), 48 px tall; danger = `--danger` fill for trigger and confirm. Disabled keeps its shape with a `--dawn-surface-2` fill, ink-soft text and a **dashed** 2 px border, so it never looks like the primary.
 - **Borders:** controls 2 px solid (`--dawn-border` / `--dusk-border`). Overlays 1.5 px `--input`.
-- **Elevation:** surfaces have **none** (`--elevation: none`, `--shadow-lift: none`; `.elev` is retired). `--shadow-hung` (`0 2px 0 rgba(20,32,47,.06), 0 14px 22px -10px rgba(20,32,47,.18)`) is for artwork mats only. `--shadow-float` (`0 1px 0 rgba(20,32,47,.10), 0 24px 48px -28px rgba(20,32,47,.35)`) is for true overlays at dawn (dialog, popover, menu, toast) via `--overlay-shadow`; at dusk overlays have no shadow, only the 1.5 px border.
+- **Elevation:** surfaces have **none** (`--elevation: none`, `--shadow-lift: none`; `.elev` is retired). `--shadow-hung` (`0 2px 0 rgba(38,31,43,.06), 0 14px 22px -10px rgba(38,31,43,.18)`, ink-tinted) is for artwork mats only. `--shadow-float` (`0 1px 0 rgba(38,31,43,.10), 0 24px 48px -28px rgba(38,31,43,.35)`) is for true overlays at dawn (dialog, popover, menu, toast) via `--overlay-shadow`; at dusk and at night overlays have no shadow, only the 1.5 px border.
 - **Overlays:** dialogs are a mat on a `--dawn-ink` 55 % overlay, radius 0, padding 32 px, title in `type-h2`, with a **text** close button ("Cerrar / Tanca / Close", quiet) instead of an icon-only ✕. Toasts use the SNotice look (square, 2 px tone border, tone icon, 18 px text, a "Cerrar" text button), bottom-left, 12 s, paused on hover and focus; errors never auto-close.
-- **Focus:** a 3 px ring in `--dawn-violet` / `--dusk-focus`, with a 3 px offset, on every interactive element. Never remove it.
+- **Focus:** a 3 px ring in `--dawn-violet` by day, `--night-focus` at night, `--dusk-focus` at dusk, with a 3 px offset, on every interactive element. Never remove it.
 - **Content width:** 1120 px max for app pages. Text columns at most 60 ch.
 
 ### 4.6 Motion
@@ -257,16 +257,16 @@ A palette is one scene and its interior: the 3D scene colours (`frontend/src/the
 5. **Architecture (optional):** the 3D colonnade and statue fragment scene (§5.3), or a static poster of it.
 6. **Content scrim:** text sits on `--dusk-surface` at 97% opacity (so no shape ghosts through), or directly on the sky only where the measured contrast passes.
 
-### 5.2 Dawn echoes (no 3D)
+### 5.2 The interior echoes the scene (no 3D)
 
-> **D16 (owner, after the meeting prep):** the inside of the app reads *too white* and clashes with the dusk welcome. Keep dawn lower-intensity than dusk, but clearly the **same place**: dawn is the atrium in the morning, not a blank web page. Directions for the next session to explore and choose from: tint the page and surfaces from the dusk palette (lilac/peach haze, marble-warm off-whites instead of `#FFFFFF`); carry a faint horizon or sky band at the top of working screens; reuse the dither/grain at low strength; use the colonnade/flute motif in headers and dividers; let artwork mats be the brightest thing on screen. Contrast rules (§4, §9) still apply.
-
+> **D16 → v6 (owner):** the inside read *too white*, then (D16 Colonnade) still *did not really match the login screen*, and the night was an indigo-navy that "is a telltale sign of vibecoding". v6 takes the interior's colours **from the scene itself**: by day the page is the columns' lit marble in the horizon haze (§4.2); at night it is the shadow side of the same columns (§4.2b). Dawn stays calmer than dusk (no sky gradient, no sun disc on working screens), but it is clearly the same place. The dev palette selector (§4.7) swaps scene and interior together, so any alternative keeps that link.
 
 Working screens quote the sanctuary lightly:
-- the warm dawn glow at the top of the page (`--dawn-bg-warm` radial)
+- the horizon haze at the top of the page (`.dawn-glow`, from `--dawn-bg-warm`; at night `--night-glow`)
+- the stone grain over the page (Comfort → Atmosphere → Plain removes it)
 - the **niche** arch for featured artwork
-- a thin column-flute rule (3 parallel hairlines) as a section divider
-- marble-white mats for artworks
+- the fluted course (`.flute-rule`) under the header and between sections, shaded with `--flute-*`
+- artwork mats as the brightest surface (`--dawn-mat`; `--night-mat` at night)
 - Tenor Sans caps for labels
 
 ### 5.3 The Sanctuary scene (3D)
@@ -303,10 +303,10 @@ All components are built on the existing Reka UI / shadcn-vue primitives, restyl
 
 | Component | Spec |
 |---|---|
-| **Button** | `primary` (dusk: peach fill, sky text; dawn: ink fill, white text), `secondary` (surface fill, 2 px border), `quiet` (text with an underline on hover), `danger`. 56 px, 18 px label, an icon only together with text. Disabled = surface-2 fill + ink-soft text (≥ 4.5 : 1), never 50% opacity. |
+| **Button** | Square-cut, **2 px radius** (`--radius-control`), 56 px, 18 px label, an icon only together with text, no lift or shadow. `primary`: ink fill with surface text by day, the sun (`--night-primary` / `--dusk-light`) with page-colour text at night and dusk. `secondary`: transparent, 2 px `--input` border. `quiet`: no box, an always-visible 1 px underline (2 px on hover), 48 px. `danger`: `--danger` fill. Disabled = surface-2 fill, ink-soft text (≥ 4.5 : 1) and a dashed 2 px border, never 50 % opacity. |
 | **Field** | Visible label above (never placeholder-only), 56 px input, 2 px border, help text below, error below with an icon. Password fields get a "Show" toggle, and paste is allowed. |
-| **Card** | 16 px radius, surface fill, hairline. One card = one thing. |
-| **ArtworkMount** | White mat (16–32 px) around the image, optional niche arch, and a **MuseumLabel** below: title (Tenor caps; "Sin título / Sense títol / Untitled" if empty), a technique line ("A partir de un boceto"), date, "Hecha por Alex". |
+| **Card** (`SCard`) | **Radius 0, no shadow, no hover lift.** `panel` (default): no fill, no border; a `--rule` above and 24–32 px of space, the heading is the frame. `mat` (opt-in, for a form, the paper, the reflection): `--card` fill, no border by day; at dusk the 97 % scrim and a 1.5 px hairline. `selected`: a 2 px outline plus a label. One container = one thing; no boxes around groups that a rule and space already separate. |
+| **ArtworkMount** | `--dawn-mat` mat (16–32 px; white by day, dimmed marble at night) with `--shadow-hung`, square corners, optional niche arch, and a **MuseumLabel** below: title (Tenor caps; "Sin título / Sense títol / Untitled" if empty), a technique line ("A partir de un boceto"), date, "Hecha por Alex". |
 | **SessionCard** | A date "leaf" (month + day), time, therapist name, status chip (Ahora / Hoy / Próxima), and one action ("Entrar a la sesión"). |
 | **WayIn picker** | Three large tiles with an icon and a one-line description: **Palabras** (describe it), **Dibujo** (draw it), **Imagen** (start from an image). Combine sits inside "Imagen". Tiles are real `<button>`s. |
 | **CalmProgress** | The dusk sun or mist visual + a thin progress bar + a single status line ("Tu obra está en camino", ES / "La teva obra és en camí", CA / "Your artwork is on its way", EN), with `aria-live="polite"`. |

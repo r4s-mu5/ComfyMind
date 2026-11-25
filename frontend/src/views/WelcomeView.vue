@@ -48,8 +48,9 @@ const posterMode = computed(() => !live.value && (!(comfort.scene3d && desktop) 
 const labelSeed = computed(() => (live.value ? seed.value : posterMode.value ? POSTER_SEED : null))
 
 // Pin the label card beside the plinth's top corner, like a label on the wall next to a plinth: its top-left
-// just right of the corner, hanging down along the plinth's side. Never over the plinth: if the corner is too close
-// to the right edge for the card, the card goes ABOVE the corner instead (right-aligned), still clear of the plinth.
+// just right of the corner, hanging down along the plinth's side. Never over the plinth or the piece: when the corner
+// is too close to the right edge for the card (narrow screens), the card moves up to the right edge, above the
+// sculpture's head (it stands about a fifth of the screen height above the plinth top in every framing).
 const card = ref<HTMLElement | null>(null)
 const cardPos = ref<{ left: string; top: string } | null>(null)
 function posterAnchor(): { x: number; y: number } {
@@ -66,7 +67,7 @@ function placeCard() {
   const W = window.innerWidth, H = window.innerHeight
   const w = card.value?.offsetWidth ?? 260, h = card.value?.offsetHeight ?? 120
   let x = a.x + GAP, y = a.y + 4
-  if (x + w > W - EDGE) { x = W - w - EDGE; y = a.y - h - GAP }
+  if (x + w > W - EDGE) { x = W - w - EDGE; y = a.y - h - GAP - 0.22 * H }
   x = Math.max(EDGE, x)
   y = Math.min(H - h - EDGE, Math.max(TOP, y))
   cardPos.value = { left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }
