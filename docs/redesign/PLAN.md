@@ -30,6 +30,11 @@ the stakeholder meeting.
 | D14 | Sculpture **turns slowly 360°** on its plinth (60–90 s/rev, linear) so users see all angles; camera still fixed; still under Motion off / reduced motion. Supersedes the "no object motion" part of D13. | User |
 | D15 | **Rounded cards read as vibecoded** → review and replace with architectural, near-square edges; arch/niche is the only curve; reconsider pills/chips. | User |
 | D16 | **App interior too white** → integrate dawn with dusk (same place, lower intensity). | User |
+| D17 | **Meeting (2026-11-25): keep the Liminal Sanctuary theme**; the 3D art was liked. Some members read the dither/pixel effect as "still loading" → build a **dev panel** (v*_dev builds only, `VITE_DEV_PANEL`) with post-FX toggles and sliders, 3D asset controls, a palette selector and snapshots, so the next meeting can tune it live; the chosen values then become permanent. | Owner + meeting |
+| D18 | **Interior palette from the scene.** Light and dark take their colours from the login/landing scene; the navy/indigo dark mode is a vibecoding tell → v6 ships "Scene stone" night (ash-mauve from the column shadows). Other palettes are presets in the dev selector. | Owner |
+| D19 | **Frame choice after generating:** Arco, Cuadrado, Frontón, Óculo, Columnas, Sin marco; saved per artwork. | Owner |
+| D20 | **Welcome and login layout:** calmer distribution, login without scrolling; the sculpture is centred more. | Owner |
+| D21 | **Dev build only (for now): controls on the plinth** — a nameplate plus 3D buttons (refresh = new sculpture, pause/play = turning) set into the base, with real DOM buttons kept for keyboard and screen readers. | Owner |
 | D9 | Demo: Spanish default; reviewers view it over a video call and on their own computers, so desktop QA comes first; curated template images. | User (interview) |
 
 ## Known facts / constraints
@@ -128,3 +133,4 @@ the stakeholder meeting.
 - 2026-11-25 — Owner requested D14–D16 + a review of other vibecoded tells; brief for the next session written in `HANDOFF.md` §0.
 - 2026-11-25 — D14 turntable built. D16: owner chose option 3 "Colonnade" (applied to style.css). VC4 review written (`reviews/VC4_REVIEW.md`), fixes pending. Demo v4 republished.
 - 2026-11-25 — VC4 fixes applied (W1–W4); night mode added (Comfort → Pantalla); v5 single-file demo. Seed 1203 figurative read deferred by owner. VC5 pending.
+- 2026-11-25 (pm) — Meeting notes recorded as D17–D21. Workers D1 (dev panel, scene API, centring, plinth controls), D2 (scene-derived palette, presets, docs), D3 (welcome/login layout), D4 (frames). Targets: v6 and v6_dev single-file HTML. Sculpture seed 1203 still deferred.

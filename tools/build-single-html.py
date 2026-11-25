@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Build the backend-free demo as ONE self-contained HTML file (opens from disk, no server).
-Usage: python3 tools/build-single-html.py [out.html]   (default: ComfyMind-demo.html in the repo root)"""
+Usage: python3 tools/build-single-html.py [out.html] [mode]   (default: ComfyMind-demo.html, mode "demo";
+use mode "demodev" for the build with the dev panel)"""
 import base64, glob, os, re, subprocess, sys
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 OUT = os.path.abspath(sys.argv[1]) if len(sys.argv) > 1 else os.path.join(ROOT, 'ComfyMind-demo.html')
-D = '/tmp/comfymind-single'
+MODE = sys.argv[2] if len(sys.argv) > 2 else 'demo'
+D = '/tmp/comfymind-single-' + MODE
 subprocess.run(['rm', '-rf', D], check=True)
-subprocess.run(['npx', 'vite', 'build', '--mode', 'demo', '--config', 'vite.single.mjs', '--outDir', D],
+subprocess.run(['npx', 'vite', 'build', '--mode', MODE, '--config', 'vite.single.mjs', '--outDir', D],
                cwd=os.path.join(ROOT, 'frontend'), check=True, stdout=subprocess.DEVNULL)
 html = open(f'{D}/index.html').read()
 js = open(glob.glob(f'{D}/assets/*.js')[0]).read()
