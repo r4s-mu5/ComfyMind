@@ -9,7 +9,7 @@ Todavía no está lista para usarse con personas reales y necesita una revisión
    - `GET /users/` devuelve todos los usuarios sin autenticación.
    - cualquier usuario autenticado puede crear sesiones entre otras dos personas.
    - los endpoints de generación no comprueban que el `user_id` coincida con el usuario autenticado.
-2. **WebSocket del chat.** El rol llega como parámetro de la ruta y solo se validan `patient` y `therapist`. Con cualquier otro valor, un usuario autenticado puede conectarse a una sesión ajena y enviar mensajes a la persona usuaria. El JSON se reenvía sin validar, así que puede hacerse pasar por la terapeuta. El JWT también viaja en la query string de la URL, así que queda en los logs.
+2. **WebSocket del chat.** El rol llega como parámetro de la ruta y solo se validan `patient` y `therapist`. Con cualquier otro valor, un usuario autenticado puede conectarse a una sesión ajena y enviar mensajes a la persona usuaria. El JSON se reenvía sin validar, así que puede hacerse pasar por la terapeuta. El JWT también viaja en la query string de la URL y queda en los logs.
 3. **Configuración por defecto insegura:**
    - el `SECRET_KEY` que firma los JWT es `"changeme"` si no se define.
    - CORS acepta cualquier origen (`*`) con credenciales.
