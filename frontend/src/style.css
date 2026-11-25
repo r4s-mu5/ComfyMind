@@ -84,8 +84,8 @@
   --night-glow: rgba(224, 191, 182, 0.1);   /* horizon haze, very faint, at the top of the page */
 
   /* Semantic colours: always shown with an icon and text. Each mode has explicit tokens. */
-  --success-dawn: #1D6B47;
-  --warning-dawn: #7A5000;   /* 4.6:1 on surface-2, 5.6:1 on the page */
+  --success-dawn: #1A6441;   /* 5.0:1 on surface-2 */
+  --warning-dawn: #7A5000;   /* 4.9:1 on surface-2, 5.7:1 on the page */
   --danger-dawn: #A3302A;
   --success-dusk: #7FD1A6;
   --warning-dusk: #F2C46D;

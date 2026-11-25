@@ -111,6 +111,7 @@ interface SceneHandle {
 const DevPlinthControls = import.meta.env.VITE_DEV_PANEL === 'true'
   ? defineAsyncComponent(() => import('@/dev/DevPlinthControls.vue'))
   : null
+const loadDevBridge = import.meta.env.VITE_DEV_PANEL === 'true' ? () => import('@/dev/sceneBridge') : null
 const devHandle = shallowRef<SceneHandle | null>(null)
 let unbindDev: (() => void) | null = null
 
@@ -167,8 +168,8 @@ const start = async () => {
     })
     if (gone || !allowed.value) { created.dispose(); return }
     handle = created
-    if (import.meta.env.VITE_DEV_PANEL === 'true') {
-      const bridge = await import('@/dev/sceneBridge')
+    if (loadDevBridge) {
+      const bridge = await loadDevBridge()
       if (handle === created) {
         unbindDev = bridge.bindScene(created, { framing: props.framing, canvas: canvas.value })
         devHandle.value = created

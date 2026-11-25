@@ -238,7 +238,7 @@ const reflectionLog = ref('')
               <p class="type-small text-muted-foreground">{{ p.description }}</p>
             </div>
             <ul class="grid grid-cols-4 gap-2 sm:grid-cols-8" :aria-label="`${p.name}: scene colours`">
-              <li v-for="(hex, key) in p.scene" :key="key" class="flex flex-col gap-1">
+              <li v-for="(hex, key) in p.scene" :key="key" class="flex min-w-0 flex-col gap-1 break-words">
                 <span class="block h-12 border border-border" :style="{ background: hex }" aria-hidden="true" />
                 <span class="type-small">{{ key }}</span>
                 <span class="type-small text-muted-foreground">{{ hex }}</span>

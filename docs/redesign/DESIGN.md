@@ -65,6 +65,8 @@ Tokens live in `frontend/src/style.css` as CSS custom properties, exposed to Tai
 
 ### 4.1 Colour: Dusk (thresholds)
 
+Unchanged in v6 (the owner likes the login). Contrast on `--dusk-sky`.
+
 | Token | Hex | Use | Contrast |
 |---|---|---|---|
 | `--dusk-sky` | `#14202F` | page background | — |
@@ -79,58 +81,62 @@ Tokens live in `frontend/src/style.css` as CSS custom properties, exposed to Tai
 | `--dusk-focus` | `#FFE3A3` | focus ring | 13.1 : 1 |
 | Sky gradient | `#0F1826 → #14202F → #2A3148 → #413F59`, with a peach horizon glow `rgba(240,213,191,.35)` | landing and waiting backgrounds | — |
 
-### 4.2 Colour: Dawn (working screens)
+> **Open point (v6):** `--dusk-sky` and `--dusk-surface` are navy (`#14202F`, `#1F3140`). Over the mauve 3D scene they still read as a dark panel, but now that the interior's night is scene stone, the login panel is the one navy surface left: going from the login into a dark app changes hue. Not changed here (the owner likes the login); the presets in §4.7 show the alternative (each preset's dusk panel is its own night stone).
 
-D16 "Colonnade" (owner choice, 2026-11-25): dawn is the atrium in the morning. Cool lilac-grey stone, fluted courses under the header and between sections, a faint grain over the page (off with Comfort → Atmosphere → Plain). Contrast below is on `--dawn-bg` unless stated.
+### 4.2 Colour: the interior by day (Atrio light)
+
+v6 "Atrio" (owner, after the D16 meeting: *more influence from the login scene*). The page is the **lit marble of the columns** (sampled `#C0ADAB`) lifted into the **horizon haze** (`#D4BFB9`); the top light of the page is the haze itself; ink is the **column shadow** (`#5D4E62`) at its deepest. Rose-grey stone: calmer than the dusk login, not white, not cream-and-terracotta. The fluted courses and the grain stay (grain off with Comfort → Atmosphere → Plain). Contrast on `--dawn-bg` unless stated.
 
 | Token | Hex | Use | Contrast |
 |---|---|---|---|
-| `--dawn-bg` | `#E7E5ED` | page background (lilac-grey stone) | — |
-| `--dawn-bg-warm` | `#EEEBF2` | top light of the page (cool, no peach) | — |
-| `--dawn-surface` | `#F5F4F7` | cool marble: mats for forms, inputs, dialogs, popovers, toasts | — |
+| `--dawn-bg` | `#E9E2E3` | page: lit marble in morning haze | — |
+| `--dawn-bg-warm` | `#F3E9E5` | top light of the page (the horizon haze) | — |
+| `--dawn-surface` | `#F7F3F2` | honed marble: mats for forms, inputs, dialogs, popovers, toasts | — |
 | `--dawn-mat` | `#FFFFFF` | the **artwork mat** only: the brightest surface on the page | — |
-| `--dawn-surface-2` | `#DDDAE6` | selected and soft fills, disabled buttons | ink 11.9 : 1 |
-| `--dawn-ink` | `#14202F` | primary text, **primary button fill** | 13.2 : 1 (15.0 on surface) |
-| `--dawn-ink-soft` | `#3D4A5F` | secondary text, primary button hover | 7.2 : 1 (8.2 on surface) |
-| `--dawn-teal` | `#1E5E61` | links, progress | 5.9 : 1 (6.8 on surface) |
-| `--dawn-violet` | `#5B4E86` | wordmark, focus ring, accents | 5.8 : 1 |
-| `--dawn-border` | `#6B7488` | input, chip and control borders | 3.8 : 1 (4.3 on surface, 3.4 on surface-2) |
-| `--dawn-hairline` | `rgba(42,49,72,.22)` | rules between rooms; decorative only (never the only boundary of a control) | — |
-| `--dawn-sun` | `#F0D5BF` | the sun-disc motif, the "now" date leaf (decorative only) | ink 12.6 : 1 |
-| `--flute-dark` / `--flute-lit` / `--flute-mid` | `#CAC6D6` / `#F1EFF5` / `#DCD9E5` | the flute shading in `.flute-rule` | — |
+| `--dawn-surface-2` | `#DFD5D8` | selected and soft fills, disabled buttons | ink 11.2 : 1 |
+| `--dawn-ink` | `#261F2B` | primary text, **primary button fill** | 12.5 : 1 (14.5 on surface) |
+| `--dawn-ink-soft` | `#54485B` | secondary text, primary button hover | 6.7 : 1 (7.8 on surface, 6.0 on surface-2) |
+| `--dawn-teal` | `#245A5C` | links, progress (verdigris: the cool note the dusk mist carries) | 6.1 : 1 (5.4 on surface-2) |
+| `--dawn-violet` | `#5E4868` | wordmark, focus ring, accents (the shadow side of the columns) | 6.3 : 1 |
+| `--dawn-border` | `#76697B` | input, chip and control borders | 4.0 : 1 (4.7 on surface, 3.6 on surface-2) |
+| `--dawn-hairline` | `rgba(38,31,43,.22)` | rules between rooms; decorative only (never the only boundary of a control) | — |
+| `--dawn-sun` | `#F0D5BF` | the sun-disc motif, the "now" date leaf (decorative only) | ink 11.4 : 1 |
+| `--flute-dark` / `--flute-lit` / `--flute-mid` | `#CFC3C7` / `#F6F0EF` / `#DED4D7` | the flute shading in `.flute-rule` | — |
 | `--dawn-grain` | SVG noise | the stone grain behind AppShell (`.shell > .atmo-layer`) | — |
 
-### 4.2b Night (app dark mode)
+Shadows (`--shadow-hung`, `--shadow-float`) are tinted with the ink, not navy.
 
-Comfort → **Pantalla / Pantalla / Screen**: Clara (default) / Oscura / Como el dispositivo (follows `prefers-color-scheme` live). It sets `html.theme-dark` (`useComfort`). Night is **the same atrium after dark**: it is derived from the dusk tokens, not a neutral grey, and it is not near-black with one neon accent. It changes the working screens (AppShell, dialogs, popovers, menus, toasts, FullCalendar); threshold screens are already dusk and look the same. Defined in `style.css` §6.
+### 4.2b Night (app dark mode): "scene stone"
 
-| Role | Value | Contrast |
+Comfort → **Pantalla / Pantalla / Screen**: Clara (default) / Oscura / Como el dispositivo (follows `prefers-color-scheme` live). It sets `html.theme-dark` (`useComfort`). v6 (owner): *the indigo-navy night was a vibecoded tell.* Night is now **the same atrium at night**, sampled from the **shadow side of the columns** (`#5D4E62`) and the dusk sky's mauve-grey, deepened: a warm ash-mauve. No navy or blue-black, no neon accent, no saturated violet. Text is lit marble, the primary is the sun. Tokens are `--night-*` in `style.css` §1; the mapping is §7. It changes the working screens (AppShell, dialogs, popovers, menus, toasts, FullCalendar); threshold screens stay dusk.
+
+| Role | Token, value | Contrast |
 |---|---|---|
-| Page (`--background`, `--dawn-bg`) | `--dusk-sky` `#14202F` | — |
-| Cards, dialogs, popovers (`--card`) | `--dusk-surface` `#1F3140` | — |
-| Selected and soft fills (`--secondary`) | `#2B3D52` | text 10.0 : 1 |
-| Text / secondary text | `--dusk-text` / `--dusk-text-soft` | 14.9 / 10.4 : 1 on page (12.1 / 8.5 on card, 10.0 / 7.0 on fill) |
-| Primary button | `--dusk-light` fill, sky text | 11.7 : 1; fill vs page 11.7 : 1 |
-| Control borders (`--input`) | `--dusk-border` `#8FA0B8` | 6.2 : 1 on page, 5.0 on card, 4.2 on fill |
-| Links (`--link`) | `--dusk-teal` `#7FC4C4` | 8.3 : 1 on page, 6.7 on card |
-| Wordmark, accents (`--mark`, `--dawn-violet`) | `--dusk-lilac` `#B9AFD6` | 8.0 : 1 |
-| Focus ring | `--dusk-focus` `#FFE3A3`, 3 px | 13.1 : 1 on page, 10.7 on card |
-| Success / warning / danger | `#7FD1A6` / `#F2C46D` / `#FF9C92` | 9.1 / 10.1 / 8.2 : 1 on page (7.4 / 8.2 / 6.6 on card); danger fill with sky text 8.2 : 1 |
-| Hairline | `rgba(244,243,247,.18)` | decorative only |
-| Artwork mat (`--dawn-mat`) and fixed light things (`--dawn-surface`: paper samples, image tiles) | `#E4DFD6`, a dimmed warm off-white | ink on it 12.4 : 1; the artwork stays the brightest thing |
-| Flutes | `--dusk-sky-deep` / `--dusk-sky-mid` / `#1B2738` | — |
-| Grain / top light | grain at 45 % opacity; a faint lilac moonlight instead of the morning light | — |
-| Overlay behind dialogs | `rgb(5 9 16 / .72)` | — |
+| Page (`--background`, `--dawn-bg`) | `--night-bg` `#261F27` | — |
+| Top light | `--night-bg-warm` `#2F262C`; `.dawn-glow` uses `--night-glow` (horizon haze at 10 %) | — |
+| Cards, dialogs, popovers (`--card`) | `--night-surface` `#31292F` | — |
+| Selected and soft fills (`--secondary`) | `--night-fill` `#3E343C` | text 9.9 : 1 |
+| Text / secondary text | `--night-text` `#F0E8E5` (lit marble) / `--night-text-soft` `#D0C3C3` | 13.3 / 9.4 : 1 on page (11.7 / 8.2 on card, 9.9 / 7.0 on fill) |
+| Primary button | `--night-primary` `#F0D5BF` (the sun), page-colour text | 11.5 : 1; fill vs page 11.5 : 1 |
+| Control borders (`--input`) | `--night-border` `#9F8E98` (the plinth in shade) | 5.2 : 1 on page, 4.6 on card, 3.9 on fill |
+| Links (`--link`) | `--night-link` `#D2BEDD`: the sky above the columns, lifted. Teal was the one cool, saturated note on warm stone and read as the "dark page + one neon accent" flag. Links keep their underline, so the hue is not the only cue | 9.3 : 1 on page, 6.9 on fill |
+| Wordmark, accents (`--mark`, `--dawn-violet`) | `--night-mark` `#E0BFB6` (horizon haze) | 9.4 : 1 |
+| Focus ring | `--night-focus` `#FFE3A3` (the sun's core), 3 px | 12.8 : 1 on page, 9.5 on fill |
+| Success / warning / danger | `--success-night` `#93D0A9` / `--warning-night` `#ECC57C` / `--danger-night` `#F5A39A` | 9.1 / 9.8 / 8.1 : 1 on page (6.7 / 7.3 / 6.0 on fill); danger and the live calendar event take page-colour text, 8.1 / 9.1 : 1 |
+| Hairline | `--night-hairline` `rgba(240,232,229,.18)` | decorative only |
+| Artwork mat (`--dawn-mat`) and fixed light things (`--dawn-surface`: paper samples, image tiles) | `--night-mat` `#E3DAD6`, lit marble dimmed | ink on it 11.6 : 1; the artwork stays the brightest thing |
+| Flutes | `#1B161C` / `#3E343C` / `#2D252B` | — |
+| Overlay behind dialogs | `--night-deep` `#120F14` at 72 % | — |
 
-`--dawn-ink` and `--dawn-sun` do not change (ink on the peach "now" leaf, ink on paper). Overlays have no shadow at night (`--overlay-shadow: none`); the 1.5 px `--dusk-border` is their edge. shadcn `dark:` variants apply at night too.
+`--dawn-ink` and `--dawn-sun` do not change (ink on the peach "now" leaf, ink on paper). Overlays have no shadow at night (`--overlay-shadow: none`); the 1.5 px `--input` border is their edge. shadcn `dark:` variants apply at night too.
 
-### 4.3 Semantic colours (both modes, always with an icon and text)
+### 4.3 Semantic colours (every mode, always with an icon and text)
 
-| Token | Dawn | Dusk |
-|---|---|---|
-| `--success` | `#1D6B47` (6.5 : 1 on white) | `#7FD1A6` |
-| `--warning` | `#7F5300` (5.4 : 1 on bg, 4.9 on surface-2) | `#F2C46D` |
-| `--danger` | `#A3302A` (7.0 : 1) | `#FF9C92` |
+| Token | Light | Night | Dusk |
+|---|---|---|---|
+| `--success` | `#1A6441` (5.0 : 1 on surface-2) | `#93D0A9` | `#7FD1A6` |
+| `--warning` | `#7A5000` (4.9 : 1 on surface-2) | `#ECC57C` | `#F2C46D` |
+| `--danger` | `#A3302A` (4.9 : 1 on surface-2) | `#F5A39A` | `#FF9C92` |
 
 Destructive actions (end session, delete) use `--danger` for **both** the trigger and the confirm button.
 
@@ -181,6 +187,62 @@ Destructive actions (end session, delete) use `--danger` for **both** the trigge
 | Waiting | a breathing sun or mist (opacity ±8% over 6 s) **plus** an honest progress bar |
 | Never | flashing, parallax on scroll, autoplaying carousels, bouncing, shaking for errors, confetti |
 | `prefers-reduced-motion` or Comfort → Motion off | everything still; the 3D scene becomes its poster image |
+
+### 4.7 Palettes (presets for the dev palette selector)
+
+A palette is one scene and its interior: the 3D scene colours (`frontend/src/theme/palettes.ts`, `PALETTES`, with the sampled scene colours in its header) and the GUI tokens, as an `html.palette-<id>` block in `style.css` §6 that overrides the raw dusk, light and night tokens (so one block covers the login and landing, the light interior and night). The dev selector sets the class and gives the scene the preset's `scene`; **Atrio is the default and has no class**. Helpers: `paletteClass`, `activePaletteId`, `applyPaletteClass`. The style guide (`/design`, `/design/dusk`) can preview each one.
+
+| Id | Name | Scene | Light interior | Night |
+|---|---|---|---|---|
+| `atrio` | Atrio (default) | today's Quiet mood: `#1D2142 → #5E5A8A → #B49AB4`, horizon `#D9B4AE`, sun `#FFE6CC` | lit marble `#E9E2E3`, ink `#261F2B`, verdigris links | column-shadow stone `#261F27`, sun primary, sky-lilac links |
+| `alba` | Alba | dawn: slate-pearl sky `#46506A → #9AA2BA`, rose-gold horizon `#F1D8C8` | pearl `#E8E8EB`, rose-gold top light, slate-teal links | graphite `#212328`, rose-gold primary `#F3D3BF`, pale slate links |
+| `piedra` | Piedra | quarried stone: umber-grey sky `#3B3734 → #8A8076`, sand horizon `#DCCAB0` | limestone `#E6E2DC`, umber ink `#29251F`, moss-grey links (no terracotta) | warm stone `#22201D`, sandstone primary `#EBD7B7`, ochre links |
+| `jardin` | Jardín | sage/olive dusk `#2D3631 → #6F7B69`, straw horizon `#D8CEA9` | sage stone `#E2E5DE`, green-black ink, verdigris links `#245E55` | moss stone `#1D2320`, straw primary `#E8DBB2`, verdigris links `#98C9B9` |
+| `noche-clara` | Noche clara | moonlit: blue-grey sky `#2C3440 → #6B7584`, pale moon `#F1EFE6` | cool stone `#E3E5E7`, graphite ink, steel links | blue-grey stone `#1D2125` (low saturation, not navy), moon primary `#E6E2D2`, pale steel links |
+
+**Contrast, every palette and mode.** Computed from `style.css` by a script (all text/background pairs on the page, surface and fill; 390 pairs, 0 failures). The table gives the lowest ratio for each role. Body text targets 7 : 1 (AA 4.5 is the hard floor); soft text, links and semantic colours ≥ 4.5; borders and focus rings ≥ 3.
+
+**light** (lowest ratio across the page, surface and fill)
+
+| Role | min | atrio | alba | piedra | jardin | noche-clara |
+|---|---|---|---|---|---|---|
+| Body text | 4.5 (target 7) | 11.2 | 10.8 | 10.3 | 10.4 | 11.2 |
+| Soft text | 4.5 | 6.0 | 5.9 | 5.7 | 5.7 | 5.9 |
+| Link | 4.5 | 5.4 | 5.6 | 5.1 | 5.3 | 5.4 |
+| Control border | 3 | 3.6 | 3.5 | 3.3 | 3.3 | 3.4 |
+| Focus ring | 3 | 6.3 | 5.7 | 5.5 | 5.2 | 5.9 |
+| Success | 4.5 | 5.0 | 4.7 | 4.9 | 4.7 | 4.7 |
+| Warning | 4.5 | 4.9 | 5.2 | 4.8 | 5.1 | 5.2 |
+| Danger | 4.5 | 4.9 | 5.1 | 4.8 | 4.9 | 5.1 |
+| Primary button text | 4.5 (target 7) | 14.5 | 13.8 | 13.8 | 13.5 | 14.4 |
+
+**night** (lowest ratio across the page, surface and fill)
+
+| Role | min | atrio | alba | piedra | jardin | noche-clara |
+|---|---|---|---|---|---|---|
+| Body text | 4.5 (target 7) | 9.9 | 10.1 | 10.3 | 9.7 | 10.3 |
+| Soft text | 4.5 | 7.0 | 7.2 | 7.4 | 7.0 | 7.2 |
+| Link | 4.5 | 6.9 | 6.6 | 6.9 | 6.2 | 6.7 |
+| Control border | 3 | 3.9 | 3.7 | 3.9 | 3.9 | 3.9 |
+| Focus ring | 3 | 9.5 | 9.3 | 9.9 | 9.2 | 9.6 |
+| Success | 4.5 | 6.7 | 6.6 | 7.0 | 6.7 | 6.8 |
+| Warning | 4.5 | 7.3 | 7.1 | 7.6 | 7.0 | 7.3 |
+| Danger | 4.5 | 6.0 | 5.9 | 6.2 | 5.8 | 6.0 |
+| Primary button text | 4.5 (target 7) | 11.5 | 11.1 | 11.6 | 11.6 | 12.5 |
+
+**dusk** (lowest ratio across the sky and panel)
+
+| Role | min | atrio | alba | piedra | jardin | noche-clara |
+|---|---|---|---|---|---|---|
+| Body text | 4.5 (target 7) | 12.1 | 10.6 | 11.6 | 11.5 | 11.9 |
+| Soft text | 4.5 | 8.5 | 7.5 | 8.3 | 8.3 | 8.3 |
+| Link | 4.5 | 6.7 | 6.9 | 7.7 | 7.4 | 7.7 |
+| Control border | 3 | 5.0 | 3.9 | 4.4 | 4.6 | 4.4 |
+| Focus ring | 3 | 10.7 | 9.8 | 11.0 | 10.8 | 11.0 |
+| Success | 4.5 | 7.4 | 6.9 | 7.8 | 7.9 | 7.9 |
+| Warning | 4.5 | 8.2 | 7.5 | 8.5 | 8.3 | 8.4 |
+| Danger | 4.5 | 6.6 | 6.2 | 6.9 | 6.8 | 6.9 |
+| Primary button text | 4.5 (target 7) | 11.7 | 8.8 | 11.0 | 11.6 | 12.3 |
 
 ---
 

@@ -130,7 +130,13 @@ onBeforeUnmount(() => {
 <style scoped>
 .sculpture-card { position: fixed; z-index: 20; width: max-content; max-width: 20rem; }
 
-/* The wall plaque: from md it keeps to the left ~45% of the screen (its right edge lands at 44-46% from 1024 to
+/* The wall plaque is cut from the night sky at the top of the screen (--dusk-sky-deep), one step deeper than the
+   login panel's surface; the museum label card is the same material. On it the lilac wordmark and the teal link
+   reach 7:1 even where the palest column is behind
+   (measured against the worst background pixel, with the 3% the panel lets through). Square, hairline edge, no blur. */
+.plaque.scrim, .sculpture-card.scrim { background: color-mix(in srgb, var(--dusk-sky-deep) 97%, transparent); }
+
+/* From md it keeps to the left ~45% of the screen (its right edge lands at 44-46% from 1024 to
    1440 with DuskLayout's left line), so the sculpture, about 60% across, stays clear. */
 @media (min-width: 768px) {
   .plaque { width: clamp(22rem, 33vw, 30rem); }

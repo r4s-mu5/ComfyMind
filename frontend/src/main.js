@@ -12,3 +12,6 @@ import 'vue-sonner/style.css'
 initComfort()
 
 createApp(App).use(router).mount('#app')
+
+// Dev builds only (--mode demodev): the dev / post-FX panel. Normal builds drop this branch and its chunk.
+if (import.meta.env.VITE_DEV_PANEL === 'true') import('./dev/mountDevPanel').then((m) => m.mountDevPanel(router))
