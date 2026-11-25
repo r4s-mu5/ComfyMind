@@ -134,3 +134,4 @@ the stakeholder meeting.
 - 2026-11-25 — D14 turntable built. D16: owner chose option 3 "Colonnade" (applied to style.css). VC4 review written (`reviews/VC4_REVIEW.md`), fixes pending. Demo v4 republished.
 - 2026-11-25 — VC4 fixes applied (W1–W4); night mode added (Comfort → Pantalla); v5 single-file demo. Seed 1203 figurative read deferred by owner. VC5 pending.
 - 2026-11-25 (pm) — Meeting notes recorded as D17–D21. Workers D1 (dev panel, scene API, centring, plinth controls), D2 (scene-derived palette, presets, docs), D3 (welcome/login layout), D4 (frames). Targets: v6 and v6_dev single-file HTML. Sculpture seed 1203 still deferred.
+- 2026-11-25 (eve) — v6 and v6_dev built and checked from disk (0 errors); Spanish security note written. VC5 pending.

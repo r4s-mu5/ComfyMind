@@ -4,6 +4,27 @@
 
 Read in this order: this file → `PLAN.md` (decisions D1–D16, status, log) → `DESIGN.md` (the spec) → `VIBECHECK.md` (mandatory rule) → the latest review, `reviews/VC3_FINAL.md`.
 
+## Status 2026-11-25, evening (v6)
+
+- **Meeting decisions D17–D21** in PLAN.md. Built by workers D1–D4:
+  - **D1:** dev panel (v*_dev only; Shift+D or the "Dev" tab) with post-FX, 3D assets, palette, Comfort shortcuts, snapshots and JSON; the scene tuning API `setTuning()`; the sculpture centred (~61% at 1440); posters re-rendered; plinth nameplate and 3D buttons in dev builds.
+  - **D2:** the scene-sampled "Atrio" palette with a stone night (no navy) and the presets alba / piedra / jardin / noche-clara in `src/theme/palettes.ts` and `html.palette-<id>`; DESIGN §4.7 has the contrast tables.
+  - **D3:** the landing wall plaque; login without scrolling (the email form behind a disclosure).
+  - **D4:** the frame choice after generating (Arco, Cuadrado, Frontón, Óculo, Columnas, Sin marco), saved per artwork.
+- **Builds:**
+  - `python3 tools/build-single-html.py ComfyMind-demo-v6.html demo`
+  - `python3 tools/build-single-html.py ComfyMind-demo-v6_dev.html demodev`
+  - The dev panel is absent from v6 (checked with grep).
+  - The hosted artifact is still v4.
+- **Security note (ES)** for the team: `docs/redesign/SEGURIDAD_RESUMEN.md` (a PDF is made from it). The backend findings from `01_APP_INVENTORY.md` §9 P1 are still present.
+- **Still open:**
+  - The login panel is the last navy surface; compare it with the selector presets.
+  - Sculpture seed 1203 reads like a head.
+  - The landing scrolls 32px on a 390px phone.
+  - At 1024 the frame picker wraps below the fold.
+  - The dev panel's Light/Dark switch has no "system" option.
+  - VC5 fresh review not run.
+
 ## Status 2026-11-25, afternoon (v5)
 
 - **VC4 fixes applied** (workers W1–W4): square-cut shape language in tokens and components (radius 2px/0, niche the only curve, no lifts), Colonnade folded into the real dawn tokens, way-in as doorways, therapist calendar/home/session rebuilt in our words, landing hero as wall text, login with one primary, poster re-rendered without the hole, CA/EN copy slips fixed.
