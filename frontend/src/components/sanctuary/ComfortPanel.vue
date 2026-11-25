@@ -2,20 +2,20 @@
 import { ref } from 'vue'
 import { Check, Sun } from 'lucide-vue-next'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
-import { useComfort, type Atmosphere, type TextSize } from '@/composables/useComfort'
+import { useComfort, type Atmosphere, type TextSize, type Theme } from '@/composables/useComfort'
 import { usePrototypeLocale, type PrototypeLocale } from '@/composables/usePrototypeLocale'
 import SButton from './SButton.vue'
 
 /**
  * Comfort panel (DESIGN.md §5.4): a labelled sun button that opens a popover with text size,
- * motion, atmosphere, 3D scene and language. Everything persists per device (useComfort).
+ * screen (light / dark / device), motion, atmosphere, 3D scene and language. Everything persists per device (useComfort).
  */
 const props = defineProps<{
   variant?: 'secondary' | 'quiet'
   /** Panel look: 'auto' (default) follows the screen, so it is dark when opened inside a `.dusk` ancestor. */
   mode?: 'auto' | 'dawn' | 'dusk'
 }>()
-const { state, motionOff, setTextSize, setMotion, setAtmosphere, setScene3d, reset } = useComfort()
+const { state, motionOff, setTextSize, setMotion, setAtmosphere, setScene3d, setTheme, reset } = useComfort()
 const { t, locale, setLocale } = usePrototypeLocale()
 
 const sizes: TextSize[] = [100, 125, 150]
@@ -23,6 +23,11 @@ const atmospheres: { value: Atmosphere; label: string }[] = [
   { value: 'thresholds', label: 'comfort.atmosphereThresholds' },
   { value: 'everywhere', label: 'comfort.atmosphereEverywhere' },
   { value: 'plain', label: 'comfort.atmospherePlain' },
+]
+const themes: { value: Theme; label: string }[] = [
+  { value: 'light', label: 'comfort.screenLight' },
+  { value: 'dark', label: 'comfort.screenDark' },
+  { value: 'system', label: 'comfort.screenSystem' },
 ]
 const languages: { value: PrototypeLocale; label: string }[] = [
   { value: 'es', label: 'ES' },
@@ -57,6 +62,15 @@ const onOpen = (open: boolean) => {
           <div class="flex flex-wrap gap-x-4 gap-y-2">
             <button v-for="s in sizes" :key="s" type="button" :aria-pressed="state.textSize === s" class="chip type-small min-w-12" @click="setTextSize(s)">
               <Check v-if="state.textSize === s" aria-hidden="true" class="size-4 shrink-0" />{{ s }}%
+            </button>
+          </div>
+        </fieldset>
+
+        <fieldset class="flex flex-col gap-2">
+          <legend class="type-small mb-2 font-semibold">{{ t('comfort.screen') }}</legend>
+          <div class="flex flex-wrap gap-x-4 gap-y-2">
+            <button v-for="th in themes" :key="th.value" type="button" :aria-pressed="state.theme === th.value" class="chip type-small min-w-12" @click="setTheme(th.value)">
+              <Check v-if="state.theme === th.value" aria-hidden="true" class="size-4 shrink-0" />{{ t(th.label) }}
             </button>
           </div>
         </fieldset>

@@ -15,8 +15,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-/* `dark:` variants (used by the shadcn components in ui/) apply inside a dusk container. */
-@custom-variant dark (&:is(.dusk, .dusk *));
+/* `dark:` variants (used by the shadcn components in ui/) apply inside a dusk container and at night. */
+@custom-variant dark (&:is(.dusk, .dusk *, .theme-dark *));
 
 /* ------------------------------------------------------------------ */
 /* 1. Raw tokens                                                       */
@@ -682,3 +682,82 @@ html:not(.atmo-plain) .shell > .atmo-layer {
   opacity: 0.7;
   mix-blend-mode: soft-light;
 }
+
+/* ------------------------------------------------------------------ */
+/* 6. Night: the same atrium after dark (Comfort > Pantalla > Oscura)  */
+/* ------------------------------------------------------------------ */
+/* Set by useComfort as html.theme-dark ("Como el dispositivo" follows prefers-color-scheme live).
+   Derived from the dusk tokens, not a neutral grey: the sky is the page, the surfaces are dusk stone,
+   the primary is the warm distant light. Threshold screens are already .dusk and look the same.
+   The fixed --dawn-ink and --dawn-sun stay as they are (ink text on peach, ink on paper). */
+html.theme-dark {
+  color-scheme: dark;
+
+  /* Raw dawn tokens at night (they also drive the flutes, the grain and FullCalendar's grid). */
+  --dawn-bg: var(--dusk-sky);              /* #14202F */
+  --dawn-bg-warm: #1A2638;
+  --dawn-surface: #E4DFD6;                 /* fixed light things (paper samples, image tiles): dimmed, warm */
+  --dawn-surface-2: #2B3D52;
+  --dawn-mat: #E4DFD6;                     /* the artwork mat: a dimmed warm off-white, still the brightest surface */
+  --dawn-teal: var(--dusk-teal);
+  --dawn-violet: var(--dusk-lilac);
+  --dawn-border: var(--dusk-border);
+  --dawn-hairline: rgba(244, 243, 247, 0.18);
+  --flute-dark: var(--dusk-sky-deep);
+  --flute-lit: var(--dusk-sky-mid);
+  --flute-mid: #1B2738;
+
+  /* Mode variables: the .dusk mapping, with a dusk-stone card and a deeper selected fill. */
+  --background: var(--dusk-sky);
+  --foreground: var(--dusk-text);
+  --card: var(--dusk-surface);
+  --card-foreground: var(--dusk-text);
+  --popover: var(--dusk-surface);
+  --popover-foreground: var(--dusk-text);
+  --primary: var(--dusk-light);
+  --primary-foreground: var(--dusk-sky);
+  --primary-hover: color-mix(in srgb, var(--dusk-light) 88%, white);
+  --secondary: #2B3D52;
+  --secondary-foreground: var(--dusk-text);
+  --muted: #2B3D52;
+  --muted-foreground: var(--dusk-text-soft);
+  --accent: #2B3D52;
+  --accent-foreground: var(--dusk-text);
+  --destructive: var(--danger-dusk);
+  --border: rgba(244, 243, 247, 0.18);
+  --input: var(--dusk-border);
+  --ring: var(--dusk-focus);
+  --chart-1: var(--dusk-teal);
+  --chart-2: var(--dusk-lilac);
+  --chart-3: var(--warning-dusk);
+  --chart-4: var(--success-dusk);
+  --chart-5: var(--dusk-text-soft);
+  --sidebar: var(--dusk-surface);
+  --sidebar-foreground: var(--dusk-text);
+  --sidebar-primary: var(--dusk-light);
+  --sidebar-primary-foreground: var(--dusk-sky);
+  --sidebar-accent: #2B3D52;
+  --sidebar-accent-foreground: var(--dusk-text);
+  --sidebar-border: var(--dusk-border);
+  --sidebar-ring: var(--dusk-focus);
+
+  --success: var(--success-dusk);
+  --warning: var(--warning-dusk);
+  --danger: var(--danger-dusk);
+  --danger-foreground: var(--dusk-sky);
+  --link: var(--dusk-teal);
+  --mark: var(--dusk-lilac);
+  --hairline: rgba(244, 243, 247, 0.18);
+  --focus-ring: var(--dusk-focus);
+  --overlay-shadow: none;   /* overlays keep their 1.5px --dusk-border */
+  --rule-strong: 2px solid var(--dusk-light);
+}
+/* Faint moonlight at the top instead of the morning light; the grain is a little quieter on the dark stone. */
+html.theme-dark .dawn-glow {
+  background: radial-gradient(ellipse 90% 300px at 50% 0%, rgba(185, 175, 214, 0.10) 0%, transparent 100%);
+}
+html.theme-dark:not(.atmo-plain) .shell > .atmo-layer { opacity: 0.45; }
+/* Dialog overlays: ink at 55% would not dim a page that is already ink. */
+html.theme-dark .bg-dawn-ink\/55 { background-color: rgb(5 9 16 / 0.72); }
+/* FullCalendar's live event writes --dawn-surface on --success; at night that needs the sky colour. */
+html.theme-dark .fc-sanctuary .active-event { color: var(--dusk-sky); }
