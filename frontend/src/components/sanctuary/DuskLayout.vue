@@ -40,7 +40,7 @@ withDefaults(defineProps<Props>(), { align: 'start', showComfort: true, width: '
 
     <div
       v-if="showComfort || $slots.top"
-      :class="['relative z-10 flex flex-wrap items-center justify-end gap-3 px-4 py-4 sm:px-6', fit && 'md:absolute md:inset-x-0 md:top-0']"
+      :class="['relative z-10 flex flex-wrap items-center justify-end gap-3 px-4 py-4 sm:px-6', fit && 'md:absolute md:inset-x-0 md:top-0 md:z-20 md:pointer-events-none md:[&>*]:pointer-events-auto']"
     >
       <slot name="top" />
       <ComfortPanel v-if="showComfort" variant="quiet" />
