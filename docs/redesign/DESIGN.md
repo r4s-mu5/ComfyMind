@@ -81,26 +81,31 @@ Tokens live in `frontend/src/style.css` as CSS custom properties, exposed to Tai
 
 ### 4.2 Colour: Dawn (working screens)
 
+D16 "Colonnade" (owner choice, 2026-11-25): dawn is the atrium in the morning. Cool lilac-grey stone, fluted courses under the header and between sections, a faint grain over the page (off with Comfort → Atmosphere → Plain). Contrast below is on `--dawn-bg` unless stated.
+
 | Token | Hex | Use | Contrast |
 |---|---|---|---|
-| `--dawn-bg` | `#F2F0F5` | page background (lilac-grey, the sky at first light) | — |
-| `--dawn-bg-warm` | `#F6F1EE` | top glow of page / hero bands | — |
-| `--dawn-surface` | `#FFFFFF` | cards, mats, inputs | — |
-| `--dawn-surface-2` | `#E7E3EE` | selected and soft fills | ink 13.0 : 1 |
-| `--dawn-ink` | `#14202F` | primary text, **primary button fill** | 14.5 : 1 |
-| `--dawn-ink-soft` | `#3D4A5F` | secondary text | 7.9 : 1 (9.0 on white) |
-| `--dawn-teal` | `#1E5E61` | links, active nav, progress | 6.6 : 1 |
-| `--dawn-violet` | `#5B4E86` | wordmark, focus ring, accents | 6.5 : 1 (7.3 on white) |
-| `--dawn-border` | `#6B7488` | input and control borders | 4.7 : 1 on white |
-| `--dawn-hairline` | `rgba(20,32,47,.14)` | decorative dividers only (never the only boundary of a control) | — |
-| `--dawn-sun` | `#F0D5BF` | the sun-disc motif, warm highlights (decorative only) | — |
+| `--dawn-bg` | `#E7E5ED` | page background (lilac-grey stone) | — |
+| `--dawn-bg-warm` | `#EEEBF2` | top light of the page (cool, no peach) | — |
+| `--dawn-surface` | `#F5F4F7` | cool marble: mats for forms, inputs, dialogs, popovers, toasts | — |
+| `--dawn-mat` | `#FFFFFF` | the **artwork mat** only: the brightest surface on the page | — |
+| `--dawn-surface-2` | `#DDDAE6` | selected and soft fills, disabled buttons | ink 11.9 : 1 |
+| `--dawn-ink` | `#14202F` | primary text, **primary button fill** | 13.2 : 1 (15.0 on surface) |
+| `--dawn-ink-soft` | `#3D4A5F` | secondary text, primary button hover | 7.2 : 1 (8.2 on surface) |
+| `--dawn-teal` | `#1E5E61` | links, progress | 5.9 : 1 (6.8 on surface) |
+| `--dawn-violet` | `#5B4E86` | wordmark, focus ring, accents | 5.8 : 1 |
+| `--dawn-border` | `#6B7488` | input, chip and control borders | 3.8 : 1 (4.3 on surface, 3.4 on surface-2) |
+| `--dawn-hairline` | `rgba(42,49,72,.22)` | rules between rooms; decorative only (never the only boundary of a control) | — |
+| `--dawn-sun` | `#F0D5BF` | the sun-disc motif, the "now" date leaf (decorative only) | ink 12.6 : 1 |
+| `--flute-dark` / `--flute-lit` / `--flute-mid` | `#CAC6D6` / `#F1EFF5` / `#DCD9E5` | the flute shading in `.flute-rule` | — |
+| `--dawn-grain` | SVG noise | the stone grain behind AppShell (`.shell > .atmo-layer`) | — |
 
 ### 4.3 Semantic colours (both modes, always with an icon and text)
 
 | Token | Dawn | Dusk |
 |---|---|---|
 | `--success` | `#1D6B47` (6.5 : 1 on white) | `#7FD1A6` |
-| `--warning` | `#8A5A00` (5.9 : 1) | `#F2C46D` |
+| `--warning` | `#7F5300` (5.4 : 1 on bg, 4.9 on surface-2) | `#F2C46D` |
 | `--danger` | `#A3302A` (7.0 : 1) | `#FF9C92` |
 
 Destructive actions (end session, delete) use `--danger` for **both** the trigger and the confirm button.
@@ -127,9 +132,19 @@ Destructive actions (end session, delete) use `--danger` for **both** the trigge
 
 - **Spacing scale (px):** 4, 8, 12, 16, 24, 32, 48, 64, 96. Use `gap` on flex and grid containers.
 - **Targets:** patient primary controls are **56 px** tall, with 48 px as the floor for any patient target. Therapist targets are at least 44 px. Leave at least 12 px between adjacent targets.
-- **Radius (UNDER REVIEW, D15):** the owner reads *rounded cards* as a vibecoded tell. Direction: architectural, near-square edges (0–4 px) for cards, panels and inputs; hairlines and mats instead of rounded boxes; the **arch/niche** stays as the only curved motif, reserved for artwork and the atrium; pill buttons to be reconsidered in the same review. Final values are set by the next review (see `HANDOFF.md`). Until then, the values below are the current implementation: controls 12 px. Cards 16 px. Pill buttons 999 px (primary actions only). The arch top (`border-radius: 999px 999px 12px 12px`) is the **niche** motif for featured artwork and the atrium.
-- **Borders:** controls 2 px solid (`--dawn-border` / `--dusk-border`). Cards 1.5 px hairline plus surface colour.
-- **Elevation:** at dawn, one soft lift `0 1px 0 rgba(20,32,47,.06), 0 10px 26px rgba(20,32,47,.07)`. At dusk, no shadows; depth comes from translucency and a soft warm glow `0 0 40px rgba(240,213,191,.16)`.
+- **Shape (D15, set by VC4 §3):** a museum building, not a SaaS dashboard. Rooms are separated by **hairline rules and space**, artworks sit on **mats**, controls are **square-cut** like placards. No boxes around groups that a rule and space already separate.
+  - `--radius` 2 px (shadcn base; `--radius-sm` 0, `-md`/`-lg`/`-xl` 2 px, set explicitly).
+  - `--radius-control` **2 px**: buttons, inputs, segments.
+  - `--radius-card` **0**: panels, mats, dialogs, popovers, toasts.
+  - `--radius-pill` **retired** (now 2 px so old classes render square; do not use).
+  - `--radius-niche` `999px 999px 0 0`: the arch top with a square foot. **The only curve**: the featured ArtworkMount, the empty-state poster, the CalmProgress window and the atrium.
+  - `--radius-mark` 50 %: only the sun disc, the "now" dot and the Dibujo colour swatches.
+- **Containers:** the default is a **panel** (`.panel`, `<SCard>`): no fill, no border, no radius; `--rule` above and 24–32 px of space; the heading is the only frame. A **mat** (`.mat`, `<SCard variant="mat">`) is opt-in for a form, the paper or the reflection: surface fill, square, no border, no shadow (at dusk: the 97 % scrim fill and a 1.5 px hairline). `--rule` = 1 px hairline (one per room, not per item). `--rule-strong` = 2 px ink (peach at dusk), once per screen, **under** a title or active tab, never as a left bar.
+- **Chips** (`.chip`: suggestions, segments, tools): not boxes. 48 px tall, a 2 px bottom border in `--input` (≥ 3 : 1), no sides. Selected (`aria-pressed`/`aria-selected`/`.is-selected`): 3 px bottom rule in `--primary`, bold, plus a ✓ in the markup.
+- **Buttons:** primary = ink fill (peach at dusk), 2 px radius, 56 px; secondary = transparent with a 2 px `--input` border; quiet = no box, an always-visible 1 px underline (2 px on hover), 48 px tall; danger = `--danger` fill for trigger and confirm. Disabled keeps its shape with a `--dawn-surface-2` fill, ink-soft text and a **dashed** 2 px border, so it never looks like the primary.
+- **Borders:** controls 2 px solid (`--dawn-border` / `--dusk-border`). Overlays 1.5 px `--input`.
+- **Elevation:** surfaces have **none** (`--elevation: none`, `--shadow-lift: none`; `.elev` is retired). `--shadow-hung` (`0 2px 0 rgba(20,32,47,.06), 0 14px 22px -10px rgba(20,32,47,.18)`) is for artwork mats only. `--shadow-float` (`0 1px 0 rgba(20,32,47,.10), 0 24px 48px -28px rgba(20,32,47,.35)`) is for true overlays at dawn (dialog, popover, menu, toast) via `--overlay-shadow`; at dusk overlays have no shadow, only the 1.5 px border.
+- **Overlays:** dialogs are a mat on a `--dawn-ink` 55 % overlay, radius 0, padding 32 px, title in `type-h2`, with a **text** close button ("Cerrar / Tanca / Close", quiet) instead of an icon-only ✕. Toasts use the SNotice look (square, 2 px tone border, tone icon, 18 px text, a "Cerrar" text button), bottom-left, 12 s, paused on hover and focus; errors never auto-close.
 - **Focus:** a 3 px ring in `--dawn-violet` / `--dusk-focus`, with a 3 px offset, on every interactive element. Never remove it.
 - **Content width:** 1120 px max for app pages. Text columns at most 60 ch.
 

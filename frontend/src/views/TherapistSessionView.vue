@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import { CheckCircle2, Hourglass, Image as ImageIcon, Lock, Palette } from 'lucide-vue-next'
 import { createSocket, imageUrl as fileUrl, API_URL } from '@/lib/config'
 import { userService } from '@/api/userService'
 import { sessionsService } from '@/api/sessionsService'
 import { useDateHelpers } from '@/lib/useDateHelpers'
 import { getReflectionNote } from '@/lib/reflection'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import { AppShell, ArtworkMount, SButton, SCard, SNotice, VersionsStrip } from '@/components/sanctuary'
+import { AppShell, ArtworkMount, SButton, SNotice, VersionsStrip } from '@/components/sanctuary'
 import TherapistChat from '@/components/TherapistChat.vue'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 
@@ -64,13 +63,13 @@ const progress = computed(() => {
 })
 const remainingText = computed(() => (endMs.value && now.value >= endMs.value ? t('therapist.over') : t('therapist.remaining', { min: remainingMin.value })))
 
-// ---- status chip (icon + text)
+// ---- status: a text tag (the words carry the state; the dot only marks that something happened)
 const status = computed(() => {
   const n = patientName.value
-  if (confirmed.value) return { icon: CheckCircle2, text: t('therapist.statusConfirmed', { name: n }), tone: 'text-success border-success' }
-  if (versions.value.length) return { icon: ImageIcon, text: t('therapist.statusShared'), tone: 'text-link border-link' }
-  if (chatMessages.value.length) return { icon: Palette, text: t('therapist.statusWorking', { name: n }), tone: 'text-link border-link' }
-  return { icon: Hourglass, text: t('therapist.statusWaiting', { name: n }), tone: 'text-muted-foreground border-border' }
+  if (confirmed.value) return { text: t('therapist.statusConfirmed', { name: n }), tone: 'text-success', dot: 'bg-success' }
+  if (versions.value.length) return { text: t('therapist.statusShared'), tone: 'text-link', dot: 'bg-link' }
+  if (chatMessages.value.length) return { text: t('therapist.statusWorking', { name: n }), tone: 'text-link', dot: 'bg-link' }
+  return { text: t('therapist.statusWaiting', { name: n }), tone: 'text-muted-foreground', dot: '' }
 })
 
 // ---- socket (real WebSocket in normal mode, fake BroadcastChannel socket in demo mode)
@@ -223,7 +222,7 @@ const onTabKey = (e: KeyboardEvent) => {
         </div>
         <div class="flex flex-wrap items-center gap-x-8 gap-y-3">
           <div class="w-full min-w-[14rem] sm:w-64">
-            <p class="text-[1.0625rem] font-semibold">{{ remainingText }}</p>
+            <p class="type-body font-semibold">{{ remainingText }}</p>
             <div
               class="mt-2 h-1.5 w-full bg-secondary"
               role="progressbar"
@@ -235,8 +234,8 @@ const onTabKey = (e: KeyboardEvent) => {
               <div class="h-full bg-foreground" :style="{ width: `${progress}%` }" />
             </div>
           </div>
-          <p :class="['inline-flex min-h-11 shrink-0 items-center gap-2 rounded-control border-2 px-4 text-[1.0625rem] font-semibold', status.tone]" role="status">
-            <component :is="status.icon" aria-hidden="true" class="size-5" />
+          <p :class="['type-body inline-flex min-h-11 shrink-0 items-center gap-2.5 font-semibold', status.tone]" role="status">
+            <span v-if="status.dot" aria-hidden="true" :class="['size-2.5 shrink-0 rounded-full', status.dot]" />
             {{ status.text }}
           </p>
         </div>
@@ -252,9 +251,9 @@ const onTabKey = (e: KeyboardEvent) => {
             mat="md"
             loading="eager"
           />
-          <div v-if="sharedNote" class="border-l-[3px] border-foreground pl-5">
+          <div v-if="sharedNote" class="border-t border-border pt-4">
             <h2 class="type-h3">{{ t('therapist.reflectionTitle', { name: patientName }) }}</h2>
-            <p class="type-body mt-2 text-[1.0625rem]">{{ sharedNote }}</p>
+            <p class="type-body mt-2">{{ sharedNote }}</p>
           </div>
         </div>
         <VersionsStrip v-if="versions.length" :versions="versions" v-model="currentId" class="lg:pt-2" />
@@ -265,14 +264,15 @@ const onTabKey = (e: KeyboardEvent) => {
         <div class="niche aspect-[4/5] w-full max-w-[14rem] shrink-0 border-[1.5px] border-dashed border-input bg-card" aria-hidden="true" />
         <div class="flex max-w-[30rem] flex-col gap-2 sm:pb-2">
           <h2 id="t-empty" class="type-h2">{{ t('therapist.emptyTitle', { name: patientName }) }}</h2>
-          <p class="type-body text-[1.0625rem] text-muted-foreground">{{ t('therapist.emptyHint') }}</p>
+          <p class="type-body text-muted-foreground">{{ t('therapist.emptyHint') }}</p>
         </div>
       </section>
     </div>
 
-    <template #aside>
-      <SCard v-if="!loading && !denied && !ended" padding="md" class="flex flex-col gap-4" :aria-label="t('therapist.panelLabel')" as="section">
-        <div role="tablist" :aria-label="t('therapist.panelLabel')" class="flex gap-2" @keydown="onTabKey">
+    <!-- Only while the session is live: no orphan "Ocultar panel" on the ended page. -->
+    <template v-if="!loading && !denied && !ended" #aside>
+      <section class="panel flex flex-col gap-5" :aria-label="t('therapist.panelLabel')">
+        <div role="tablist" :aria-label="t('therapist.panelLabel')" class="flex gap-6 border-b border-border" @keydown="onTabKey">
           <button
             v-for="x in tabs"
             :id="`ttab-${x.id}`"
@@ -282,7 +282,7 @@ const onTabKey = (e: KeyboardEvent) => {
             :aria-selected="tab === x.id"
             :aria-controls="`tpanel-${x.id}`"
             :tabindex="tab === x.id ? 0 : -1"
-            :class="['inline-flex min-h-11 flex-1 items-center justify-center gap-2 rounded-control border-2 px-3 text-base font-semibold', tab === x.id ? 'border-primary bg-primary text-primary-foreground' : 'border-input bg-card text-foreground hover:bg-secondary']"
+            :class="['-mb-px inline-flex min-h-11 items-center rounded-none border-b-[3px] px-1 text-base', tab === x.id ? 'border-foreground font-bold text-foreground' : 'border-transparent font-semibold text-muted-foreground hover:text-foreground hover:underline hover:underline-offset-4']"
             @click="tab = x.id"
           >
             {{ x.label }}
@@ -297,9 +297,7 @@ const onTabKey = (e: KeyboardEvent) => {
         <div v-show="tab === 'notes'" id="tpanel-notes" role="tabpanel" aria-labelledby="ttab-notes" class="flex flex-col gap-3">
           <h2 class="type-h3 flex flex-wrap items-center gap-2">
             {{ t('therapist.notesTitle') }}
-            <span class="inline-flex items-center gap-1 rounded-control border-[1.5px] border-border bg-secondary px-3 py-0.5 text-[0.9375rem] font-semibold">
-              <Lock aria-hidden="true" class="size-4" /> {{ t('therapist.onlyYou') }}
-            </span>
+            <span class="type-small font-semibold text-muted-foreground">{{ t('therapist.onlyYou') }}</span>
           </h2>
           <p class="type-small text-muted-foreground">{{ t('therapist.notesHint', { name: patientName }) }}</p>
           <label for="therapist-notes" class="sr-only">{{ t('therapist.notesTitle') }}</label>
@@ -307,18 +305,18 @@ const onTabKey = (e: KeyboardEvent) => {
             id="therapist-notes"
             v-model="notes"
             rows="10"
-            class="min-h-48 w-full rounded-control border-2 border-input bg-card p-4 text-[1.0625rem] leading-relaxed text-foreground"
+            class="type-body min-h-48 w-full rounded-control border-2 border-input bg-card p-4 leading-relaxed text-foreground"
           />
           <p class="type-small text-muted-foreground" aria-live="polite">
             <span v-if="notesSavedAt">{{ t('therapist.notesSaved') }}. </span>{{ t('therapist.notesConcept') }}
           </p>
         </div>
-      </SCard>
+      </section>
     </template>
 
     <!-- End session: danger trigger above, danger confirm here -->
     <Dialog :open="showEnd" @update:open="(v: boolean) => !endBusy && (showEnd = v)">
-      <DialogContent class="max-w-[32rem] rounded-card border-[1.5px] border-border bg-background p-8 sm:max-w-[32rem]">
+      <DialogContent class="max-w-[32rem] sm:max-w-[32rem]">
         <DialogTitle class="type-h2">{{ t('therapist.endTitle') }}</DialogTitle>
         <DialogDescription class="type-body">{{ t('therapist.endBody', { name: patientName }) }}</DialogDescription>
         <SNotice v-if="endFailed" tone="danger" :title="t('therapist.endErrorTitle')"><p>{{ t('therapist.endErrorBody') }}</p></SNotice>

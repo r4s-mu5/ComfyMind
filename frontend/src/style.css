@@ -363,7 +363,7 @@ html.atmo-plain .dawn-glow,
 html.atmo-plain .atmo-layer { display: none; }
 html.atmo-plain .sky { background: var(--dusk-sky); }
 
-/* Faint mist behind working screens, only when asked. AppShell renders <div class="atmo-layer">. */
+/* AppShell's .atmo-layer: hidden by default; the dawn grain at the end of this file switches it on. */
 .atmo-layer { display: none; }
 html.atmo-everywhere .atmo-layer { display: block; }
 
@@ -674,7 +674,7 @@ html.no-3d .scene-3d canvas { display: none; }
 .paper-frame { background: var(--dawn-surface-2); }
 
 /* Dawn grain: the stone's faint texture behind the whole working page (AppShell's .atmo-layer,
-   always on at dawn; the low mist stays a dusk thing). Off with Comfort > Atmosphere > Plain. */
+   always on at dawn; AppShell renders no mist). Off with Comfort > Atmosphere > Plain. */
 html:not(.atmo-plain) .shell > .atmo-layer {
   display: block;
   background-image: var(--dawn-grain);
@@ -682,4 +682,3 @@ html:not(.atmo-plain) .shell > .atmo-layer {
   opacity: 0.7;
   mix-blend-mode: soft-light;
 }
-.shell > .atmo-layer .mist { display: none; }

@@ -8,11 +8,8 @@
       <router-view />
     </div>
 
-    <Toaster 
-    position="top-right"
-    :duration="10000"
-    rich-colors
-    />
+    <!-- Toasts: bottom-left, 12 s, paused on hover and focus, errors stay until closed (ui/sonner). -->
+    <Toaster position="bottom-left" :duration="12000" close-button expand />
 
     <!-- AlertDialog global para sesión expirada -->
     <AlertDialog :open="sessionExpiredDialog" @update:open="(val) => sessionExpiredDialog = val">

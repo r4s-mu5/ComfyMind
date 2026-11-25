@@ -35,8 +35,8 @@ const altText = computed(() =>
 
 <template>
   <figure class="flex flex-col gap-4">
-    <!-- The mat is always white, in dawn and dusk alike. Square corners, no border, hung shadow. -->
-    <div :class="['bg-dawn-surface shadow-hung', padding, niche ? 'niche rounded-b-[2px] pt-12' : 'rounded-[2px]']">
+    <!-- The mat (--dawn-mat) is the brightest surface on the page, in dawn and dusk alike. Square corners, no border, hung shadow. -->
+    <div :class="['bg-dawn-mat shadow-hung', padding, niche ? 'niche rounded-b-[2px] pt-12' : 'rounded-[2px]']">
       <img
         :src="src"
         :alt="altText"

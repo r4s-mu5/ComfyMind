@@ -151,6 +151,25 @@ const enterSession = () => {
   router.push(`/session/${activeSession.value.id}/${role}`)
 }
 
+// Therapist agenda: today's sessions as ledger rows, then the next few days as a short list.
+const nameOf = (id: number) => patients.value.find((p) => p.id === id)?.full_name || ''
+const startOf = (s: any) => toDate(s.start_date)?.getTime() ?? 0
+const openSessions = computed(() => sessionsList.value.filter((s) => !s.ended_at).sort((a, b) => startOf(a) - startOf(b)))
+const todaySessions = computed(() => openSessions.value.filter((s) => isToday(s.start_date) || s.id === activeSession.value?.id))
+const upcomingSessions = computed(() => {
+  const endOfToday = new Date()
+  endOfToday.setHours(23, 59, 59, 999)
+  return openSessions.value.filter((s) => startOf(s) > endOfToday.getTime()).slice(0, 4)
+})
+const rangeOf = (s: any) => `${formatTime(s.start_date)} – ${formatTime(s.end_date)}`
+const dayOf = (s: any) => {
+  const d = toDate(s.start_date)
+  if (!d) return ''
+  const text = new Intl.DateTimeFormat(locale.value, { weekday: 'long', day: 'numeric', month: 'long' }).format(d)
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}
+const todayLong = computed(() => dayOf({ start_date: new Date().toISOString() }))
+
 const handleSessionCreated = async () => {
   showCreateModal.value = false
   await refreshHomeData()
@@ -239,28 +258,54 @@ onBeforeUnmount(disconnectHomeWs)
       </div>
     </template>
 
-    <!-- Therapist home: unchanged behaviour, restyled with the sanctuary components. -->
-    <section v-else class="flex max-w-[44rem] flex-col gap-8">
-      <header class="flex flex-col gap-3">
-        <h1 class="type-h1">{{ greeting }}</h1>
-        <p class="type-body text-muted-foreground">{{ hasActiveSession ? t('home.therapistLive') : t('home.therapistNone') }}</p>
+    <!-- Therapist home: the day as a ledger (DESIGN.md §7). Today's sessions as rows, the next days beside them. -->
+    <template v-else>
+      <header class="flex flex-wrap items-end justify-between gap-x-10 gap-y-5">
+        <div class="flex flex-col gap-3">
+          <h1 class="type-h1">{{ greeting }}</h1>
+          <p class="type-body text-muted-foreground">{{ hasActiveSession ? t('home.therapistLive') : t('home.therapistNone') }}</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-x-6 gap-y-3">
+          <SButton variant="secondary" size="compact" @click="showCreateModal = true">{{ t('home.therapistCreate') }}</SButton>
+          <SButton variant="quiet" size="compact" v-bind="nav('/calendar')">{{ t('home.therapistCalendar') }}</SButton>
+        </div>
       </header>
-      <SessionCard
-        v-if="shownSession"
-        :date="toDate(shownSession.start_date)!"
-        :time="sessionRange"
-        :therapist="shownOther?.full_name"
-        :status="sessionStatus"
-      >
-        <template v-if="hasActiveSession" #action>
-          <SButton size="compact" @click="enterSession">{{ t('session.enter') }}</SButton>
-        </template>
-      </SessionCard>
-      <div class="flex flex-wrap gap-3">
-        <SButton :variant="hasActiveSession ? 'secondary' : 'primary'" size="compact" @click="showCreateModal = true">{{ t('home.therapistCreate') }}</SButton>
-        <SButton variant="quiet" size="compact" v-bind="nav('/calendar')">{{ t('home.therapistCalendar') }}</SButton>
+
+      <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] lg:items-start xl:gap-16">
+        <section class="flex flex-col gap-4" aria-labelledby="t-today">
+          <h2 id="t-today" class="type-h2 flex flex-wrap items-baseline gap-x-4 gap-y-1">
+            {{ t('home.therapistToday') }}
+            <span class="type-body font-normal text-muted-foreground">{{ todayLong }}</span>
+          </h2>
+          <ul v-if="todaySessions.length" class="flex flex-col [&>li+li]:-mt-px">
+            <li v-for="s in todaySessions" :key="s.id">
+              <SessionCard
+                :date="toDate(s.start_date)!"
+                :time="rangeOf(s)"
+                :therapist="nameOf(s.patient_id)"
+                :status="s.id === activeSession?.id ? 'now' : 'today'"
+              >
+                <template v-if="s.id === activeSession?.id" #action>
+                  <SButton size="compact" @click="enterSession">{{ t('session.enter') }}</SButton>
+                </template>
+              </SessionCard>
+            </li>
+          </ul>
+          <p v-else class="type-body border-y border-border py-6 text-muted-foreground">{{ t('home.therapistTodayEmpty') }}</p>
+        </section>
+
+        <section class="flex flex-col gap-4" aria-labelledby="t-upcoming">
+          <h2 id="t-upcoming" class="type-h2">{{ t('home.therapistUpcoming') }}</h2>
+          <ol v-if="upcomingSessions.length" class="flex flex-col divide-y divide-border border-y border-border">
+            <li v-for="s in upcomingSessions" :key="s.id" class="flex flex-col gap-1 py-4">
+              <p class="type-small font-semibold text-muted-foreground">{{ dayOf(s) }}</p>
+              <p class="type-body"><time :datetime="toDate(s.start_date)!.toISOString()">{{ rangeOf(s) }}</time> · {{ nameOf(s.patient_id) }}</p>
+            </li>
+          </ol>
+          <p v-else class="type-body border-y border-border py-4 text-muted-foreground">{{ t('home.therapistUpcomingEmpty') }}</p>
+        </section>
       </div>
-    </section>
+    </template>
 
     <CreateSessionModal
       :open="showCreateModal"

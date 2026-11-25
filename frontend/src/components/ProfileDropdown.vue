@@ -5,7 +5,6 @@ import { LogOut } from 'lucide-vue-next'
 import { userService } from '../api/userService'
 import { usePrototypeDemo } from '@/composables/usePrototypeDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,13 +20,6 @@ const { locationWithDemo } = usePrototypeDemo()
 const { t } = usePrototypeLocale()
 
 const displayUser = computed(() => user.value)
-
-const initials = computed(() => displayUser.value?.full_name
-  ?.split(/\s+/)
-  .map((part: string) => part[0])
-  .join('')
-  .slice(0, 2)
-  .toUpperCase() || 'CM')
 
 onMounted(async () => {
   try {
@@ -48,11 +40,8 @@ const logout = () => {
     <DropdownMenuTrigger as-child>
       <slot />
     </DropdownMenuTrigger>
-    <DropdownMenuContent class="w-72 rounded-card p-2" align="end">
-      <DropdownMenuLabel class="flex items-center gap-3 px-3 py-3 font-normal">
-        <Avatar class="size-11 bg-secondary">
-          <AvatarFallback class="bg-secondary font-bold text-secondary-foreground">{{ initials }}</AvatarFallback>
-        </Avatar>
+    <DropdownMenuContent class="w-72 p-2" align="end">
+      <DropdownMenuLabel class="px-3 py-3 font-normal">
         <div class="min-w-0">
           <p class="truncate font-bold text-foreground">{{ displayUser?.full_name || t('profile.label') }}</p>
           <p class="type-small truncate text-muted-foreground">{{ displayUser?.email }}</p>
@@ -60,7 +49,7 @@ const logout = () => {
         </div>
       </DropdownMenuLabel>
       <DropdownMenuSeparator />
-      <DropdownMenuItem class="min-h-11 cursor-pointer rounded-control px-3 text-base text-danger" @click="logout">
+      <DropdownMenuItem class="min-h-12 cursor-pointer rounded-none px-3 text-base font-semibold text-danger" @click="logout">
         <LogOut aria-hidden="true" class="size-5" />
         {{ t('profile.logout') }}
       </DropdownMenuItem>

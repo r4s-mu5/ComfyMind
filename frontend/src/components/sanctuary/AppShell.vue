@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref, useSlots } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
-import { UserRound } from 'lucide-vue-next'
+import { ChevronDown } from 'lucide-vue-next'
 import { userService } from '@/api/userService'
 import { isDemo } from '@/lib/demo/isDemo'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
@@ -36,11 +36,14 @@ const asideOpen = defineModel<boolean>('asideOpen', { default: true })
 const route = useRoute()
 const { t } = usePrototypeLocale()
 const userType = ref<string | null>(null)
+const firstName = ref('')
 
 onMounted(async () => {
-  if (props.role || !props.profile) return
+  if (!props.profile) return
   try {
-    userType.value = (await userService.getCurrentUser())?.type ?? null
+    const user = await userService.getCurrentUser()
+    userType.value = user?.type ?? null
+    firstName.value = (user?.full_name ?? '').trim().split(/\s+/)[0] ?? ''
   } catch {
     userType.value = null
   }
@@ -83,21 +86,20 @@ const setAside = async (open: boolean) => {
 }
 
 const navClass = (active: boolean) => [
-  'type-small inline-flex min-h-11 items-center border-b-[3px] px-3 transition-colors hover:text-foreground',
+  'type-small inline-flex min-h-12 items-center border-b-[3px] px-3 transition-colors hover:text-foreground',
   active ? 'border-foreground font-bold text-foreground' : 'border-transparent font-medium text-muted-foreground',
 ]
 </script>
 
 <template>
-  <div class="relative isolate min-h-screen bg-background text-foreground">
+  <div class="shell relative isolate min-h-screen bg-background text-foreground">
     <div class="dawn-glow absolute inset-x-0 top-0 -z-10 h-[360px]" aria-hidden="true" />
-    <div class="atmo-layer absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
-      <div class="mist opacity-25" />
-    </div>
+    <!-- Dawn grain over the whole page (style.css, .shell > .atmo-layer); off with Comfort > Plain. -->
+    <div class="atmo-layer absolute inset-0 -z-10 overflow-hidden" aria-hidden="true" />
 
     <a
       href="#main"
-      class="type-small absolute left-4 top-2 z-50 -translate-y-20 rounded-control bg-primary px-4 py-3 font-semibold text-primary-foreground focus:translate-y-0"
+      class="type-small absolute left-4 top-2 z-50 -translate-y-20 rounded-none bg-primary px-4 py-3 font-semibold text-primary-foreground focus:translate-y-0"
       @click.prevent="skipToMain"
     >
       {{ t('shell.skip') }}
@@ -109,11 +111,12 @@ const navClass = (active: boolean) => [
       <div :class="[wrapWidth, '@container mx-auto flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 sm:px-6']">
         <RouterLink
           to="/home"
-          class="type-wordmark rounded-control py-2 text-mark"
+          class="type-wordmark rounded-none py-2 text-mark"
           :aria-label="t('shell.wordmark')"
         >
           {{ t('shell.wordmark') }}
         </RouterLink>
+        <DemoTag v-if="isDemo" class="-ml-2" />
 
         <nav class="order-last flex w-full flex-wrap gap-1 p-1 @min-[56rem]:order-none @min-[56rem]:w-auto" :aria-label="t('nav.main')">
           <template v-for="item in navItems" :key="item.label">
@@ -123,7 +126,7 @@ const navClass = (active: boolean) => [
                   {{ item.label }}
                 </button>
               </PopoverTrigger>
-              <PopoverContent align="start" class="w-[min(22rem,calc(100vw-2rem))] rounded-card border-2 border-input p-5">
+              <PopoverContent align="start" class="w-[min(22rem,calc(100vw-2rem))] p-5">
                 <p class="type-h3 mb-2">{{ t('help.title') }}</p>
                 <p class="type-small text-muted-foreground">{{ t('help.body') }}</p>
               </PopoverContent>
@@ -135,13 +138,13 @@ const navClass = (active: boolean) => [
         </nav>
 
         <div class="ml-auto flex flex-wrap items-center justify-end gap-2">
-          <DemoTag v-if="isDemo" />
           <LanguageSelector />
           <ComfortPanel />
           <ProfileDropdown v-if="profile">
-            <SButton variant="secondary" size="compact" :aria-label="t('profile.label')">
-              <template #icon><UserRound aria-hidden="true" /></template>
-              <span class="hidden 2xl:inline">{{ t('profile.label') }}</span>
+            <SButton variant="quiet" size="compact">
+              <span v-if="firstName"><span class="sr-only">{{ t('profile.label') }}: </span>{{ firstName }}</span>
+              <span v-else>{{ t('profile.label') }}</span>
+              <ChevronDown aria-hidden="true" class="!size-4" />
             </SButton>
           </ProfileDropdown>
         </div>

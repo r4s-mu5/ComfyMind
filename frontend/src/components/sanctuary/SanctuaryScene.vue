@@ -227,8 +227,8 @@ onBeforeUnmount(() => {
   </div>
   <!-- Stop/resume for the turntable (WCAG 2.2.2): words, not a media-player icon. Outside the aria-hidden layer. -->
   <Teleport v-if="showTurnControl" :to="controlsHost ?? 'body'" :disabled="!controlsHost">
-    <div :class="['sanctuary-turn', !controlsHost && 'is-free scrim rounded-control px-3']">
-      <SButton variant="quiet" size="compact" class="-ml-1 !min-h-14 px-1 text-link underline" @click="toggleTurn">
+    <div :class="['sanctuary-turn', !controlsHost && 'is-free scrim rounded-none px-3']">
+      <SButton variant="quiet" size="compact" class="!min-h-14 px-0 text-link underline" @click="toggleTurn">
         {{ turning ? t('landing.turnStop') : t('landing.turnResume') }}
       </SButton>
     </div>

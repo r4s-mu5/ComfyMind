@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { Check } from 'lucide-vue-next'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
-import imageSample from '@/lib/demo/images/simple_test_00127_.jpg'
+import imageSample from '@/lib/demo/images/simple_test_00160_.jpg'
 
 /**
  * "How would you like to begin?": three doorways in a colonnade (hairlines between them, no cards,
@@ -33,7 +33,7 @@ const compact = computed(() => props.collapse && !!model.value)
       :class="
         compact
           ? 'flex flex-wrap gap-x-6 gap-y-1 border-b border-hairline'
-          : 'grid divide-y divide-hairline border-y border-hairline @[44rem]:grid-cols-3 @[44rem]:divide-x @[44rem]:divide-y-0'
+          : 'grid border-y border-hairline @[44rem]:grid-cols-3'
       "
     >
       <button
@@ -46,12 +46,17 @@ const compact = computed(() => props.collapse && !!model.value)
           'group rounded-none border-b-[3px] text-left transition-colors disabled:cursor-not-allowed disabled:text-muted-foreground',
           compact
             ? 'type-body -mb-px inline-flex min-h-12 items-center gap-2 px-2'
-            : 'grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-5 gap-y-4 px-2 py-5 @[44rem]:grid-cols-1 @[44rem]:content-start @[44rem]:px-6 @[44rem]:py-6',
+            : [
+                'grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-x-5 gap-y-4 px-2 py-5',
+                // hairlines between doorways: rows when stacked, columns side by side (no divide-*: it would fight the 3px rule)
+                'border-t border-t-hairline first:border-t-0',
+                '@[44rem]:grid-cols-1 @[44rem]:content-start @[44rem]:border-t-0 @[44rem]:border-l @[44rem]:border-l-hairline @[44rem]:px-6 @[44rem]:py-6 @[44rem]:first:border-l-0',
+              ],
           model === o.value
-            ? 'border-foreground font-bold text-foreground'
+            ? 'border-b-foreground font-bold text-foreground'
             : compact
-              ? 'border-transparent font-medium text-muted-foreground hover:border-input hover:text-foreground'
-              : 'border-transparent text-foreground hover:border-input',
+              ? 'border-b-transparent font-medium text-muted-foreground hover:border-b-input hover:text-foreground'
+              : 'border-b-transparent text-foreground hover:border-b-input',
         ]"
         @click="model = o.value"
       >
@@ -82,7 +87,7 @@ const compact = computed(() => props.collapse && !!model.value)
               stroke-linecap="round"
             />
           </svg>
-          <img v-else :src="imageSample" alt="" class="block size-full object-cover object-[30%_60%]" />
+          <img v-else :src="imageSample" alt="" class="block size-full object-cover object-[50%_62%]" />
         </span>
 
         <span :class="compact ? 'contents' : 'flex min-w-0 flex-col gap-1'">
