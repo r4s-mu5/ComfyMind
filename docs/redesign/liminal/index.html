@@ -59,7 +59,6 @@ button{font:inherit;color:inherit}
 .mark{margin:0 0 18px;font:400 17px/1 var(--font-mark);letter-spacing:.28em;text-transform:uppercase;color:var(--warm)}
 h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-wrap:balance}
 .lede{margin:0 0 26px;color:var(--ink-2);max-width:36ch}
-.actions-2{margin:10px 0 0}
 .actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px}
 .btn-primary{min-height:56px;min-width:180px;padding:0 32px;border-radius:999px;border:0;background:var(--warm);color:var(--on-warm);
   font:700 19px/1 var(--font-body);letter-spacing:.01em;cursor:pointer;touch-action:manipulation;box-shadow:0 0 40px rgba(240,213,191,.18)}
@@ -96,8 +95,10 @@ h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);lett
 .fx-panel .seg button{padding:0 12px}
 .fx-off .fx-dep{opacity:.5}
 /* ---------- museum label pinned beside the plinth (HTML, so it stays crisp) ---------- */
-.museum{position:fixed;z-index:1;left:0;top:0;max-width:240px;padding:10px 14px 11px;border-radius:6px;
-  background:rgba(244,240,236,.94);color:#24223A;pointer-events:none;box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.museum{position:fixed;z-index:1;left:0;top:0;width:max-content;max-width:280px;padding:10px 14px 4px;border-radius:6px;
+  background:rgba(244,240,236,.95);color:#24223A;box-shadow:0 1px 0 rgba(0,0,0,.18)}
+.museum .link-btn{min-height:44px;margin-left:-4px;font-size:16px;color:#2F5F5A}
+.museum .link-btn:focus-visible{outline-color:#6A4E00;box-shadow:0 0 0 2px #fff}
 .museum[hidden]{display:none}
 .museum .m-title{margin:0;font:400 13px/1.25 var(--font-display);letter-spacing:.16em;text-transform:uppercase}
 .museum .m-tech{margin:3px 0 0;font:400 14px/1.3 var(--font-body);color:#4A465E}
@@ -192,17 +193,17 @@ h1{margin:0 0 16px;font:400 clamp(28px,3.1vw,42px)/1.18 var(--font-display);lett
       <button type="button" class="btn-primary" id="begin" data-t="begin">Comenzar</button>
       <a class="link-quiet" href="#terapeuta" id="therapist" data-t="therapist">Soy terapeuta</a>
     </div>
-    <p class="actions-2"><button type="button" class="link-btn" id="another" data-t="another" hidden>Otra escultura</button></p>
     <p class="sr-only" id="sculptureLive" aria-live="polite"></p>
     <p class="note" id="note" role="status" aria-live="polite"></p>
     <p class="fallback" id="fallback">3D isn’t available on this device, so a still image is shown instead.</p>
   </main>
 </div>
 
-<div class="museum" id="museum" aria-hidden="true" hidden>
+<aside class="museum" id="museum" lang="es" hidden>
   <p class="m-title" id="mTitle">Escultura nº 0000</p>
   <p class="m-tech" id="mTech">Mármol, generada para ti</p>
-</div>
+  <button type="button" class="link-btn" id="another">Otra escultura</button>
+</aside>
 
 <aside class="dock" aria-label="Prototype controls" lang="en">
   <span class="dock-title">Prototype</span>
@@ -317,12 +318,14 @@ function renderLabel(){
   const c = COPY[state.lang];
   $('#mTitle').textContent = `${c.label} ${pad(seed)}`;
   $('#mTech').textContent = c.tech;
+  $('#another').textContent = c.another;
+  $('#museum').setAttribute('aria-label', `${c.label} ${pad(seed)}`);
   $('#museum').lang = state.lang;
 }
 function placeLabel(){
   const el = $('#museum');
   const live = scene && state.three && state.object === 'escultura';
-  el.hidden = !live; $('#another').hidden = !live;
+  el.hidden = !live;
   if (!live) return;
   const portrait = innerWidth / innerHeight < 0.95;
   // landscape: a wall label just right of the plinth; portrait: on the plinth's front face, right-aligned

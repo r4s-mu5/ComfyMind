@@ -1,32 +1,50 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import LanguageSelector from '@/components/LanguageSelector.vue'
-import { DuskLayout, SButton } from '@/components/sanctuary'
+import { DuskLayout, MuseumLabel, SButton } from '@/components/sanctuary'
 import SanctuaryScene from '@/components/sanctuary/SanctuaryScene.vue'
 import { usePrototypeLocale } from '@/composables/usePrototypeLocale'
 
 // Landing (DESIGN.md §7): wordmark, one line, one sentence, one primary action.
-// The scene shows a generated marble sculpture; "Otra escultura" asks for another one (keyboard and
-// screen readers use this button; a click on the scene itself does the same where it can be reached).
+// The scene shows a generated marble sculpture. Its museum label is pinned beside the plinth and carries
+// the quiet "Otra escultura" button (keyboard and screen readers use it; the panel keeps one primary action).
+// Label and button only exist while the 3D scene is live; with the poster there is nothing to regenerate.
 const { t } = usePrototypeLocale()
 const scene = ref<InstanceType<typeof SanctuaryScene> | null>(null)
 const announcement = ref('')
+const seed = ref<number | null>(null)
 let asked = false
 const pad = (n: number) => String(n).padStart(4, '0')
 function another() {
   asked = true
   scene.value?.regenerate()
 }
-function onSculpture(seed: number) {
+function onSculpture(s: number) {
+  seed.value = s
   if (!asked) return // the first sculpture is not announced
-  announcement.value = `${t('landing.sculptureLabel')} ${pad(seed)}. ${t('landing.sculptureTechnique')}.`
+  announcement.value = `${t('landing.sculptureLabel')} ${pad(s)}. ${t('landing.sculptureTechnique')}.`
 }
+
+// Pin the label card just right of the plinth's top corner, kept inside the viewport.
+const card = ref<HTMLElement | null>(null)
+const cardPos = ref<{ left: string; top: string } | null>(null)
+function placeCard() {
+  const a = scene.value?.anchor()
+  if (!a) { cardPos.value = null; return }
+  const w = card.value?.offsetWidth ?? 260, h = card.value?.offsetHeight ?? 120
+  const x = Math.min(window.innerWidth - w - 16, Math.max(16, a.x + 14))
+  const y = Math.min(window.innerHeight - h - 16, Math.max(80, a.y + 6))
+  cardPos.value = { left: `${Math.round(x)}px`, top: `${Math.round(y)}px` }
+}
+const onLayout = () => { void nextTick(placeCard) }
+onMounted(() => window.addEventListener('scroll', onLayout, { passive: true }))
+onBeforeUnmount(() => window.removeEventListener('scroll', onLayout))
 </script>
 
 <template>
   <DuskLayout width="76rem">
     <template #scene>
-      <SanctuaryScene ref="scene" object="escultura" framing="landing" interactive label @sculpture="onSculpture" />
+      <SanctuaryScene ref="scene" object="escultura" framing="landing" interactive @sculpture="onSculpture" @layout="onLayout" />
     </template>
     <template #top><LanguageSelector /></template>
 
@@ -41,11 +59,26 @@ function onSculpture(seed: number) {
           <SButton to="/login">{{ t('landing.begin') }}</SButton>
           <SButton to="/login?role=therapist" variant="quiet" class="px-2 text-link underline">{{ t('landing.therapist') }}</SButton>
         </div>
-        <SButton v-if="scene?.live" variant="quiet" class="mt-2 px-2 text-link underline" @click="another">
-          {{ t('landing.another') }}
-        </SButton>
         <p class="sr-only" aria-live="polite">{{ announcement }}</p>
       </section>
     </div>
+
+    <!-- The sculpture's museum label, beside the plinth, with the quiet way to ask for another piece. -->
+    <aside
+      v-if="scene?.live && seed !== null"
+      ref="card"
+      class="sculpture-card scrim rounded-control px-4 pb-2 pt-3"
+      :style="cardPos ?? { visibility: 'hidden' }"
+      :aria-label="t('landing.sculptureLabel') + ' ' + pad(seed)"
+    >
+      <MuseumLabel :title="`${t('landing.sculptureLabel')} ${pad(seed)}`" :technique="t('landing.sculptureTechnique')" />
+      <SButton variant="quiet" size="compact" class="-ml-1 mt-1 px-1 text-link underline" @click="another">
+        {{ t('landing.another') }}
+      </SButton>
+    </aside>
   </DuskLayout>
 </template>
+
+<style scoped>
+.sculpture-card { position: fixed; z-index: 20; width: max-content; max-width: 19rem; }
+</style>

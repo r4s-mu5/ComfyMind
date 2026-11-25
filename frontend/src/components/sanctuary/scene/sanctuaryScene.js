@@ -206,39 +206,41 @@ export function sculptureParams(seed) {
   const side = sign();
   if (P.family === 'arc') {
     // an open crescent: a broad ellipse with a deep off-axis bite
-    P.rx = R(0.52, 0.7); P.ry = Math.min(P.rx * R(0.8, 1.0), (room + 0.08) / 1.96);
+    P.rx = R(0.54, 0.7); P.ry = Math.min(P.rx * R(0.8, 0.95), (room + 0.08) / 1.96);
     P.cx = R(-0.08, 0.08); P.cy = top - 0.08 + P.ry * 0.96; P.lean = R(-0.22, 0.22);
     P.biteA = side * R(0.34, 0.78);
     const bk = R(0.62, 0.86);
     P.bix = P.cx + Math.sin(P.biteA) * P.ry * bk; P.biy = P.cy + Math.cos(P.biteA) * P.ry * bk;
-    P.brx = R(0.26, 0.4) * P.rx / 0.6; P.bry = R(0.34, 0.55);
+    P.brx = R(0.32, 0.42) * P.rx / 0.6;   // wide bites only: narrow ones leave two prongs P.bry = R(0.34, 0.55);
     P.th0 = R(0.13, 0.2); P.taper = R(0.02, 0.08);
     P.bowA = R(0.04, 0.15); P.bowF = R(1.6, 2.8); P.bowP = R(0, Math.PI * 2);
   } else if (P.family === 'pair') {
     // two soft blocks: a narrow lower one and a longer upper one cantilevered well off to one side
-    P.a = [R(0.24, 0.34), R(0.14, 0.22), R(0.22, 0.32)];
-    P.ac = [side * R(0.05, 0.2), top + P.a[1] - 0.05, R(-0.05, 0.05)];
-    P.b = [R(0.5, 0.66), R(0.1, 0.16), R(0.2, 0.3)];
-    P.bc = [P.ac[0] - side * R(0.26, 0.4), P.ac[1] + P.a[1] + P.b[1] - 0.04, R(-0.08, 0.08)];
-    P.bRotY = R(-0.6, 0.6); P.bRotZ = side * R(0.04, 0.16);
-    P.round = R(0.05, 0.09);
+    P.a = [R(0.3, 0.42), R(0.16, 0.24), R(0.26, 0.36)];
+    P.ac = [side * R(0.05, 0.16), top + P.a[1] - 0.05, R(-0.05, 0.05)];
+    P.b = [R(0.4, 0.54), R(0.17, 0.24), R(0.26, 0.36)];
+    P.bc = [P.ac[0] - side * R(0.16, 0.28), P.ac[1] + P.a[1] + P.b[1] - 0.05, R(-0.08, 0.08)];
+    P.bRotY = R(0.35, 0.8) * sign(); P.bRotZ = side * R(0.08, 0.22);
+    P.round = R(0.04, 0.07);
   } else if (P.family === 'ribbon') {
-    // a thick band curling round most of a vertical loop, left open on one upper side
+    // a thick band round an upright loop, nearly closed, with a small gap low on one side (never a hook)
     P.rr = Math.min(R(0.4, 0.52), (room + 0.04) / 2.1);
     P.cy = top - 0.04 + P.rr; P.cx = R(-0.06, 0.06);
-    const gap = R(1.1, 2.0), gapAt = Math.PI / 2 + side * R(0.35, 0.9);
+    const gap = R(0.45, 0.8), gapAt = -Math.PI / 2 + side * R(0.95, 1.4);
     P.a0 = gapAt + gap / 2; P.a1 = gapAt - gap / 2 + Math.PI * 2;
-    P.t1 = R(0.07, 0.11); P.t2 = R(0.18, 0.3); P.bandTwist = side * R(0.25, 0.7);
+    P.t1 = R(0.12, 0.16); P.t2 = R(0.2, 0.3); P.bandTwist = side * R(0.2, 0.55);
   } else if (P.family === 'split') {
-    // a low, wide stone with one carved channel running diagonally across its top
-    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.34, 0.46), room * 0.55); P.ez = R(0.36, 0.46);
+    // a low, wide stone split by one straight, narrow slot, cut diagonally from the top down to its middle
+    P.ex = R(0.58, 0.72); P.ey = Math.min(R(0.3, 0.4), room * 0.55); P.ez = R(0.36, 0.46);
     P.cx = R(-0.06, 0.06); P.cy = top - 0.06 + P.ey * 0.9; P.tilt = side * R(0.06, 0.2);
-    P.gA = side * R(0.5, 1.1); P.gOff = side * R(0.12, 0.26); P.gR = R(0.1, 0.16); P.gH = P.cy + P.ey * R(0.72, 0.92);
+    const gA = side * R(0.45, 1.0), gl = Math.hypot(Math.cos(gA), 0.25, Math.sin(gA));
+    P.gn = [Math.cos(gA) / gl, side * 0.25 / gl, Math.sin(gA) / gl];
+    P.gOff = side * R(0.03, 0.13);   // near the middle: an edge slot leaves a beak-like cap P.gW = R(0.035, 0.06); P.gFloor = P.cy - P.ey * R(0.1, 0.35);
   } else {
     // a wide slab leaning back and tipped sideways, with one shallow hollow off centre (never through)
-    P.hx = R(0.5, 0.66); P.hy = Math.min(R(0.34, 0.46), room * 0.48); P.ht = R(0.09, 0.13);
+    P.hx = R(0.56, 0.7); P.hy = Math.min(R(0.28, 0.38), room * 0.48); P.ht = R(0.1, 0.14);
     P.cy = top - 0.05 + P.hy; P.cx = R(-0.05, 0.05);
-    P.roll = side * R(0.14, 0.36); P.pitch = R(0.1, 0.28);
+    P.roll = side * R(0.24, 0.48); P.pitch = R(0.18, 0.36);
     P.dr = R(0.22, 0.34); P.dx = -side * R(0.14, 0.3); P.dy = R(-0.05, 0.12); P.dd = R(0.05, 0.08);
   }
   return P;
@@ -291,21 +293,21 @@ export function sculptureSdf(x, y, z, P) {
     let ang = Math.atan2(dy, dx);
     while (ang < P.a0) ang += Math.PI * 2;
     while (ang > P.a0 + Math.PI * 2) ang -= Math.PI * 2;
-    const ac = Math.min(ang, P.a1);
+    // inside the gap, measure from the nearer end of the band
+    const ac = ang <= P.a1 ? ang : (ang - P.a1 < P.a0 + Math.PI * 2 - ang ? P.a1 : P.a0);
     const nx = Math.cos(ac), ny = Math.sin(ac);
     const ex = dx - nx * P.rr, ey = dy - ny * P.rr;
     let u = ex * nx + ey * ny, w = -ex * ny + ey * nx, v = pz;
     const k = P.bandTwist * (ac - P.a0), ck = Math.cos(k), sk = Math.sin(k);
     [u, v] = [ck * u - sk * v, sk * u + ck * v];
-    form = rbox(u, v, w, P.t1, P.t2, 0.001, 0.06);
+    form = rbox(u, v, w, P.t1, P.t2, 0.06, 0.06);
   } else if (P.family === 'split') {
     const ct = Math.cos(P.tilt), st = Math.sin(P.tilt);
     const lx = ct * (px - P.cx) - st * (y - P.cy), ly = st * (px - P.cx) + ct * (y - P.cy);
     form = (Math.hypot(lx / P.ex, ly / P.ey, pz / P.ez) - 1) * Math.min(P.ex, P.ey, P.ez);
-    // the channel: a cylinder along a horizontal, diagonal axis, laid across the top
-    const gx = Math.cos(P.gA), gz = Math.sin(P.gA);
-    const across = -gz * (px - P.cx) + gx * pz - P.gOff;
-    form = smax(form, -(Math.hypot(across, y - P.gH) - P.gR), 0.06);
+    // the slot: a thin slab of space through a diagonal plane, from the top down to gFloor
+    const slot = Math.abs(P.gn[0] * (px - P.cx - P.gOff) + P.gn[1] * (y - P.cy) + P.gn[2] * pz) - P.gW;
+    form = smax(form, -Math.max(slot, P.gFloor - y), 0.03);
   } else {
     let lx = px - P.cx, ly = y - P.cy, lz = pz;
     const cp = Math.cos(P.pitch), sp = Math.sin(P.pitch);

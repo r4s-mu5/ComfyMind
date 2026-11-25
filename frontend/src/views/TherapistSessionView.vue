@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { CheckCircle2, Hourglass, Image as ImageIcon, Lock, Palette } from 'lucide-vue-next'
 import { createSocket, imageUrl as fileUrl, API_URL } from '@/lib/config'
 import { userService } from '@/api/userService'
@@ -18,7 +18,6 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
  * /legacy/session/:sessionId/therapist (TherapistGenerationView.vue).
  */
 const route = useRoute()
-const router = useRouter()
 const { t, locale } = usePrototypeLocale()
 const { ensureUTCString } = useDateHelpers()
 
@@ -44,6 +43,8 @@ const showEnd = ref(false)
 const endBusy = ref(false)
 const endFailed = ref(false)
 const ended = ref(false)
+const endedHeading = ref<HTMLElement | null>(null)
+watch(ended, async (v) => { if (v) { await nextTick(); endedHeading.value?.focus() } })
 const asideOpen = ref(true)
 const now = ref(Date.now())
 
@@ -328,14 +329,17 @@ const onTabKey = (e: KeyboardEvent) => {
       </DialogContent>
     </Dialog>
 
-    <Dialog :open="ended">
-      <DialogContent :show-close-button="false" class="max-w-[32rem] rounded-card border-[1.5px] border-border bg-background p-8 sm:max-w-[32rem]" @interact-outside.prevent @escape-key-down.prevent>
-        <DialogTitle class="type-h2">{{ t('therapist.endedTitle') }}</DialogTitle>
-        <DialogDescription class="type-body">{{ t('therapist.endedBody') }}</DialogDescription>
-        <div class="mt-2 flex justify-end">
-          <SButton size="compact" @click="router.push('/home')">{{ t('therapist.endedBack') }}</SButton>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <!-- Ended: the same ledger as the live header, in our own words, on the page (no modal over an emptied screen). -->
+    <section v-if="ended" class="flex max-w-[44rem] flex-col gap-6" aria-labelledby="t-ended">
+      <header class="flex flex-col gap-2 border-y-[1.5px] border-border py-5">
+        <p v-if="timeRange" class="type-h3 text-muted-foreground">{{ timeRange }}</p>
+        <h1 id="t-ended" ref="endedHeading" tabindex="-1" class="type-h1 text-balance outline-offset-4">{{ t('therapist.endedTitle', { name: patientName }) }}</h1>
+      </header>
+      <p class="type-body measure text-muted-foreground">{{ t('therapist.endedBody', { name: patientName }) }}</p>
+      <div class="flex flex-wrap gap-3">
+        <SButton size="compact" :to="`/session/${sessionId}`">{{ t('therapist.endedObras') }}</SButton>
+        <SButton size="compact" variant="secondary" to="/home">{{ t('therapist.endedBack') }}</SButton>
+      </div>
+    </section>
   </AppShell>
 </template>

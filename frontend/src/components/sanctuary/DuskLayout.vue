@@ -10,7 +10,7 @@ import ComfortPanel from './ComfortPanel.vue'
  * Slots
  *   scene   optional full-bleed scene (e.g. <SanctuaryScene />), rendered above the sky, below the content
  *   top     extra controls in the top-right corner (next to the Comfort button)
- *   default content column. Add `scrim` (or class="scrim") behind forms so they sit on a 92% surface.
+ *   default content column. Add `scrim` (or class="scrim") behind forms so they sit on a 97% surface.
  */
 interface Props {
   scrim?: boolean

@@ -69,7 +69,7 @@ Tokens live in `frontend/src/style.css` as CSS custom properties, exposed to Tai
 |---|---|---|---|
 | `--dusk-sky` | `#14202F` | page background | — |
 | `--dusk-sky-deep` | `#0F1826` | top of sky gradient | — |
-| `--dusk-surface` | `#1F3140` | panels, cards (≥ 92% opaque) | — |
+| `--dusk-surface` | `#1F3140` | panels, cards (97% opaque) | — |
 | `--dusk-text` | `#F4F3F7` | primary text | 14.9 : 1 |
 | `--dusk-text-soft` | `#C9CEDA` | secondary text | 10.4 : 1 (8.5 on surface) |
 | `--dusk-light` | `#F0D5BF` | **primary action fill** (warm distant light) | its text `#14202F` 11.7 : 1 |
@@ -154,7 +154,7 @@ Destructive actions (end session, delete) use `--danger` for **both** the trigge
 3. **Mist:** 2–3 blurred radial gradients in teal, lilac and peach, at no more than 35% alpha.
 4. **Grain:** SVG `feTurbulence` noise at 4–6% opacity, `mix-blend-mode: screen`.
 5. **Architecture (optional):** the 3D colonnade and statue fragment scene (§5.3), or a static poster of it.
-6. **Content scrim:** text sits on `--dusk-surface` at ≥ 92% opacity, or directly on the sky only where the measured contrast passes.
+6. **Content scrim:** text sits on `--dusk-surface` at 97% opacity (so no shape ghosts through), or directly on the sky only where the measured contrast passes.
 
 ### 5.2 Dawn echoes (no 3D)
 

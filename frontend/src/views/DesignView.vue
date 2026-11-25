@@ -30,7 +30,7 @@ const groups: Group[] = [
       { token: '--dusk-sky-deep', use: 'top of sky gradient', on: '--dusk-text' },
       { token: '--dusk-sky-mid', use: 'sky gradient', on: '--dusk-text' },
       { token: '--dusk-sky-low', use: 'sky gradient, near horizon', on: '--dusk-text' },
-      { token: '--dusk-surface', use: 'panels, cards (92%+ opaque)', on: '--dusk-text' },
+      { token: '--dusk-surface', use: 'panels, cards (97% opaque)', on: '--dusk-text' },
       { token: '--dusk-text', use: 'primary text (on sky)', on: '--dusk-sky' },
       { token: '--dusk-text-soft', use: 'secondary text (on sky)', on: '--dusk-sky' },
       { token: '--dusk-light', use: 'primary action fill', on: '--dusk-sky' },

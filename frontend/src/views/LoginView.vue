@@ -71,7 +71,8 @@ const login = async () => {
     <div class="scrim p-6 sm:p-10">
       <p class="type-wordmark text-mark">ComfyMind</p>
       <h1 class="type-h1 mt-5">{{ isTherapist ? t('login.headingTherapist') : t('login.heading') }}</h1>
-      <p class="type-body mt-2 text-muted-foreground">{{ isTherapist ? t('login.ledeTherapist') : t('login.lede') }}</p>
+      <!-- In demo the shortcuts come first, so the "email and password" lede would describe the wrong thing. -->
+      <p v-if="isTherapist || !isDemo" class="type-body mt-2 text-muted-foreground">{{ isTherapist ? t('login.ledeTherapist') : t('login.lede') }}</p>
 
       <!-- Demo: the shortcuts come first (reviewers have no credentials), Alex is the one primary action. -->
       <section v-if="isDemo" class="mt-8 flex flex-col gap-4" data-testid="demo-login" aria-labelledby="demo-title">

@@ -494,10 +494,10 @@ html.no-3d .scene-3d canvas { display: none; }
     background-size: 180px 180px;
   }
 
-  /* Panel behind FORMS on the dusk sky: surface at 92% opacity (DESIGN.md §5.1.6). Wall text sits
-     directly on the sky and needs no scrim. No glow. */
+  /* Panel behind FORMS on the dusk sky: surface at 97% opacity, so no sculpture or sun shape shows
+     through as "glass" (DESIGN.md §5.1.6). Wall text sits directly on the sky and needs no scrim. No glow. */
   .scrim {
-    background: color-mix(in srgb, var(--dusk-surface) 92%, transparent);
+    background: color-mix(in srgb, var(--dusk-surface) 97%, transparent);
     border: 1.5px solid var(--hairline);
     border-radius: var(--radius-card);
   }
