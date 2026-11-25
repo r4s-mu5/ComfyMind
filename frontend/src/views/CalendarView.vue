@@ -376,6 +376,9 @@ onBeforeUnmount(disconnectCalendarWs)
 .fc-sanctuary .fc-daygrid-event:focus-visible { outline: 3px solid var(--ring); outline-offset: 2px; }
 .fc-sanctuary .fc-event-title, .fc-sanctuary .fc-event-time { color: inherit; font-weight: 600; }
 .fc-sanctuary .fc-daygrid-event-dot { display: none; }
+/* Names wrap instead of being cut ("Jordi Pui…" at 1024 px and at 150 % text). */
+.fc-sanctuary .fc-daygrid-dot-event { flex-wrap: wrap; white-space: normal; }
+.fc-sanctuary .fc-daygrid-dot-event .fc-event-title { overflow: visible; white-space: normal; }
 /* upcoming: ink on the page, outlined */
 .fc-sanctuary .pending-event { background: var(--card); color: var(--foreground); border-color: var(--link); }
 /* happening now: solid success fill */

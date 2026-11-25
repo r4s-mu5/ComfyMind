@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
    Solid under the text, then an eased fade past its right edge, above and below; open to the left edge of the
    screen, like dusk falling on the near wall. No box, no edge, no radius. --fade is shorter at 1024 so the
    sculpture on the right stays clear. */
-.wall-text { --fade: 7rem; --shade: color-mix(in srgb, var(--dusk-sky-deep) 90%, transparent); }
+.wall-text { --fade: 7rem; --shade: color-mix(in srgb, var(--dusk-sky-deep) 93%, transparent); }
 @media (min-width: 1280px) { .wall-text { --fade: 13rem; } }
 .wall-text::before {
   content: '';

@@ -45,14 +45,15 @@ Fixed-mode classes (use in layouts and for things that never change mode, like t
 
 Type: `font-display` (Tenor Sans), `font-body` (Readex Pro), `text-body` (18px), `text-small` (15px), and the roles `type-wordmark`, `type-display`, `type-h1`, `type-h2`, `type-h3`, `type-label`, `type-body`, `type-small`, `type-button`, plus `measure` (max 60ch).
 **Tenor caps is only for the wordmark, the display line and museum labels (`type-label`).** Every other heading and tile label is sentence case: `type-h3` is Readex 600. (`.prototype-eyebrow/-title/-lead` are legacy aliases in the same style; do not use them in new code.)
-Shape: `rounded-control` (12px), `rounded-card` (16px), `rounded-pill` (primary actions only), `.niche` (arch), `.elev` (soft lift at dawn, for floating panels only), `shadow-hung` (a frame on a wall: artwork mats only). Cards have no shadow.
+Shape (square-cut, DESIGN.md §4.5): `rounded-control` (2px: buttons, inputs), `rounded-card` (0: mats, overlays), `.niche` (arch top, square foot: featured artwork and the atrium only), `rounded-full` only for the sun, the "now" dot and colour swatches. `rounded-pill` and `.elev` are retired. Containers: `.panel` (rule above, no box: the default) and `.mat` (surface fill, square: forms, paper, reflection). Controls in a group: `.chip` (2px underline; `aria-pressed`/`aria-selected`/`.is-selected` gives the 3px rule and bold; add a `<Check>` icon). Tokens `--rule` / `--rule-strong` (under a title or active tab only). Shadows: `shadow-hung` (artwork mats only), `shadow-[var(--overlay-shadow)]` (dialogs, popovers, menus, toasts at dawn; none at dusk). Surfaces have no shadow.
 Atmosphere (the atrium at dusk): `.sky` (sky, 2px horizon line, darker floor; `--horizon` sets its height), `.sun-disc` (a crisp disc seated on the horizon; `--sun-size`, `--sun-x`), `.mist` (low horizontal strata), `.dither` (4x4 Bayer overlay), `.grain`, `.scrim` (panel behind forms only, no glow), `.dawn-glow`, `.flute-rule`.
 Spacing: Tailwind steps match the scale: `gap-1 2 3 4 6 8 12 16 24` = 4 8 12 16 24 32 48 64 96 px. Targets: `min-h-14` (56px patient), `min-h-11` (44px).
 
 ```vue
 <!-- DO -->
 <p class="type-body text-muted-foreground">Marta puede ver lo que compartes.</p>
-<div class="rounded-card bg-card border-[1.5px] border-border p-6">...</div>
+<section class="panel"><h2 class="type-h2">Mis obras</h2>...</section>   <!-- a room: rule + space, no box -->
+<button class="chip" :aria-pressed="on"><Check v-if="on" aria-hidden="true" class="size-4" />125%</button>
 
 <!-- DON'T -->
 <p style="color:#526762; font-size:14px">...</p>      <!-- hex, px font size, below 15px -->
@@ -68,17 +69,17 @@ Need a colour that does not exist? Add a token in `style.css`, show it in `Desig
 |---|---|---|
 | `SButton` | every button and button-looking link | `variant` primary/secondary/quiet/danger, `size` patient(56px)/compact(44px), `to`/`href`/`as`, `busy`, `disabled`, `block`; slot `icon` |
 | `SField` | any labelled input | `v-model`, `label`, `type` (text, email, password, textarea...), `help`, `error`, `optional`; default slot for a custom control |
-| `SCard` | one card = one thing, no shadow by default | `padding`, `selected`, `raised` (optional soft lift), `as` |
+| `SCard` | a room: default `panel` (rule above, no fill or box); `variant="mat"` for a form or the reflection | `variant` panel/mat, `padding`, `selected`, `as` |
 | `SNotice` | persistent message | `tone` info/success/warning/danger, `title`, `dismissible`, event `dismiss` |
-| `ArtworkMount` | showing an artwork on a square white museum mat with a hung shadow (not a card) | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `niche`, `mat`, `ratio`, `label` |
+| `ArtworkMount` | showing an artwork on a square museum mat (`--dawn-mat`, the brightest surface) with a hung shadow (not a card) | `src`, `alt`, `title`, `technique`, `date`, `madeBy`, `niche`, `mat`, `ratio`, `label` |
 | `MuseumLabel` | caption under artwork | `title` (falls back to "Sin título"), `technique`, `date`, `madeBy` |
-| `SessionCard` | a session; the status is a word on the date leaf ("Ahora" turns the leaf peach), no pill | `date`, `time`, `therapist`, `status` now/today/next; slot `action` |
+| `SessionCard` | a session as a ledger row between hairlines (no card); the status is a word on the date leaf ("Ahora" puts it on a square of sun colour) | `date`, `time`, `therapist`, `status` now/today/next; slot `action` |
 | `WayInPicker` | Palabras / Dibujo / Imagen | `v-model` `'words' \| 'draw' \| 'image'` |
 | `CalmProgress` | waiting | `progress` 0..1 or none (indeterminate), `status`, `hint`; slot `actions` |
 | `ReflectionPrompt` | the post-save question | `question`; events `save(note)`, `skip` |
 | `VersionsStrip` | versions in this sitting | `versions: {id, src}[]`, `v-model` current id, event `select` |
-| `DemoTag` | "Demo" chip | none (AppShell shows it automatically) |
-| `ComfortPanel` | Comfort popover; the selected option shows a check icon, and the panel turns dark when opened inside `.dusk` | `variant`, `mode` auto/dawn/dusk |
+| `DemoTag` | the word "Demo" beside the wordmark, plain text | none (AppShell shows it automatically) |
+| `ComfortPanel` | Comfort popover (quiet "Comodidad" trigger); options are `.chip` segments with a check icon; the panel turns dark when opened inside `.dusk` | `variant`, `mode` auto/dawn/dusk |
 | `DuskLayout` | threshold screens; content is left-aligned wall text on the sky by default | `scrim` (only behind forms), `align` start/center, `width`, `showComfort`; slots `default`, `scene`, `top` |
 | `AppShell` | working screens | `role`, `profile`; slots `default`, `aside` (collapsible right panel); `v-model:asideOpen` |
 
@@ -103,7 +104,7 @@ Need a colour that does not exist? Add a token in `style.css`, show it in `Desig
 </template>
 ```
 
-The header nav in `AppShell` is text-only on a solid background with a flute rule below; the current page is bold with a 3px underline plus `aria-current="page"`.
+The header nav in `AppShell` (root class `shell`) is text-only on a solid background with the fluted entablature below; nav targets are 48px; the current page is bold with a 3px underline plus `aria-current="page"`. The profile menu is a quiet text button with the first name. Dialogs (`ui/dialog`, `ui/alert-dialog`) close with a text "Cerrar" button (`dialog.close`); toasts (`ui/sonner`) are bottom-left mats with a tone border, and `toast.error` never auto-closes.
 
 Rules of thumb: one primary `SButton` per screen; icons only together with text; state is never colour alone; errors never auto-dismiss; no "generate / result / try again" words on user screens, and never "paciente / pacient / patient" in visible text (see DESIGN.md §8).
 
